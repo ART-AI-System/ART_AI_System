@@ -1,0 +1,171 @@
+import { NextFunction, Request, Response } from 'express'
+import { ObjectId } from 'mongodb'
+import { USERS_MESSAGES } from '~/constants/messages'
+import {
+  ForgotPasswordReqBody,
+  LoginReqBody,
+  LogoutReqBody,
+  RefreshTokenReqBody,
+  RegisterReqBody,
+  ResetPasswordReqBody,
+  TokenPayload,
+  VerifyEmailReqBody,
+  VerifyForgotPasswordReqBody,
+  UpdateMeReqBody
+} from '~/models/requests/users.request'
+import User from '~/models/schemas/users.schema'
+import usersService from '~/services/users.service'
+import { ParamsDictionary } from 'express-serve-static-core'
+import databaseService from '~/services/database.service'
+import HTTP_STATUS from '~/constants/httpStatus'
+import { UserVerifyStatus } from '~/constants/enums'
+
+export const loginController = async (req: Request<ParamsDictionary, any, LoginReqBody>, res: Response) => {
+  const user = req.user as User
+  const user_id = user._id as ObjectId
+  const result = await usersService.login({ user_id: user_id.toString(), verify: user.verify })
+  return res.json({
+    message: USERS_MESSAGES.LOGIN_SUCCESSFUL,
+    result
+  })
+}
+
+export const registerController = async (req: Request<ParamsDictionary, any, RegisterReqBody>, res: Response) => {
+  try {
+    const result = await usersService.register(req.body)
+    return res.json({
+      message: USERS_MESSAGES.REGISTER_SUCCESSFUL,
+      result
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(400).json({
+      message: USERS_MESSAGES.REGISTER_FAILED
+    })
+  }
+}
+
+export const logoutController = async (req: Request<ParamsDictionary, any, LogoutReqBody>, res: Response) => {
+  const { refresh_token } = req.body
+  const result = await usersService.logout(refresh_token)
+  return res.json(result)
+}
+
+export const oauthController = async (req: Request, res: Response) => {
+  const { code } = req.query
+  const result = await usersService.oauthGoogle(code as string)
+  const urlRedirect = `${process.env.CLIENT_REDIRECT_CALLBACK}?access_token=${result.access_token}
+  &refresh_token=${result.refresh_token}&newUser=${result.newUser}&verify=${result.verify}`
+  console.log('Redirecting to:', urlRedirect)
+  return res.redirect(urlRedirect)
+}
+
+export const refreshTokenController = async (
+  req: Request<ParamsDictionary, any, RefreshTokenReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { refresh_token } = req.body
+  const { user_id, verify, exp } = req.decored_refresh_token as TokenPayload
+  const result = await usersService.refreshToken({ user_id, verify, refresh_token, exp })
+  return res.json({
+    message: USERS_MESSAGES.REFRESH_TOKEN_SUCCESSFUL,
+    result
+  })
+}
+
+export const emailVerifyController = async (
+  req: Request<ParamsDictionary, any, VerifyEmailReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decoded_email_verify_token as TokenPayload
+  const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
+  if (!user) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({
+      message: USERS_MESSAGES.USER_NOT_FOUND
+    })
+  }
+  // Đã verify rồi thì không báo lỗi
+  // Mà MH sẽ return status OK với message là đã verify trước đó rồi
+  if (user.email_verify_token === '') {
+    return res.json({
+      message: USERS_MESSAGES.EMAIL_ALREADY_VERIFIED
+    })
+  }
+  const result = await usersService.verifyEmail(user_id)
+  return res.json({
+    message: USERS_MESSAGES.EMAIL_VERIFY_SUCCESSFUL,
+    result
+  })
+}
+
+export const resendVerifyEmailController = async (req: Request, res: Response, next: NextFunction) => {
+  const { user_id } = req.decoded_auth as TokenPayload
+  const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
+  if (!user) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({
+      message: USERS_MESSAGES.USER_NOT_FOUND
+    })
+  }
+  if (user.verify === UserVerifyStatus.VERIFIED) {
+    return res.json({
+      message: USERS_MESSAGES.EMAIL_ALREADY_VERIFIED
+    })
+  }
+  const result = await usersService.resendVerifyEmail(user_id)
+  return res.json(result)
+}
+
+export const forgotPasswordController = async (
+  req: Request<ParamsDictionary, any, ForgotPasswordReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { _id, verify } = req.user as User
+  const result = await usersService.forgotPassword({ user_id: (_id as ObjectId).toString(), verify })
+  return res.json(result)
+}
+
+export const verifyForgotPasswordController = async (
+  req: Request<ParamsDictionary, any, VerifyForgotPasswordReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  return res.json({
+    message: USERS_MESSAGES.VERIFY_FORGOT_PASSWORD_SUCCESSFUL
+  })
+}
+
+export const resetPasswordController = async (
+  req: Request<ParamsDictionary, any, ResetPasswordReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decoded_forgot_password_token as TokenPayload
+  const { password } = req.body
+  const result = await usersService.resetPassword(user_id, password)
+  return res.json(result)
+}
+
+export const getMeController = async (req: Request, res: Response, next: NextFunction) => {
+  const { user_id } = req.decoded_auth as TokenPayload
+  const user = await usersService.getMe(user_id)
+  return res.json({
+    message: USERS_MESSAGES.GET_ME_SUCCESSFUL,
+    result: user
+  })
+}
+
+export const updateMeController = async (
+  req: Request<ParamsDictionary, any, UpdateMeReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decoded_auth as TokenPayload
+  const result = await usersService.updateMe(user_id, req.body)
+  return res.json({
+    message: USERS_MESSAGES.UPDATE_ME_SUCCESSFUL,
+    result
+  })
+}
