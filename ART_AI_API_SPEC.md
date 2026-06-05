@@ -4,15 +4,15 @@
 
 ART-AI (Academic Research Transparency & AI Audit System) is a platform designed to evaluate how students use Generative AI during academic work.
 
-The system does **not** detect AI-generated content from uploaded files.
+The system does not detect AI-generated content from uploaded files.
 
 Instead, it focuses on:
 
-* AI Usage Declaration
-* Prompt & Response Tracking
-* Reflection & Critical Thinking Assessment
-* AI Dependency Evaluation
-* Lecturer Review & Monitoring
+- AI Usage Declaration
+- Prompt & Response Tracking
+- Reflection & Critical Thinking Assessment
+- AI Dependency Evaluation
+- Lecturer Review & Monitoring
 
 ---
 
@@ -50,7 +50,7 @@ Instead, it focuses on:
 
 ---
 
-# 3. Academic Management
+# 3. Academic Structure Management
 
 ## 3.1 Classes
 
@@ -79,10 +79,10 @@ Grade Items represent milestones of an academic project.
 
 Examples:
 
-* Proposal
-* Literature Review
-* Methodology
-* Final Report
+- Proposal
+- Literature Review
+- Methodology
+- Final Report
 
 | Method | Endpoint                        | Role              |
 | ------ | ------------------------------- | ----------------- |
@@ -94,23 +94,7 @@ Examples:
 
 ---
 
-# 4. Submission Management
-
-Submission files are only used as final deliverables.
-
-Supported file types:
-
-* PDF
-* DOCX
-* XLSX
-* PPTX
-* ZIP
-
-Constraints:
-
-```text
-Maximum file size: 10 MB
-```
+# 4. Assignment Submission Management
 
 ## 4.1 Submission APIs
 
@@ -121,7 +105,7 @@ Maximum file size: 10 MB
 | GET    | `/grade-items/:gradeItemId/submissions`    | Lecturer                        |
 | GET    | `/submissions/:id`                         | Student, Lecturer, Subject Head |
 | GET    | `/submissions/:id/download`                | Student, Lecturer, Subject Head |
-
+| GET    | `/students/me/submissions`                 | Student                         |
 ---
 
 # 5. Lecturer Review
@@ -146,22 +130,182 @@ FLAGGED
 
 ---
 
-# 6. Reporting
+# 6. Score & Grading Management
 
-## 6.1 Reports
+## 6.1 Submission Grading APIs
+
+| Method | Endpoint                           | Role              |
+| ------ | ---------------------------------- | ----------------- |
+| POST   | `/submissions/:id/grade`           | Lecturer          |
+| GET    | `/submissions/:id/grade`           | Student, Lecturer |
+| PUT    | `/submissions/:id/grade`           | Lecturer          |
+| DELETE | `/submissions/:id/grade`           | Lecturer          |
+| GET    | `/grade-items/:gradeItemId/grades` | Lecturer          |
+| GET    | `/classes/:classId/grades`         | Lecturer          |
+
+---
+
+# 7. Final Result Management
+
+## 7.1 Final Result APIs
+
+| Method | Endpoint                                             | Role                   |
+| ------ | ---------------------------------------------------- | ---------------------- |
+| POST   | `/classes/:classId/final-results/calculate`          | Lecturer               |
+| GET    | `/classes/:classId/final-results`                    | Lecturer, Subject Head |
+| GET    | `/students/:studentId/classes/:classId/final-result` | Student, Lecturer      |
+| GET    | `/classes/:classId/final-results/export`             | Lecturer, Subject Head |
+| GET    | `/students/me/results`                               | Student                |
+
+### Final Score Formula
+
+```text
+Final Score =
+Σ (Grade Item Score × Grade Item Weight)
+```
+
+Example:
+
+```text
+Proposal          20%
+Literature Review 20%
+Methodology       20%
+Final Report      40%
+```
+
+```text
+Final Score =
+(8.0 × 20%)
++ (7.5 × 20%)
++ (8.5 × 20%)
++ (9.0 × 40%)
+
+= 8.4
+```
+---
+
+# 8. Academic Classification
+
+## 8.1 Classification APIs
+
+| Method | Endpoint                              | Role                   |
+| ------ | ------------------------------------- | ---------------------- |
+| GET    | `/classes/:classId/classifications`   | Lecturer, Subject Head |
+| GET    | `/classes/:classId/rankings`          | Lecturer, Subject Head |
+| GET    | `/students/:studentId/classification` | Student, Lecturer      |
+
+### Classification Rules
+
+```text
+0.0 - 4.9   = POOR
+5.0 - 6.4   = AVERAGE
+6.5 - 7.9   = GOOD
+8.0 - 8.9   = VERY_GOOD
+9.0 - 10.0  = EXCELLENT
+```
+
+---
+
+# 9. Reporting & Export
+
+## 9.1 Academic Reports
+
+| Method | Endpoint                                    | Role                   |
+| ------ | ------------------------------------------- | ---------------------- |
+| GET    | `/reports/classes/:classId/grade-summary`   | Lecturer, Subject Head |
+| GET    | `/reports/classes/:classId/final-results`   | Lecturer, Subject Head |
+| GET    | `/reports/classes/:classId/rankings`        | Lecturer, Subject Head |
+| GET    | `/reports/classes/:classId/classifications` | Lecturer, Subject Head |
+
+## 9.2 AI Usage Reports
 
 | Method | Endpoint                                | Role                   |
 | ------ | --------------------------------------- | ---------------------- |
 | GET    | `/reports/classes/:classId/ai-usage`    | Lecturer, Subject Head |
 | GET    | `/reports/semesters/:semester/ai-usage` | Subject Head           |
 | GET    | `/reports/suspicious-cases`             | Subject Head           |
-| GET    | `/reports/export`                       | Subject Head           |
+
+## 9.3 Export Reports
+
+- Excel
+- PDF
+- CSV
+
+| Method | Endpoint                                 | Role                   |
+| ------ | ---------------------------------------- | ---------------------- |
+| GET    | `/reports/classes/:classId/export-excel` | Lecturer, Subject Head |
+| GET    | `/reports/classes/:classId/export-pdf`   | Lecturer, Subject Head |
+| GET    | `/reports/classes/:classId/export-csv`   | Lecturer, Subject Head |
+
+## 9.4 Dashboard Analytics
+
+### Student Dashboard
+
+| Method | Endpoint             |
+| ------ | -------------------- |
+| GET    | `/dashboard/student` |
+
+Metrics:
+
+* Submitted Assignments
+* Pending Assignments
+* Average Score
+* AI Usage Pattern
+* Flags Received
 
 ---
 
-# 7. AI Usage Declaration
+### Lecturer Dashboard
 
-## 7.1 Business Rules
+| Method | Endpoint              |
+| ------ | --------------------- |
+| GET    | `/dashboard/lecturer` |
+
+Metrics:
+
+* Total Classes
+* Total Students
+* Pending Reviews
+* Flagged Submissions
+* AI Usage Distribution
+
+---
+
+### Subject Head Dashboard
+
+| Method | Endpoint                  |
+| ------ | ------------------------- |
+| GET    | `/dashboard/subject-head` |
+
+Metrics:
+
+* Total Classes
+* Total Students
+* AI Usage Trends
+* High Dependency Cases
+* Academic Performance Summary
+
+---
+
+### Admin Dashboard
+
+| Method | Endpoint           |
+| ------ | ------------------ |
+| GET    | `/dashboard/admin` |
+
+Metrics:
+
+* Total Users
+* Total Classes
+* Total Submissions
+* Total AI Interactions
+* System Activity
+
+---
+
+# 10. AI Usage Declaration
+
+## 10.1 Business Rules
 
 Each submission must contain:
 
@@ -172,16 +316,14 @@ Maximum interactions: 10
 
 Each interaction consists of:
 
-* AI Tool
-* Usage Purpose
-* Prompt
-* AI Response
-* Student Decision
-* Reflection
+- AI Tool
+- Usage Purpose
+- Prompt
+- AI Response
+- Student Decision
+- Reflection
 
----
-
-## 7.2 AI Interaction APIs
+## 10.2 AI Interaction APIs
 
 | Method | Endpoint                                     | Role                            |
 | ------ | -------------------------------------------- | ------------------------------- |
@@ -223,26 +365,11 @@ REJECTED
 REFERENCE_ONLY
 ```
 
-### Create AI Interaction Request
-
-```json
-{
-  "aiTool": "CHATGPT",
-  "purpose": "CRITICAL_FEEDBACK",
-  "prompt": "Act as a reviewer and criticize my methodology section.",
-  "response": "Your sample size may be too small...",
-  "decision": "PARTIALLY_ACCEPTED",
-  "reflection": "I agreed with the concern about sample size and expanded the survey."
-}
-```
-
 ---
 
-# 8. AI Usage Evaluation
+# 11. AI Usage Evaluation
 
-The system evaluates how students interact with AI rather than whether AI generated the final work.
-
-## 8.1 Evaluation APIs
+## 11.1 Evaluation APIs
 
 | Method | Endpoint                             | Role                            |
 | ------ | ------------------------------------ | ------------------------------- |
@@ -259,29 +386,18 @@ PASSIVE_USAGE
 HIGH_DEPENDENCY
 ```
 
-### Evaluation Result Example
+### Evaluation Dimensions
 
-```json
-{
-  "pattern": "CRITICAL_ENGAGEMENT",
-  "riskLevel": "LOW",
-  "scores": {
-    "promptQuality": 82,
-    "reflectionQuality": 88,
-    "criticalThinking": 76,
-    "aiDependency": 24
-  },
-  "summary": "Student mainly used AI for feedback and improvement."
-}
-```
+- Prompt Quality
+- Reflection Quality
+- Critical Thinking
+- AI Dependency
 
 ---
 
-# 9. Flag Management
+# 12. Flag Management
 
-Flags identify potentially problematic AI usage patterns.
-
-## 9.1 Flag APIs
+## 12.1 Flag APIs
 
 | Method | Endpoint                 | Role                   |
 | ------ | ------------------------ | ---------------------- |
@@ -313,9 +429,9 @@ HIGH
 
 ---
 
-# 10. Core MVP APIs
+# 13. Core MVP APIs
 
-Priority implementation order:
+Priority Order:
 
 1. POST `/grade-items/:gradeItemId/submissions`
 2. GET `/submissions/:id`
@@ -327,15 +443,19 @@ Priority implementation order:
 
 ---
 
-# Core Philosophy
+# 14. Core Philosophy
 
-ART-AI does not attempt to detect AI-generated content.
+ART-AI does not evaluate:
+
+- AI Generated Percentage
+- AI Generated Text Detection
+- Plagiarism Detection
 
 ART-AI evaluates:
 
-* How students use AI
-* Whether students critically engage with AI responses
-* Whether students reflect on AI suggestions
-* Whether students rely excessively on AI
+- How students use AI
+- Whether students critically engage with AI
+- Whether students reflect on AI responses
+- Whether students depend excessively on AI
 
 The system promotes transparency, accountability, and responsible AI-assisted learning.
