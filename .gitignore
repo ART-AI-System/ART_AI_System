@@ -3,3 +3,5 @@ dist/
 .env
 uploads/
 .ecc_reference/
+
+.gh_cli/
