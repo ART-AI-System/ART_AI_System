@@ -90,23 +90,6 @@ const forgotPasswordTokenSchema: ParamSchema = {
 // EXPORTED VALIDATORS
 // ==========================================
 
-export const loginValidator = validate(
-  checkSchema({
-    email: {
-      ...emailRules(),
-      custom: {
-        options: async (value, { req }) => {
-          const user = await databaseService.users.findOne({ email: value, password: hashPassword(req.body.password) })
-          if (!user) throw new Error(USERS_MESSAGES.EMAIL_OR_PASSWORD_INCORRECT)
-          req.user = user
-          return true
-        }
-      }
-    },
-    password: passwordRules()
-  }, ['body'])
-)
-
 export const registerValidator = validate(
   checkSchema({
     fullName: fullNameSchema,
@@ -126,51 +109,6 @@ export const registerValidator = validate(
       isIn: {
         options: [['STUDENT', 'LECTURER', 'SUBJECT_HEAD', 'ADMIN']],
         errorMessage: 'Role must be STUDENT, LECTURER, SUBJECT_HEAD, or ADMIN'
-      }
-    }
-  }, ['body'])
-)
-
-export const accessTokenValidator = validate(
-  checkSchema({
-    authorization: {
-      custom: {
-        options: async (value: string, { req }) => {
-          const access_token = (value || '').split(' ')[1]
-          if (!access_token) throw new ErrorWithStatus({ message: USERS_MESSAGES.ACCESS_TOKEN_IS_INVALID, status: HTTP_STATUS.UNAUTHORIZED })
-          try {
-            req.decoded_auth = await verifyToken({ token: access_token, secretOrPublicKey: process.env.JWT_SECRET_ACCESS_TOKEN as string })
-          } catch (error) {
-            throw new ErrorWithStatus({ message: (error as JsonWebTokenError).message, status: HTTP_STATUS.UNAUTHORIZED })
-          }
-          return true
-        }
-      }
-    }
-  }, ['headers'])
-)
-
-export const refreshTokenValidator = validate(
-  checkSchema({
-    refresh_token: {
-      trim: true,
-      custom: {
-        options: async (value: string, { req }) => {
-          if (!value) throw new ErrorWithStatus({ message: USERS_MESSAGES.REFRESH_TOKEN_IS_REQUIRED, status: HTTP_STATUS.UNAUTHORIZED })
-          try {
-            const [decoded_refresh_token, refresh_token] = await Promise.all([
-              verifyToken({ token: value, secretOrPublicKey: process.env.JWT_SECRET_REFRESH_TOKEN as string }),
-              databaseService.refreshTokens.findOne({ token: value })
-            ])
-            if (!refresh_token) throw new ErrorWithStatus({ message: USERS_MESSAGES.USED_REFRESH_TOKEN_OR_NOT_EXISTS, status: HTTP_STATUS.UNAUTHORIZED })
-            req.decored_refresh_token = decoded_refresh_token
-          } catch (error) {
-            throw error instanceof JsonWebTokenError 
-              ? new ErrorWithStatus({ message: USERS_MESSAGES.REFRESH_TOKEN_IS_INVALID, status: HTTP_STATUS.UNAUTHORIZED }) 
-              : error
-          }
-          return true
-        }
       }
     }
   }, ['body'])
