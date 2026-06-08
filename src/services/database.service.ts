@@ -8,7 +8,7 @@ import Grade from '~/models/schemas/grades.schema'
 import FinalResult from '~/models/schemas/finalResults.schema'
 dotenv.config()
 
-const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@art-ai-system.rpdlfxc.mongodb.net/`
+const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USERNAME as string)}:${encodeURIComponent(process.env.DB_PASSWORD as string)}@art-ai-system.rpdlfxc.mongodb.net/`
 
 class DatabaseService {
   private client: MongoClient
