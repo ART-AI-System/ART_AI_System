@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import {
   createClassController,
   getClassesController,
@@ -9,10 +10,10 @@ import {
 
 const classesRouter = Router()
 
-classesRouter.post('/', createClassController)
-classesRouter.get('/', getClassesController)
-classesRouter.get('/:id', getClassByIdController)
-classesRouter.put('/:id', updateClassController)
-classesRouter.delete('/:id', deleteClassController)
+classesRouter.post('/', requireAuth, requireRole('ADMIN', 'SUBJECT_HEAD'), createClassController)
+classesRouter.get('/', requireAuth, getClassesController)
+classesRouter.get('/:id', requireAuth, getClassByIdController)
+classesRouter.put('/:id', requireAuth, requireRole('ADMIN', 'SUBJECT_HEAD', 'LECTURER'), updateClassController)
+classesRouter.delete('/:id', requireAuth, requireRole('ADMIN', 'SUBJECT_HEAD'), deleteClassController)
 
 export default classesRouter

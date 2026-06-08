@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import {
   gradeSubmissionController,
   getGradeBySubmissionController,
@@ -11,16 +12,16 @@ import {
 const gradesRouter = Router({ mergeParams: true })
 
 // These will be mounted at /api/submissions/:id/grade
-gradesRouter.post('/', gradeSubmissionController)
-gradesRouter.get('/', getGradeBySubmissionController)
-gradesRouter.put('/', gradeSubmissionController) // PUT and POST map to the same upsert logic
-gradesRouter.delete('/', deleteGradeController)
+gradesRouter.post('/', requireAuth, requireRole('LECTURER'), gradeSubmissionController)
+gradesRouter.get('/', requireAuth, getGradeBySubmissionController)
+gradesRouter.put('/', requireAuth, requireRole('LECTURER'), gradeSubmissionController) // PUT and POST map to the same upsert logic
+gradesRouter.delete('/', requireAuth, requireRole('LECTURER'), deleteGradeController)
 
 export const gradesStandaloneRouter = Router({ mergeParams: true })
 
 // These will be mounted separately in index.ts
-gradesStandaloneRouter.get('/grade-items/:gradeItemId/grades', getGradesByGradeItemController)
-gradesStandaloneRouter.get('/classes/:classId/grades', getGradesByClassController)
-gradesStandaloneRouter.post('/classes/:classId/students/:studentId/final-result', calculateFinalResultController)
+gradesStandaloneRouter.get('/grade-items/:gradeItemId/grades', requireAuth, getGradesByGradeItemController)
+gradesStandaloneRouter.get('/classes/:classId/grades', requireAuth, getGradesByClassController)
+gradesStandaloneRouter.post('/classes/:classId/students/:studentId/final-result', requireAuth, requireRole('LECTURER'), calculateFinalResultController)
 
 export default gradesRouter
