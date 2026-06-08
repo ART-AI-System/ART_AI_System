@@ -2,6 +2,8 @@ import { MongoClient, Db, Collection } from 'mongodb'
 import dotenv from 'dotenv'
 import User from '~/models/schemas/users.schema'
 import RefreshToken from '~/models/schemas/refreshToken.schema'
+import Class from '~/models/schemas/classes.schema'
+import GradeItem from '~/models/schemas/gradeItems.schema'
 dotenv.config()
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@art-ai-system.rpdlfxc.mongodb.net/`
@@ -65,6 +67,14 @@ class DatabaseService {
 
   get refreshTokens(): Collection<RefreshToken> {
     return this.db.collection(process.env.DB_REFRESH_TOKENS_COLLECTION as string)
+  }
+
+  get classes(): Collection<Class> {
+    return this.db.collection(process.env.DB_CLASSES_COLLECTION as string)
+  }
+
+  get gradeItems(): Collection<GradeItem> {
+    return this.db.collection(process.env.DB_GRADE_ITEMS_COLLECTION as string)
   }
 }
 

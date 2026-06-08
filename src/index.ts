@@ -1,6 +1,8 @@
 import express from 'express'
 import usersRouter from '~/routes/users.routes'
 import authRouter from '~/routes/auth.routes'
+import classesRouter from '~/routes/classes.routes'
+import gradeItemsRouter from '~/routes/gradeItems.routes'
 import databaseService from '~/services/database.service'
 import { defaultErrorHandler } from '~/middlewares/error.middleware'
 import { config } from 'dotenv'
@@ -19,6 +21,9 @@ app.use(express.json())
 app.use('/api/auth', authRouter)
 
 app.use('/api/users', usersRouter)
+app.use('/api/classes', classesRouter)
+app.use('/api/classes/:classId/grade-items', gradeItemsRouter)
+app.use('/api/grade-items', gradeItemsRouter)
 
 app.use(defaultErrorHandler)
 app.listen(port, () => {
