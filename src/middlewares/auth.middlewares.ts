@@ -48,7 +48,7 @@ const AUTH_ERRORS = {
  * Bước 1 — Xác thực JWT (delegate sang accessTokenValidator):
  *   accessTokenValidator đọc header Authorization: Bearer <token>,
  *   verify chữ ký JWT, gắn req.decoded_auth = decoded payload.
- *   Nếu token thiếu / sai / hết hạn → 401 ngay tại bước này.
+ *   Nếu token thiếu / sai / hết hạn → 401.
  *
  * Bước 2 — Tra DB và kiểm tra trạng thái user:
  *   Dùng user_id từ req.decoded_auth để findOne trong collection users.
@@ -149,12 +149,6 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
  *   requireAuth đảm bảo req.user đã được gắn sẵn trước khi requireRole chạy.
  *   Nếu thiếu requireAuth, req.user sẽ là undefined và requireRole sẽ từ chối mọi request.
  *
- * Thiết kế Higher-Order Function:
- *   Cho phép khai báo role linh hoạt tại thời điểm định nghĩa route:
- *   ─ requireRole('ADMIN')                        → chỉ ADMIN
- *   ─ requireRole('LECTURER', 'SUBJECT_HEAD')     → LECTURER hoặc SUBJECT_HEAD
- *   ─ requireRole('ADMIN', 'LECTURER', 'SUBJECT_HEAD', 'STUDENT') → tất cả roles
- *
  * Tại sao đọc role từ req.user (DB) thay vì req.decoded_auth (JWT)?
  *   JWT payload hiện tại không chứa role (chỉ có user_id, token_type, verify).
  *   Kể cả nếu có, DB là nguồn sự thật duy nhất — role stale trong token
@@ -213,7 +207,6 @@ export const requireRole = (...roles: UserRole[]) => {
  * QUAN TRỌNG: Phải dùng sau requireAuth vì cần req.user đã được gắn.
  *
  * @example
- *   // Thông thường không cần — requireAuth đã check isActive.
  *   // Chỉ dùng khi cần explicit guard riêng biệt trong chain phức tạp.
  *   router.post('/api/submissions', requireAuth, requireActiveAccount, requireRole('STUDENT'), createSubmissionController)
  */
