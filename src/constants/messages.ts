@@ -54,5 +54,44 @@ export const USERS_MESSAGES = {
   UPLOAD_VIDEO_SUCCESSFUL: 'Upload video successful',
   UPLOAD_VIDEO_HLS_SUCCESSFUL: 'Upload video HLS successful',
   GET_VIDEO_STATUS_SUCCESSFUL: 'Get video status successful',
-  ACCESS_TOKEN_IS_REQUIRED: 'Access token is required'
+  ACCESS_TOKEN_IS_REQUIRED: 'Access token is required',
+
+  // ==========================================
+  // MODULE 2: USER MANAGEMENT MESSAGES
+  // ==========================================
+
+  // User CRUD
+  GET_USERS_SUCCESSFUL: 'Get users successful',
+  GET_USER_SUCCESSFUL: 'Get user successful',
+  CREATE_USER_SUCCESSFUL: 'Create user successful',
+  UPDATE_USER_SUCCESSFUL: 'Update user successful',
+  DELETE_USER_SUCCESSFUL: 'User deleted (deactivated) successfully',
+
+  // Status & Role
+  UPDATE_USER_STATUS_SUCCESSFUL: 'Update user status successful',
+  UPDATE_USER_ROLE_SUCCESSFUL: 'Update user role successful',
+  IS_ACTIVE_IS_REQUIRED: 'isActive is required',
+  IS_ACTIVE_MUST_BE_BOOLEAN: 'isActive must be a boolean',
+  ROLE_IS_REQUIRED: 'Role is required',
+  ROLE_IS_INVALID: 'Role must be STUDENT, LECTURER, SUBJECT_HEAD, or ADMIN',
+  CANNOT_CHANGE_OWN_STATUS: 'Admins cannot change their own status',
+  CANNOT_DELETE_SELF: 'Admins cannot delete themselves',
+
+  // Student Code
+  STUDENT_CODE_ALREADY_IN_USE: 'Student code is already in use',
+  STUDENT_CODE_MUST_BE_STRING: 'Student code must be a string',
+  STUDENT_CODE_IS_REQUIRED_FOR_STUDENT: 'Student code is required for STUDENT role',
+  STUDENT_CODE_LENGTH: 'Student code must be between 1 and 20 characters',
+
+  // Import
+  IMPORT_USERS_SUCCESSFUL: 'Import users completed',
+  IMPORT_FILE_REQUIRED: 'Import file is required',
+  IMPORT_INVALID_FILE_TYPE: 'File must be a CSV or Excel file (.csv, .xlsx, .xls)',
+
+  // Field validations
+  FULL_NAME_IS_REQUIRED: 'Full name is required',
+  FULL_NAME_MUST_BE_STRING: 'Full name must be a string',
+  FULL_NAME_LENGTH: 'Full name must be between 1 and 100 characters',
+  EMAIL_IS_REQUIRED_FOR_CREATE: 'Email is required',
+  PASSWORD_IS_REQUIRED_FOR_CREATE: 'Password is required for user creation'
 } as const

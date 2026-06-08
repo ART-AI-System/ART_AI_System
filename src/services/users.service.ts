@@ -5,15 +5,46 @@ import databaseService from '~/services/database.service'
 import dotenv from 'dotenv'
 import { signToken, verifyToken } from '~/utils/jwt'
 import { TokenType, UserVerifyStatus } from '~/constants/enums'
-import { RegisterReqBody } from '~/models/requests/users.request'
+import {
+  RegisterReqBody,
+  CreateUserReqBody,
+  UpdateUserReqBody,
+  UpdateUserStatusReqBody,
+  UpdateUserRoleReqBody,
+  UpdateMeReqBody,
+  GetUsersQuery
+} from '~/models/requests/users.request'
+import { UserRole } from '~/models/schemas/users.schema'
 import { hashPassword } from '~/constants/crypto'
 import RefreshToken from '~/models/schemas/refreshToken.schema'
 import { USERS_MESSAGES } from '~/constants/messages'
 import axios from 'axios'
 import { ErrorWithStatus } from '~/models/Errors'
 import HTTP_STATUS from '~/constants/httpStatus'
+import path from 'path'
+import fs from 'fs'
 dotenv.config()
+
+// ==========================================
+// CONSTANTS
+// ==========================================
+
+const VALID_ROLES: UserRole[] = ['STUDENT', 'LECTURER', 'SUBJECT_HEAD', 'ADMIN']
+
+// ==========================================
+// SAFE PROJECTION — excludes sensitive fields from user documents
+// ==========================================
+const SAFE_USER_PROJECTION = {
+  password: 0,
+  email_verify_token: 0,
+  forgot_password_token: 0
+}
+
 class UserService {
+  // ==========================================
+  // MODULE 1: AUTH PRIVATE HELPERS (preserved)
+  // ==========================================
+
   private signAccessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
     return signToken({
       payload: {
@@ -77,6 +108,24 @@ class UserService {
       }
     })
   }
+
+  private signEmailVerifyToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
+    return signToken({
+      payload: {
+        user_id,
+        token_type: TokenType.EMAIL_VERIFY_TOKEN,
+        verify
+      },
+      privateKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string,
+      options: {
+        expiresIn: process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN as StringValue
+      }
+    })
+  }
+
+  // ==========================================
+  // MODULE 1: AUTH SERVICE METHODS (preserved)
+  // ==========================================
 
   async register(payload: RegisterReqBody) {
     const user_id = new ObjectId()
@@ -259,8 +308,6 @@ class UserService {
   }
 
   async verifyEmail(user_id: string) {
-    // Tạo giá trị cập nhập
-    // MongoDB cập nhập giá trị
     const [token] = await Promise.all([
       this.signAccessAndRefreshToken({
         user_id,
@@ -269,7 +316,6 @@ class UserService {
       databaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
         {
           $set: {
-            // email_verify_status: '',
             verify: UserVerifyStatus.VERIFIED,
             updated_at: '$$NOW'
           }
@@ -287,20 +333,6 @@ class UserService {
       })
     )
     return { access_token, refresh_token }
-  }
-
-  private signEmailVerifyToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
-    return signToken({
-      payload: {
-        user_id,
-        token_type: TokenType.EMAIL_VERIFY_TOKEN,
-        verify
-      },
-      privateKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string,
-      options: {
-        expiresIn: process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN as StringValue
-      }
-    })
   }
 
   async resendVerifyEmail(user_id: string) {
@@ -331,7 +363,6 @@ class UserService {
         }
       }
     ])
-    // console.log('Forgot password token:', forgot_password_token)
     return {
       message: USERS_MESSAGES.CHECK_EMAIL_TO_RESET_PASSWORD
     }
@@ -355,32 +386,417 @@ class UserService {
     }
   }
 
+  // ==========================================
+  // MODULE 2: SELF PROFILE METHODS
+  // ==========================================
+
+  /**
+   * GET /users/me — Returns the current authenticated user's profile.
+   * Excludes sensitive fields (password, tokens).
+   */
   async getMe(user_id: string) {
     const user = await databaseService.users.findOne(
       { _id: new ObjectId(user_id) },
-      { projection: { password: 0, email_verify_token: 0, forgot_password_token: 0 } }
+      { projection: SAFE_USER_PROJECTION }
     )
     return user
   }
 
-  async updateMe(user_id: string, payload: any) {
+  /**
+   * PATCH /users/me — Updates the authenticated user's own profile.
+   * Only allows: fullName, profile. Cannot change role/email/password.
+   * Returns the updated user document.
+   */
+  async updateMe(user_id: string, payload: UpdateMeReqBody) {
+    const allowedFields: Array<keyof UpdateMeReqBody> = ['fullName', 'profile']
+    const updateData: Partial<UpdateMeReqBody> = {}
+    for (const key of allowedFields) {
+      if (payload[key] !== undefined) {
+        ;(updateData as any)[key] = payload[key]
+      }
+    }
     await databaseService.users.updateOne(
       { _id: new ObjectId(user_id) },
-      {
-        $set: {
-          ...payload,
-          updated_at: new Date()
-        }
-      }
+      { $set: { ...updateData, updatedAt: new Date() } }
     )
-    const user = await databaseService.users.findOne(
-      { _id: new ObjectId(user_id) },
-      { projection: { password: 0, email_verify_token: 0, forgot_password_token: 0 } }
-    )
-    return user
+    if (updateData.fullName) {
+      await this.syncUserSnapshots(user_id, { fullName: updateData.fullName })
+    }
+    return await databaseService.users.findOne({ _id: new ObjectId(user_id) }, { projection: SAFE_USER_PROJECTION })
   }
 
+  // ==========================================
+  // MODULE 2: ADMIN USER MANAGEMENT METHODS
+  // ==========================================
+
+  /**
+   * GET /users — Returns a paginated, filterable list of users.
+   * Supports: search by fullName/email, filter by role, filter by isActive.
+   * Default: page=1, limit=20.
+   */
+  private async syncUserSnapshots(
+    userId: string,
+    updates: { fullName?: string; email?: string; studentCode?: string | null; isActive?: boolean }
+  ): Promise<void> {
+    const userObjectId = new ObjectId(userId)
+    const promises: Promise<any>[] = []
+
+    // 1. Sync Lecturer Snapshot in Classes
+    if (updates.fullName || updates.email) {
+      const lecturerFields: Record<string, string> = {}
+      if (updates.fullName) lecturerFields['lecturer.fullName'] = updates.fullName
+      if (updates.email) lecturerFields['lecturer.email'] = updates.email
+      promises.push(
+        databaseService.classes.updateMany(
+          { 'lecturer.lecturerId': userObjectId },
+          { $set: { ...lecturerFields, updatedAt: new Date() } }
+        )
+      )
+    }
+
+    // 2. Sync Student Snapshot in Classes
+    if (updates.fullName || updates.email || updates.studentCode !== undefined) {
+      const studentFields: Record<string, any> = {}
+      if (updates.fullName) studentFields['students.$[elem].fullName'] = updates.fullName
+      if (updates.email) studentFields['students.$[elem].email'] = updates.email
+      if (updates.studentCode !== undefined) studentFields['students.$[elem].studentCode'] = updates.studentCode
+      
+      promises.push(
+        databaseService.classes.updateMany(
+          { 'students.studentId': userObjectId },
+          { $set: { ...studentFields, updatedAt: new Date() } },
+          { arrayFilters: [{ 'elem.studentId': userObjectId }] }
+        )
+      )
+    }
+    await Promise.all(promises)
+  }
+
+  async getUsers(query: GetUsersQuery) {
+    const parsedPage = parseInt(query.page || '1', 10)
+    const parsedLimit = parseInt(query.limit || '20', 10)
+    const page = Math.max(1, isNaN(parsedPage) ? 1 : parsedPage)
+    const limit = Math.min(100, Math.max(1, isNaN(parsedLimit) ? 20 : parsedLimit))
+    const skip = (page - 1) * limit
+
+    // Build MongoDB filter
+    const filter: Record<string, any> = {}
+
+    if (query.role && VALID_ROLES.includes(query.role)) {
+      filter.role = query.role
+    }
+
+    if (query.isActive !== undefined) {
+      filter.isActive = query.isActive === 'true'
+    }
+
+    if (query.search) {
+      const searchRegex = { $regex: query.search, $options: 'i' }
+      filter.$or = [{ fullName: searchRegex }, { email: searchRegex }, { studentCode: searchRegex }]
+    }
+
+    const [users, total] = await Promise.all([
+      databaseService.users
+        .find(filter, { projection: SAFE_USER_PROJECTION })
+        .skip(skip)
+        .limit(limit)
+        .toArray(),
+      databaseService.users.countDocuments(filter)
+    ])
+
+    return {
+      users,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    }
+  }
+
+  /**
+   * GET /users/:id — Returns a single user by ID.
+   * Returns null if not found.
+   */
+  async getUserById(id: string) {
+    if (!ObjectId.isValid(id)) return null
+    return databaseService.users.findOne(
+      { _id: new ObjectId(id) },
+      { projection: SAFE_USER_PROJECTION }
+    )
+  }
+
+  /**
+   * POST /users — Admin creates a new user directly (no email verification flow).
+   * Password is hashed before storage.
+   */
+  async createUser(payload: CreateUserReqBody) {
+    const user_id = new ObjectId()
+    const newUser = new User({
+      _id: user_id,
+      fullName: payload.fullName,
+      email: payload.email,
+      password: hashPassword(payload.password),
+      role: payload.role,
+      studentCode: payload.studentCode ?? null,
+      profile: payload.profile ?? {},
+      isActive: true,
+      // Admin-created users are pre-verified (no email flow needed)
+      verify: UserVerifyStatus.VERIFIED,
+      email_verify_token: '',
+      forgot_password_token: ''
+    })
+
+    await databaseService.users.insertOne(newUser)
+
+    // Return safe version (no password)
+    return databaseService.users.findOne(
+      { _id: user_id },
+      { projection: SAFE_USER_PROJECTION }
+    )
+  }
+
+  /**
+   * PUT /users/:id — Admin updates a user's general information.
+   * Cannot update email or password via this method.
+   * Returns the updated user document.
+   */
+  async updateUser(id: string, payload: UpdateUserReqBody) {
+    if (!ObjectId.isValid(id)) return null
+    const allowedFields: Array<keyof UpdateUserReqBody | 'email'> = ['fullName', 'role', 'studentCode', 'profile', 'email']
+    const updateData: Record<string, any> = {}
+    for (const key of allowedFields) {
+      if ((payload as any)[key] !== undefined) {
+        updateData[key] = (payload as any)[key]
+      }
+    }
+    if (updateData.role && updateData.role !== 'STUDENT') {
+      updateData.studentCode = null
+    } else if (updateData.studentCode === '') {
+      updateData.studentCode = null
+    }
+    const result = await databaseService.users.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: { ...updateData, updatedAt: new Date() } },
+      { returnDocument: 'after', projection: SAFE_USER_PROJECTION }
+    )
+    if (result) {
+      await this.syncUserSnapshots(id, {
+        fullName: updateData.fullName,
+        email: updateData.email,
+        studentCode: updateData.studentCode
+      })
+    }
+    return result
+  }
+
+  /**
+   * PATCH /users/:id/status — Admin activates or deactivates a user (soft toggle).
+   * Cannot be used on self (enforced at controller level).
+   * Returns updated user.
+   */
+  async updateUserStatus(id: string, isActive: boolean) {
+    if (!ObjectId.isValid(id)) return null
+
+    const result = await databaseService.users.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          isActive,
+          updatedAt: new Date()
+        }
+      },
+      {
+        returnDocument: 'after',
+        projection: SAFE_USER_PROJECTION
+      }
+    )
+
+    if (result) {
+      await this.syncUserSnapshots(id, { isActive })
+    }
+
+    return result
+  }
+
+  /**
+   * PATCH /users/:id/role — Admin changes a user's role.
+   * Returns updated user.
+   */
+  async updateUserRole(id: string, role: UserRole) {
+    if (!ObjectId.isValid(id)) return null
+
+    const result = await databaseService.users.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          role,
+          updatedAt: new Date()
+        }
+      },
+      {
+        returnDocument: 'after',
+        projection: SAFE_USER_PROJECTION
+      }
+    )
+
+    return result
+  }
+
+  /**
+   * DELETE /users/:id — Soft delete: sets isActive = false.
+   * User record is NEVER physically removed from the database.
+   * Cannot be used on self (enforced at controller level).
+   */
+  async deleteUser(id: string) {
+    if (!ObjectId.isValid(id)) return null
+
+    const result = await databaseService.users.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          isActive: false,
+          updatedAt: new Date()
+        }
+      },
+      {
+        returnDocument: 'after',
+        projection: SAFE_USER_PROJECTION
+      }
+    )
+
+    if (result) {
+      await this.syncUserSnapshots(id, { isActive: false })
+    }
+
+    return result
+  }
+
+  /**
+   * POST /users/import — Bulk import users from a parsed CSV/Excel row array.
+   *
+   * Each row must contain: { fullName, email, password, role, studentCode? }
+   *
+   * Business rules:
+   *   - Skip rows with missing required fields.
+   *   - Skip rows with duplicate email (already in DB or within this batch).
+   *   - Skip rows with duplicate studentCode (already in DB or within this batch).
+   *   - Skip rows with invalid role.
+   *   - Continue processing remaining valid rows after skipping.
+   *   - Return an import summary with totalRows, success, failed, and errors[].
+   */
+  async importUsers(rows: Record<string, string>[]): Promise<{
+    totalRows: number
+    success: number
+    failed: number
+    errors: Array<{ row: number; reason: string }>
+  }> {
+    const totalRows = rows.length
+    let success = 0
+    let failed = 0
+    const errors: Array<{ row: number; reason: string }> = []
+
+    // Track emails and studentCodes used in this batch to detect intra-batch duplicates
+    const seenEmails = new Set<string>()
+    const seenStudentCodes = new Set<string>()
+
+    for (let i = 0; i < rows.length; i++) {
+      const rowNumber = i + 1
+      const row = rows[i]
+
+      // --- Required field validation ---
+      const fullName = (row.fullName || row['Full Name'] || row['full_name'] || '').trim()
+      const email = (row.email || row['Email'] || '').trim().toLowerCase()
+      const password = (row.password || row['Password'] || '').trim()
+      const roleRaw = (row.role || row['Role'] || 'STUDENT').trim().toUpperCase() as UserRole
+      const studentCode = (row.studentCode || row['Student Code'] || row['student_code'] || '').trim() || null
+
+      if (!fullName) {
+        errors.push({ row: rowNumber, reason: 'Missing required field: fullName' })
+        failed++
+        continue
+      }
+      if (!email) {
+        errors.push({ row: rowNumber, reason: 'Missing required field: email' })
+        failed++
+        continue
+      }
+      if (!password) {
+        errors.push({ row: rowNumber, reason: 'Missing required field: password' })
+        failed++
+        continue
+      }
+      if (!VALID_ROLES.includes(roleRaw)) {
+        errors.push({ row: rowNumber, reason: `Invalid role: ${roleRaw}. Must be one of: ${VALID_ROLES.join(', ')}` })
+        failed++
+        continue
+      }
+
+      // --- Intra-batch duplicate detection ---
+      if (seenEmails.has(email)) {
+        errors.push({ row: rowNumber, reason: `Duplicate email within batch: ${email}` })
+        failed++
+        continue
+      }
+      if (studentCode && seenStudentCodes.has(studentCode)) {
+        errors.push({ row: rowNumber, reason: `Duplicate studentCode within batch: ${studentCode}` })
+        failed++
+        continue
+      }
+
+      // --- DB duplicate detection ---
+      const existingEmail = await databaseService.users.findOne({ email })
+      if (existingEmail) {
+        errors.push({ row: rowNumber, reason: `Duplicate email: ${email}` })
+        failed++
+        continue
+      }
+
+      if (studentCode) {
+        const existingCode = await databaseService.users.findOne({ studentCode })
+        if (existingCode) {
+          errors.push({ row: rowNumber, reason: `Duplicate studentCode: ${studentCode}` })
+          failed++
+          continue
+        }
+      }
+
+      // --- Insert valid row ---
+      try {
+        const user_id = new ObjectId()
+        const newUser = new User({
+          _id: user_id,
+          fullName,
+          email,
+          password: hashPassword(password),
+          role: roleRaw,
+          studentCode,
+          profile: {},
+          isActive: true,
+          verify: UserVerifyStatus.VERIFIED,
+          email_verify_token: '',
+          forgot_password_token: ''
+        })
+
+        await databaseService.users.insertOne(newUser)
+
+        // Register in batch tracking sets
+        seenEmails.add(email)
+        if (studentCode) seenStudentCodes.add(studentCode)
+        success++
+      } catch (err: any) {
+        // Catch any unexpected DB errors (e.g., race condition on unique index)
+        const reason = err?.message || 'Unknown error during insert'
+        errors.push({ row: rowNumber, reason })
+        failed++
+      }
+    }
+
+    return { totalRows, success, failed, errors }
+  }
 }
 
 const usersService = new UserService()
 export default usersService
+

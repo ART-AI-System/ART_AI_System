@@ -36,10 +36,16 @@ class DatabaseService {
         await this.users.createIndex({ email: 1, password: 1 })
         await this.users.createIndex({ email: 1 }, { unique: true })
       }
+      // ART_AI_DB_SCHEMA_SPEC: studentCode must be unique when present (sparse)
+      const studentCodeIndexExists = await this.users.indexExists(['studentCode_1'])
+      if (!studentCodeIndexExists) {
+        await this.users.createIndex({ studentCode: 1 }, { unique: true, sparse: true })
+      }
     } catch (error: any) {
       if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
         await this.users.createIndex({ email: 1, password: 1 })
         await this.users.createIndex({ email: 1 }, { unique: true })
+        await this.users.createIndex({ studentCode: 1 }, { unique: true, sparse: true })
       } else {
         console.error('Error indexing users:', error)
       }
@@ -64,27 +70,27 @@ class DatabaseService {
   }
 
   get users(): Collection<User> {
-    return this.db.collection(process.env.DB_USERS_COLLECTION as string)
+    return this.db.collection(process.env.DB_USERS_COLLECTION || 'users')
   }
 
   get refreshTokens(): Collection<RefreshToken> {
-    return this.db.collection(process.env.DB_REFRESH_TOKENS_COLLECTION as string)
+    return this.db.collection(process.env.DB_REFRESH_TOKENS_COLLECTION || 'refresh_tokens')
   }
 
   get classes(): Collection<Class> {
-    return this.db.collection(process.env.DB_CLASSES_COLLECTION as string)
+    return this.db.collection(process.env.DB_CLASSES_COLLECTION || 'classes')
   }
 
   get gradeItems(): Collection<GradeItem> {
-    return this.db.collection(process.env.DB_GRADE_ITEMS_COLLECTION as string)
+    return this.db.collection(process.env.DB_GRADE_ITEMS_COLLECTION || 'grade_items')
   }
 
   get grades(): Collection<Grade> {
-    return this.db.collection(process.env.DB_GRADES_COLLECTION as string)
+    return this.db.collection(process.env.DB_GRADES_COLLECTION || 'grades')
   }
 
   get finalResults(): Collection<FinalResult> {
-    return this.db.collection(process.env.DB_FINAL_RESULTS_COLLECTION as string)
+    return this.db.collection(process.env.DB_FINAL_RESULTS_COLLECTION || 'final_results')
   }
 }
 
