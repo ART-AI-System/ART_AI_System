@@ -4,10 +4,7 @@ import {
   emailVerifyController,
   forgotPasswordController,
   getMeController,
-  loginController,
-  logoutController,
   oauthController,
-  refreshTokenController,
   registerController,
   resendVerifyEmailController,
   resetPasswordController,
@@ -15,11 +12,8 @@ import {
   verifyForgotPasswordController
 } from '~/controllers/users.controller'
 import {
-  accessTokenValidator,
   emailVerifyTokenValidator,
   forgotPasswordValidator,
-  loginValidator,
-  refreshTokenValidator,
   registerValidator,
   resetPasswordValidator,
   updateMeValidator,
@@ -27,15 +21,9 @@ import {
   verifyForgotPasswordValidator
 } from '~/middlewares/users.middleware'
 
-const usersRouter = Router()
+import { accessTokenValidator } from '~/middlewares/validation.middlewares'
 
-/**
- * Description: User login
- * Path: /login
- * Method: POST
- *  Body: { email: string, password: string }
- */
-usersRouter.post('/login', loginValidator, wrapRequestHandler(loginController))
+const usersRouter = Router()
 
 /**
  * Description: User registration
@@ -46,28 +34,12 @@ usersRouter.post('/login', loginValidator, wrapRequestHandler(loginController))
 usersRouter.post('/register', registerValidator, wrapRequestHandler(registerController))
 
 /**
- * Description: User logout
- * Path: /logout
- * Method: POST
- * Body: { refresh_token: string }
- */
-usersRouter.post('/logout', accessTokenValidator, refreshTokenValidator, wrapRequestHandler(logoutController))
-
-/**
  * Description: User OAuth with Google
  * Path: /oauth/google
  * Method: GET
  * Body: { }
  */
 usersRouter.get('/oauth/google', wrapRequestHandler(oauthController))
-
-/**
- * Description: User refresh token
- * Path: /refresh
- * Method: POST
- * Body: { refresh_token: string }
- */
-usersRouter.post('/refresh-token', refreshTokenValidator, wrapRequestHandler(refreshTokenController))
 
 /**
  * Description: User email verification
