@@ -40,13 +40,18 @@ Instead, it focuses on:
 
 ## 2.1 Users
 
-| Method | Endpoint            | Role  |
-| ------ | ------------------- | ----- |
-| GET    | `/users/me`         | All   |
-| GET    | `/users`            | Admin |
-| POST   | `/users`            | Admin |
-| PUT    | `/users/:id`        | Admin |
-| PATCH  | `/users/:id/status` | Admin |
+| #  | Method   | Endpoint             | Role  | 
+|----|----------|----------------------|-------|
+| 1  | GET      | `/users/me`          | All   | 
+| 2  | PATCH    | `/users/me`          | All   | 
+| 3  | GET      | `/users`             | Admin | 
+| 4  | POST     | `/users`             | Admin | 
+| 5  | GET      | `/users/:id`         | Admin | 
+| 6  | PUT      | `/users/:id`         | Admin | 
+| 7  | DELETE   | `/users/:id`         | Admin | 
+| 8  | PATCH    | `/users/:id/status`  | Admin | 
+| 9  | PATCH    | `/users/:id/role`    | Admin | 
+| 10 | POST     | `/users/import`      | Admin |
 
 ---
 
