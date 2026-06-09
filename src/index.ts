@@ -4,12 +4,14 @@ import authRouter from '~/routes/auth.routes'
 import classesRouter from '~/routes/classes.routes'
 import gradeItemsRouter from '~/routes/gradeItems.routes'
 import gradesRouter, { gradesStandaloneRouter } from '~/routes/grades.routes'
+import reportRouter from '~/routes/report.routes'
 import databaseService from '~/services/database.service'
 import { defaultErrorHandler } from '~/middlewares/error.middleware'
 import { config } from 'dotenv'
 config()
 
-databaseService.connect().then(() => {
+databaseService.connect().then(async () => {
+  await databaseService.initCollections()
   databaseService.indexUsers()
   databaseService.indexRefreshTokens()
 })
@@ -27,6 +29,8 @@ app.use('/api/classes/:classId/grade-items', gradeItemsRouter)
 app.use('/api/grade-items', gradeItemsRouter)
 app.use('/api/submissions/:id/grade', gradesRouter)
 app.use('/api', gradesStandaloneRouter)
+
+app.use('/api/reports', reportRouter)
 
 app.use(defaultErrorHandler)
 app.listen(port, () => {
