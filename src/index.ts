@@ -6,6 +6,7 @@ import gradeItemsRouter from '~/routes/gradeItems.routes'
 import gradesRouter, { gradesStandaloneRouter } from '~/routes/grades.routes'
 import reportRouter from '~/routes/report.routes'
 import dashboardRouter from '~/routes/dashboard.routes'
+import finalResultRouter from '~/routes/finalResult.routes'
 import databaseService from '~/services/database.service'
 import { defaultErrorHandler } from '~/middlewares/error.middleware'
 import { config } from 'dotenv'
@@ -30,6 +31,7 @@ app.use('/api/classes/:classId/grade-items', gradeItemsRouter)
 app.use('/api/grade-items', gradeItemsRouter)
 app.use('/api/submissions/:id/grade', gradesRouter)
 app.use('/api', gradesStandaloneRouter)
+app.use('/api', finalResultRouter)
 
 app.use('/api/reports', reportRouter)
 app.use('/api/dashboard', dashboardRouter)
