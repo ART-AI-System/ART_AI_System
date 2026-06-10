@@ -5,6 +5,7 @@ import classesRouter from '~/routes/classes.routes'
 import gradeItemsRouter from '~/routes/gradeItems.routes'
 import gradesRouter, { gradesStandaloneRouter } from '~/routes/grades.routes'
 import submissionsRouter from '~/routes/submissions.routes'
+import submissionReviewsRouter from '~/routes/submissionReviews.routes'
 import databaseService from '~/services/database.service'
 import { defaultErrorHandler } from '~/middlewares/error.middleware'
 import { config } from 'dotenv'
@@ -14,6 +15,7 @@ databaseService.connect().then(() => {
   databaseService.indexUsers()
   databaseService.indexRefreshTokens()
   databaseService.indexSubmissions()
+  databaseService.indexSubmissionReviews()
 })
 
 const app = express()
@@ -30,6 +32,7 @@ app.use('/api/grade-items', gradeItemsRouter)
 app.use('/api/submissions/:id/grade', gradesRouter)
 app.use('/api', gradesStandaloneRouter)
 app.use('/api', submissionsRouter)
+app.use('/api/lecturer', submissionReviewsRouter)
 
 app.use(defaultErrorHandler)
 app.listen(port, () => {
