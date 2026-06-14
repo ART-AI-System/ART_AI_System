@@ -172,7 +172,7 @@ class DashboardService {
       // 3. Pending reviews for this lecturer
       databaseService.submissionReviews.countDocuments({
         lecturerId: lecturerOid,
-        reviewStatus: 'pending'
+        reviewStatus: 'PENDING'
       }),
 
       // 4. Unresolved flagged submissions in lecturer's classes

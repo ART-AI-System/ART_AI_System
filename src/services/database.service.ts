@@ -7,6 +7,7 @@ import GradeItem from '~/models/schemas/gradeItems.schema'
 import Grade from '~/models/schemas/grades.schema'
 import FinalResult from '~/models/schemas/finalResults.schema'
 import Submission from '~/models/schemas/submissions.schema'
+import SubmissionReview from '~/models/schemas/submissionReviews.schema'
 dotenv.config()
 
 const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USERNAME as string)}:${encodeURIComponent(process.env.DB_PASSWORD as string)}@art-ai-system.rpdlfxc.mongodb.net/`
@@ -128,6 +129,27 @@ class DatabaseService {
     }
   }
 
+  async indexSubmissionReviews() {
+    try {
+      const submissionIndexExists = await this.submissionReviews.indexExists(['submissionId_1_lecturerId_1'])
+      if (!submissionIndexExists) {
+        await this.submissionReviews.createIndex({ submissionId: 1, lecturerId: 1 }, { unique: true })
+      }
+
+      const lecturerIndexExists = await this.submissionReviews.indexExists(['lecturerId_1'])
+      if (!lecturerIndexExists) {
+        await this.submissionReviews.createIndex({ lecturerId: 1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.submissionReviews.createIndex({ submissionId: 1, lecturerId: 1 }, { unique: true })
+        await this.submissionReviews.createIndex({ lecturerId: 1 })
+      } else {
+        console.error('Error indexing submission reviews:', error)
+      }
+    }
+  }
+
   get users(): Collection<User> {
     return this.db.collection(process.env.DB_USERS_COLLECTION || 'users')
   }
@@ -168,7 +190,7 @@ class DatabaseService {
     return this.db.collection(process.env.DB_SUBMISSION_FLAGS_COLLECTION || 'submission_flags')
   }
 
-  get submissionReviews(): Collection<any> {
+  get submissionReviews(): Collection<SubmissionReview> {
     return this.db.collection(process.env.DB_SUBMISSION_REVIEWS_COLLECTION || 'submission_reviews')
   }
 
