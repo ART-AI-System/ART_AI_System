@@ -71,6 +71,37 @@ class DatabaseService {
     }
   }
 
+  async initCollections() {
+    try {
+      const collections = await this.db.listCollections().toArray()
+      const collectionNames = collections.map((c) => c.name)
+
+      const requiredCollections = [
+        process.env.DB_USERS_COLLECTION || 'users',
+        process.env.DB_REFRESH_TOKENS_COLLECTION || 'refresh_tokens',
+        process.env.DB_CLASSES_COLLECTION || 'classes',
+        process.env.DB_GRADE_ITEMS_COLLECTION || 'grade_items',
+        process.env.DB_GRADES_COLLECTION || 'grades',
+        process.env.DB_FINAL_RESULTS_COLLECTION || 'final_results',
+        process.env.DB_SUBMISSIONS_COLLECTION || 'submissions',
+        process.env.DB_AI_INTERACTIONS_COLLECTION || 'ai_interactions',
+        process.env.DB_AI_EVALUATIONS_COLLECTION || 'ai_evaluations',
+        process.env.DB_SUBMISSION_FLAGS_COLLECTION || 'submission_flags',
+        process.env.DB_SUBMISSION_REVIEWS_COLLECTION || 'submission_reviews',
+        process.env.DB_NOTIFICATIONS_COLLECTION || 'notifications'
+      ]
+
+      for (const colName of requiredCollections) {
+        if (!collectionNames.includes(colName)) {
+          await this.db.createCollection(colName)
+          console.log(`Created MongoDB collection: ${colName}`)
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing MongoDB collections:', error)
+    }
+  }
+
   async indexSubmissions() {
     try {
       const uuidIndexExists = await this.submissions.indexExists(['uuid_1'])
@@ -147,8 +178,24 @@ class DatabaseService {
     return this.db.collection(process.env.DB_SUBMISSIONS_COLLECTION || 'submissions')
   }
 
+  get aiInteractions(): Collection<any> {
+    return this.db.collection(process.env.DB_AI_INTERACTIONS_COLLECTION || 'ai_interactions')
+  }
+
+  get aiEvaluations(): Collection<any> {
+    return this.db.collection(process.env.DB_AI_EVALUATIONS_COLLECTION || 'ai_evaluations')
+  }
+
+  get submissionFlags(): Collection<any> {
+    return this.db.collection(process.env.DB_SUBMISSION_FLAGS_COLLECTION || 'submission_flags')
+  }
+
   get submissionReviews(): Collection<SubmissionReview> {
     return this.db.collection(process.env.DB_SUBMISSION_REVIEWS_COLLECTION || 'submission_reviews')
+  }
+
+  get notifications(): Collection<any> {
+    return this.db.collection(process.env.DB_NOTIFICATIONS_COLLECTION || 'notifications')
   }
 }
 
