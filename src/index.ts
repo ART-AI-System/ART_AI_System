@@ -8,6 +8,7 @@ import submissionsRouter from '~/routes/submissions.routes'
 import submissionReviewsRouter from '~/routes/submissionReviews.routes'
 import reportRouter from '~/routes/report.routes'
 import dashboardRouter from '~/routes/dashboard.routes'
+import finalResultRouter from '~/routes/finalResult.routes'
 import databaseService from '~/services/database.service'
 import { defaultErrorHandler } from '~/middlewares/error.middleware'
 import { config } from 'dotenv'
@@ -36,6 +37,7 @@ app.use('/api/submissions/:id/grade', gradesRouter)
 app.use('/api', gradesStandaloneRouter)
 app.use('/api', submissionsRouter)
 app.use('/api/lecturer', submissionReviewsRouter)
+app.use('/api', finalResultRouter)
 
 app.use('/api/reports', reportRouter)
 app.use('/api/dashboard', dashboardRouter)
