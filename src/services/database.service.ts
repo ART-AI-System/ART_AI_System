@@ -6,6 +6,7 @@ import Class from '~/models/schemas/classes.schema'
 import GradeItem from '~/models/schemas/gradeItems.schema'
 import Grade from '~/models/schemas/grades.schema'
 import FinalResult from '~/models/schemas/finalResults.schema'
+import Submission from '~/models/schemas/submissions.schema'
 dotenv.config()
 
 const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USERNAME as string)}:${encodeURIComponent(process.env.DB_PASSWORD as string)}@art-ai-system.rpdlfxc.mongodb.net/`
@@ -100,6 +101,33 @@ class DatabaseService {
     }
   }
 
+  async indexSubmissions() {
+    try {
+      const uuidIndexExists = await this.submissions.indexExists(['uuid_1'])
+      if (!uuidIndexExists) {
+        await this.submissions.createIndex({ uuid: 1 }, { unique: true })
+      }
+
+      const latestIndexExists = await this.submissions.indexExists(['studentId_1_gradeItemId_1_isLatest_1'])
+      if (!latestIndexExists) {
+        await this.submissions.createIndex({ studentId: 1, gradeItemId: 1, isLatest: 1 })
+      }
+
+      const classGradeItemIndexExists = await this.submissions.indexExists(['classId_1_gradeItemId_1'])
+      if (!classGradeItemIndexExists) {
+        await this.submissions.createIndex({ classId: 1, gradeItemId: 1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.submissions.createIndex({ uuid: 1 }, { unique: true })
+        await this.submissions.createIndex({ studentId: 1, gradeItemId: 1, isLatest: 1 })
+        await this.submissions.createIndex({ classId: 1, gradeItemId: 1 })
+      } else {
+        console.error('Error indexing submissions:', error)
+      }
+    }
+  }
+
   get users(): Collection<User> {
     return this.db.collection(process.env.DB_USERS_COLLECTION || 'users')
   }
@@ -124,7 +152,7 @@ class DatabaseService {
     return this.db.collection(process.env.DB_FINAL_RESULTS_COLLECTION || 'final_results')
   }
 
-  get submissions(): Collection<any> {
+  get submissions(): Collection<Submission> {
     return this.db.collection(process.env.DB_SUBMISSIONS_COLLECTION || 'submissions')
   }
 

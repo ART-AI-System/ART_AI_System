@@ -4,6 +4,7 @@ import authRouter from '~/routes/auth.routes'
 import classesRouter from '~/routes/classes.routes'
 import gradeItemsRouter from '~/routes/gradeItems.routes'
 import gradesRouter, { gradesStandaloneRouter } from '~/routes/grades.routes'
+import submissionsRouter from '~/routes/submissions.routes'
 import reportRouter from '~/routes/report.routes'
 import dashboardRouter from '~/routes/dashboard.routes'
 import finalResultRouter from '~/routes/finalResult.routes'
@@ -16,6 +17,7 @@ databaseService.connect().then(async () => {
   await databaseService.initCollections()
   databaseService.indexUsers()
   databaseService.indexRefreshTokens()
+  databaseService.indexSubmissions()
 })
 
 const app = express()
@@ -31,6 +33,7 @@ app.use('/api/classes/:classId/grade-items', gradeItemsRouter)
 app.use('/api/grade-items', gradeItemsRouter)
 app.use('/api/submissions/:id/grade', gradesRouter)
 app.use('/api', gradesStandaloneRouter)
+app.use('/api', submissionsRouter)
 app.use('/api', finalResultRouter)
 
 app.use('/api/reports', reportRouter)
