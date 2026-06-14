@@ -1,45 +1,64 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import ErrorBoundary from '../components/common/ErrorBoundary';
-import { getMockRole, setMockRole } from '../config/roles';
-import type { Role } from '../types/role.type';
+import { getSession, setSession, clearSession, type UserSession } from '../config/roles';
 import { router } from './router';
 
-interface RoleContextType {
-  role: Role;
-  changeRole: (newRole: Role) => void;
+interface AuthContextType {
+  user: UserSession | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  login: (session: UserSession) => void;
+  logout: () => void;
 }
 
-const RoleContext = createContext<RoleContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
-  const [role, setRoleState] = useState<Role>(getMockRole());
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<UserSession | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const handleRoleChange = () => {
-      setRoleState(getMockRole());
+    // Initial load
+    setUser(getSession());
+    setLoading(false);
+
+    const handleAuthChange = () => {
+      setUser(getSession());
     };
-    window.addEventListener('mock-role-changed', handleRoleChange);
+    window.addEventListener('art_ai_auth_state_change', handleAuthChange);
     return () => {
-      window.removeEventListener('mock-role-changed', handleRoleChange);
+      window.removeEventListener('art_ai_auth_state_change', handleAuthChange);
     };
   }, []);
 
-  const changeRole = (newRole: Role) => {
-    setMockRole(newRole);
+  const login = (session: UserSession) => {
+    setSession(session);
+  };
+
+  const logout = () => {
+    clearSession();
   };
 
   return (
-    <RoleContext.Provider value={{ role, changeRole }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        isAuthenticated: !!user,
+        login,
+        logout,
+      }}
+    >
       {children}
-    </RoleContext.Provider>
+    </AuthContext.Provider>
   );
 };
 
-export const useRole = () => {
-  const context = useContext(RoleContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useRole must be used within a RoleProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
@@ -47,9 +66,9 @@ export const useRole = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <RoleProvider>
+      <AuthProvider>
         <RouterProvider router={router} />
-      </RoleProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

@@ -1,4 +1,5 @@
-import { Navigate, createBrowserRouter } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
 import LoginPage from '../pages/auth/LoginPage';
@@ -10,333 +11,409 @@ import NotFoundPage from '../pages/not-found/NotFoundPage';
 import AccessDeniedPage from '../components/common/AccessDeniedPage';
 import EmptyState from '../components/common/EmptyState';
 import ErrorState from '../components/common/ErrorState';
-import { useRole } from './App';
+import { useAuth } from './App';
 import { ROUTES } from '../config/routes';
 import type { Role } from '../types/role.type';
 
-// ─── ROLE GUARD COMPONENT ───
+// ─── AUTH GUARD ───
+const AuthGuard = () => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
+      </div>
+    );
+  }
+  
+  return isAuthenticated ? <Outlet /> : <Navigate to={ROUTES.LOGIN} replace />;
+};
+
+// ─── GUEST GUARD ───
+const GuestGuard = () => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
+      </div>
+    );
+  }
+  
+  return !isAuthenticated ? <Outlet /> : <Navigate to={ROUTES.DASHBOARD} replace />;
+};
+
+// ─── ROLE GUARD ───
 interface RoleGuardProps {
-  allowedRoles: Role[] | 'ALL';
-  children: React.ReactNode;
+  allowedRoles: Role[];
 }
 
-const RoleGuard = ({ allowedRoles, children }: RoleGuardProps) => {
-  const { role } = useRole();
+const RoleGuard = ({ allowedRoles }: RoleGuardProps) => {
+  const { user } = useAuth();
 
-  if (allowedRoles === 'ALL') {
-    return <>{children}</>;
-  }
-
-  if (!allowedRoles.includes(role)) {
+  if (!user || !allowedRoles.includes(user.role)) {
     return <AccessDeniedPage />;
   }
 
-  return <>{children}</>;
+  return <Outlet />;
 };
 
-// ─── DASHBOARD REDIRECTOR COMPONENT ───
+// ─── DASHBOARD REDIRECTOR ───
 const DashboardRedirector = () => {
-  const { role } = useRole();
+  const { user } = useAuth();
 
-  switch (role) {
-    case 'STUDENT':
-      return <Navigate to={ROUTES.DASHBOARD_STUDENT} replace />;
+  if (!user) {
+    return <Navigate to={ROUTES.LOGIN} replace />;
+  }
+
+  switch (user.role) {
+    case 'ADMIN':
+      return <Navigate to={ROUTES.DASHBOARD_ADMIN} replace />;
     case 'LECTURER':
       return <Navigate to={ROUTES.DASHBOARD_LECTURER} replace />;
     case 'SUBJECT_HEAD':
       return <Navigate to={ROUTES.DASHBOARD_SUBJECT_HEAD} replace />;
-    case 'ADMIN':
-      return <Navigate to={ROUTES.DASHBOARD_ADMIN} replace />;
+    case 'STUDENT':
+      return <Navigate to={ROUTES.DASHBOARD_STUDENT} replace />;
     default:
-      return <Navigate to={ROUTES.LOGIN} replace />;
+      return <AccessDeniedPage />;
   }
 };
 
-// ─── ROUTER CONFIGURATION ───
+// ─── ROUTER DEFINITION ───
 export const router = createBrowserRouter([
-  // Public Auth Routes
+  // Guest-only Layout & Routes
   {
-    element: <AuthLayout />,
+    element: <GuestGuard />,
     errorElement: <ErrorState />,
     children: [
       {
-        path: ROUTES.LOGIN,
-        element: <LoginPage />,
+        element: <AuthLayout />,
+        children: [
+          {
+            path: ROUTES.LOGIN,
+            element: <LoginPage />,
+          },
+        ],
       },
     ],
   },
 
-  // Protected Main Routes
+  // Auth-Protected Layout & Routes
   {
-    path: '/',
-    element: <MainLayout />,
+    element: <AuthGuard />,
     errorElement: <ErrorState />,
     children: [
-      // Root redirect to dashboard
       {
-        index: true,
-        element: <Navigate to={ROUTES.DASHBOARD} replace />,
-      },
+        path: '/',
+        element: <MainLayout />,
+        children: [
+          // Index Root Redirect
+          {
+            index: true,
+            element: <Navigate to={ROUTES.DASHBOARD} replace />,
+          },
 
-      // Dashboards Module
-      {
-        path: ROUTES.DASHBOARD,
-        element: <DashboardRedirector />,
-      },
-      {
-        path: ROUTES.DASHBOARD_STUDENT,
-        element: (
-          <RoleGuard allowedRoles={['STUDENT']}>
-            <StudentDashboardPage />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.DASHBOARD_LECTURER,
-        element: (
-          <RoleGuard allowedRoles={['LECTURER']}>
-            <LecturerDashboardPage />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.DASHBOARD_SUBJECT_HEAD,
-        element: (
-          <RoleGuard allowedRoles={['SUBJECT_HEAD']}>
-            <SubjectHeadDashboardPage />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.DASHBOARD_ADMIN,
-        element: (
-          <RoleGuard allowedRoles={['ADMIN']}>
-            <AdminDashboardPage />
-          </RoleGuard>
-        ),
-      },
+          // Dashboards Redirector Route
+          {
+            path: ROUTES.DASHBOARD,
+            element: <DashboardRedirector />,
+          },
 
-      // User Management Module
-      {
-        path: ROUTES.USERS,
-        element: (
-          <RoleGuard allowedRoles={['ADMIN']}>
-            <EmptyState
-              title="User Management"
-              description="Manage member accounts and imports here."
-            />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.USER_DETAIL,
-        element: (
-          <RoleGuard allowedRoles={['ADMIN']}>
-            <EmptyState
-              title="User Detail & Edit"
-              description="Edit and view specific member profiles here."
-            />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.PROFILE,
-        element: (
-          <RoleGuard allowedRoles="ALL">
-            <EmptyState
-              title="My Profile"
-              description="View and update your personal user profile information."
-            />
-          </RoleGuard>
-        ),
-      },
+          // Dashboards by Role
+          {
+            element: <RoleGuard allowedRoles={['STUDENT']} />,
+            children: [
+              {
+                path: ROUTES.DASHBOARD_STUDENT,
+                element: <StudentDashboardPage />,
+              },
+            ],
+          },
+          {
+            element: <RoleGuard allowedRoles={['LECTURER']} />,
+            children: [
+              {
+                path: ROUTES.DASHBOARD_LECTURER,
+                element: <LecturerDashboardPage />,
+              },
+            ],
+          },
+          {
+            element: <RoleGuard allowedRoles={['SUBJECT_HEAD']} />,
+            children: [
+              {
+                path: ROUTES.DASHBOARD_SUBJECT_HEAD,
+                element: <SubjectHeadDashboardPage />,
+              },
+            ],
+          },
+          {
+            element: <RoleGuard allowedRoles={['ADMIN']} />,
+            children: [
+              {
+                path: ROUTES.DASHBOARD_ADMIN,
+                element: <AdminDashboardPage />,
+              },
+            ],
+          },
 
-      // Academic Structure Management
-      {
-        path: ROUTES.CLASSES,
-        element: (
-          <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']}>
-            <EmptyState
-              title="Academic Classes"
-              description="List of academic class sections you teach or oversee."
-            />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.CLASS_DETAIL,
-        element: (
-          <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']}>
-            <EmptyState
-              title="Class Detail & Roster"
-              description="Manage student enrollments and reviews within this class."
-            />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.CLASS_GRADE_ITEMS,
-        element: (
-          <RoleGuard allowedRoles={['STUDENT', 'LECTURER']}>
-            <EmptyState
-              title="Class Milestones & Grade Items"
-              description="View curriculum grading items, milestones and criteria."
-            />
-          </RoleGuard>
-        ),
-      },
+          // User Management Module
+          {
+            element: <RoleGuard allowedRoles={['ADMIN']} />,
+            children: [
+              {
+                path: ROUTES.USERS,
+                element: (
+                  <EmptyState
+                    title="System User Directory"
+                    description="Perform CRUD user actions, configure database listings, or upload CSV rosters."
+                  />
+                ),
+              },
+              {
+                path: ROUTES.USER_DETAIL,
+                element: (
+                  <EmptyState
+                    title="Account Identity File"
+                    description="View academic log archives, details and metadata for this account."
+                  />
+                ),
+              },
+            ],
+          },
 
-      // Assignment Submission Management
-      {
-        path: ROUTES.GRADE_ITEM_SUBMISSIONS,
-        element: (
-          <RoleGuard allowedRoles={['STUDENT', 'LECTURER']}>
-            <EmptyState
-              title="Grade Item Submissions"
-              description="Track submissions submitted under this grade milestone."
-            />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.SUBMISSION_DETAIL,
-        element: (
-          <RoleGuard allowedRoles={['STUDENT', 'LECTURER', 'SUBJECT_HEAD']}>
-            <EmptyState
-              title="Submission Files & Detail"
-              description="View the submitted work, attachments and system audits."
-            />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.MY_SUBMISSIONS,
-        element: (
-          <RoleGuard allowedRoles={['STUDENT']}>
-            <EmptyState
-              title="My Personal Submissions"
-              description="A chronological record of all your submitted coursework."
-            />
-          </RoleGuard>
-        ),
-      },
+          // Shared Profile View (All Authenticated)
+          {
+            path: ROUTES.PROFILE,
+            element: (
+              <EmptyState
+                title="My Personal Profile"
+                description="Manage your account profile, configure settings, and view dynamic credentials."
+              />
+            ),
+          },
 
-      // Lecturer Review
-      {
-        path: ROUTES.LECTURER_CLASS_SUBMISSIONS,
-        element: (
-          <RoleGuard allowedRoles={['LECTURER']}>
-            <EmptyState
-              title="Class Submissions Overview"
-              description="Dashboard view of students coursework submissions for this class."
-            />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.LECTURER_SUBMISSION_REVIEW,
-        element: (
-          <RoleGuard allowedRoles={['LECTURER']}>
-            <EmptyState
-              title="Grade & Audit Review"
-              description="Evaluate academic work and inspect AI transparency metrics."
-            />
-          </RoleGuard>
-        ),
-      },
+          // Academic Structure Management
+          {
+            element: <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']} />,
+            children: [
+              {
+                path: ROUTES.CLASSES,
+                element: (
+                  <EmptyState
+                    title="Academic Classes Listing"
+                    description="Overview of structural class sections and syllabi parameters assigned to you."
+                  />
+                ),
+              },
+              {
+                path: ROUTES.CLASS_DETAIL,
+                element: (
+                  <EmptyState
+                    title="Class Detail & Student Roster"
+                    description="Manage student groups, course checkpoints, and overall status."
+                  />
+                ),
+              },
+            ],
+          },
+          {
+            element: <RoleGuard allowedRoles={['STUDENT', 'LECTURER']} />,
+            children: [
+              {
+                path: ROUTES.CLASS_GRADE_ITEMS,
+                element: (
+                  <EmptyState
+                    title="Course Checkpoints & Grade Items"
+                    description="List of core assignments, grading checkpoints, and criteria weightings."
+                  />
+                ),
+              },
+            ],
+          },
 
-      // Score & Grading Management
-      {
-        path: ROUTES.SUBMISSION_GRADE,
-        element: (
-          <RoleGuard allowedRoles={['STUDENT', 'LECTURER']}>
-            <EmptyState
-              title="Submission Score & Feedback"
-              description="Detailed grading report and comments from the instructor."
-            />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.CLASS_GRADEBOOK,
-        element: (
-          <RoleGuard allowedRoles={['LECTURER']}>
-            <EmptyState
-              title="Class Gradebook"
-              description="Unified spreadsheet of scores across all class grade items."
-            />
-          </RoleGuard>
-        ),
-      },
+          // Assignment Submission Management
+          {
+            element: <RoleGuard allowedRoles={['STUDENT', 'LECTURER']} />,
+            children: [
+              {
+                path: ROUTES.GRADE_ITEM_SUBMISSIONS,
+                element: (
+                  <EmptyState
+                    title="Checkpoint Submissions Log"
+                    description="Lists of submissions uploaded by students under this assignment checkpoint."
+                  />
+                ),
+              },
+            ],
+          },
+          {
+            element: <RoleGuard allowedRoles={['STUDENT', 'LECTURER', 'SUBJECT_HEAD']} />,
+            children: [
+              {
+                path: ROUTES.SUBMISSION_DETAIL,
+                element: (
+                  <EmptyState
+                    title="Submission Artifact View"
+                    description="Detailed view of submitted work files, verification logs, and code hashes."
+                  />
+                ),
+              },
+            ],
+          },
+          {
+            element: <RoleGuard allowedRoles={['STUDENT']} />,
+            children: [
+              {
+                path: ROUTES.MY_SUBMISSIONS,
+                element: (
+                  <EmptyState
+                    title="My Coursework Submissions"
+                    description="Chronological record of files you uploaded for instructor audits."
+                  />
+                ),
+              },
+            ],
+          },
 
-      // Final Result Management & Classification
-      {
-        path: ROUTES.CLASS_FINAL_RESULTS,
-        element: (
-          <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']}>
-            <EmptyState
-              title="Calculate & Export Final Results"
-              description="Generate overall grades and publish outcomes."
-            />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.CLASS_RANKINGS,
-        element: (
-          <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']}>
-            <EmptyState
-              title="Class Rankings & Classifications"
-              description="Academic performance distribution and rank index list."
-            />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.MY_RESULTS,
-        element: (
-          <RoleGuard allowedRoles={['STUDENT']}>
-            <EmptyState
-              title="My Academic Final Results"
-              description="View overall scores, classifications and instructor reports."
-            />
-          </RoleGuard>
-        ),
-      },
+          // Lecturer Review Section
+          {
+            element: <RoleGuard allowedRoles={['LECTURER']} />,
+            children: [
+              {
+                path: ROUTES.LECTURER_CLASS_SUBMISSIONS,
+                element: (
+                  <EmptyState
+                    title="Class Submission Audits"
+                    description="Instructor review hub containing overview statistics of class works."
+                  />
+                ),
+              },
+              {
+                path: ROUTES.LECTURER_SUBMISSION_REVIEW,
+                element: (
+                  <EmptyState
+                    title="Instructors Evaluation Dashboard"
+                    description="Review documents, run integrity checkers, and add comments."
+                  />
+                ),
+              },
+            ],
+          },
 
-      // Reporting & Export
-      {
-        path: ROUTES.CLASS_REPORTS,
-        element: (
-          <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']}>
-            <EmptyState
-              title="Class Reports Center"
-              description="Generate and download academic analytics in Excel/PDF/CSV formats."
-            />
-          </RoleGuard>
-        ),
-      },
-      {
-        path: ROUTES.SUSPICIOUS_CASES,
-        element: (
-          <RoleGuard allowedRoles={['SUBJECT_HEAD']}>
-            <EmptyState
-              title="Suspicious AI Cases"
-              description="Audit log of submissions flagged with potential AI abuse patterns."
-            />
-          </RoleGuard>
-        ),
-      },
+          // Score & Grading Management
+          {
+            element: <RoleGuard allowedRoles={['STUDENT', 'LECTURER']} />,
+            children: [
+              {
+                path: ROUTES.SUBMISSION_GRADE,
+                element: (
+                  <EmptyState
+                    title="Submission Grades & Evaluator Feedback"
+                    description="Check specific performance feedback, final scores, and grades."
+                  />
+                ),
+              },
+            ],
+          },
+          {
+            element: <RoleGuard allowedRoles={['LECTURER']} />,
+            children: [
+              {
+                path: ROUTES.CLASS_GRADEBOOK,
+                element: (
+                  <EmptyState
+                    title="Instructor Class Gradebook"
+                    description="Comprehensive grid of grades and scores across all checkpoints."
+                  />
+                ),
+              },
+            ],
+          },
 
-      // Catch-all (for matching main layout sub-paths that do not exist)
-      {
-        path: '*',
-        element: <NotFoundPage />,
+          // Final Results Management
+          {
+            element: <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']} />,
+            children: [
+              {
+                path: ROUTES.CLASS_FINAL_RESULTS,
+                element: (
+                  <EmptyState
+                    title="Final Performance Outcomes"
+                    description="Calculate final letter grades and output overall transcript metrics."
+                  />
+                ),
+              },
+              {
+                path: ROUTES.CLASS_RANKINGS,
+                element: (
+                  <EmptyState
+                    title="Class Rank Distribution Index"
+                    description="Analyze percentile indices and student classifications."
+                  />
+                ),
+              },
+            ],
+          },
+          {
+            element: <RoleGuard allowedRoles={['STUDENT']} />,
+            children: [
+              {
+                path: ROUTES.MY_RESULTS,
+                element: (
+                  <EmptyState
+                    title="My Final Performance Report"
+                    description="Review official final grades, transcripts, and comments."
+                  />
+                ),
+              },
+            ],
+          },
+
+          // Reporting & Auditing Exports
+          {
+            element: <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']} />,
+            children: [
+              {
+                path: ROUTES.CLASS_REPORTS,
+                element: (
+                  <EmptyState
+                    title="Compliance Export Center"
+                    description="Generate and download academic analytics in Excel, PDF, or CSV format."
+                  />
+                ),
+              },
+            ],
+          },
+          {
+            element: <RoleGuard allowedRoles={['SUBJECT_HEAD']} />,
+            children: [
+              {
+                path: ROUTES.SUSPICIOUS_CASES,
+                element: (
+                  <EmptyState
+                    title="Suspicious Cases Audit Logs"
+                    description="Audit trail of AI usage alerts and potential academic integrity flags."
+                  />
+                ),
+              },
+            ],
+          },
+
+          // Local Layout Wildcard
+          {
+            path: '*',
+            element: <NotFoundPage />,
+          },
+        ],
       },
     ],
   },
 
-  // Public/Standalone Catch-all Page
+  // Global Wildcard Page Route
   {
     path: '*',
     element: <NotFoundPage />,

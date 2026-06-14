@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { X, ChevronRight, Brain } from 'lucide-react';
 import { navigationConfig } from '../../config/navigation';
-import { useRole } from '../../app/App';
+import { useAuth } from '../../app/App';
 import { cn } from '../../utils/cn';
 import type { NavItem } from '../../types/navigation.type';
 import type { Role } from '../../types/role.type';
@@ -20,14 +20,16 @@ function NavItemLink({ item, onClick }: { item: NavItem; onClick?: () => void })
   const location = useLocation();
   const isActive =
     location.pathname === item.path ||
-    (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+    (item.path !== '/dashboard' &&
+      location.pathname.startsWith(item.path + '/') &&
+      (item.path !== '/classes' || location.pathname.split('/').length === 3));
 
   return (
     <NavLink
       to={item.path}
       onClick={onClick}
       className={cn(
-        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group',
+        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group cursor-pointer',
         isActive
           ? 'bg-indigo-600 text-white shadow-sm'
           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
@@ -46,38 +48,38 @@ function NavItemLink({ item, onClick }: { item: NavItem; onClick?: () => void })
 }
 
 function SidebarContent({ onClose }: { onClose?: () => void }) {
-  // Use reactive role hook
-  const { role } = useRole();
+  const { user } = useAuth();
 
-  const roleLabels: Record<Role, string> = {
+  const roleLabels: Record<string, string> = {
     STUDENT: 'Student',
-    LECTURER: 'Lecturer',
-    SUBJECT_HEAD: 'Subject Head',
     ADMIN: 'Administrator',
   };
+
+  if (!user) return null;
 
   const visibleGroups = navigationConfig
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => hasAccess(item.allowedRoles, role)),
+      // Map allowedRoles to match Role type (which includes Student, Lecturer, Subject Head, Admin)
+      items: group.items.filter((item) => hasAccess(item.allowedRoles, user.role)),
     }))
     .filter((group) => group.items.length > 0);
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Logo */}
+      {/* Brand Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-slate-200 flex-shrink-0">
         <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
           <Brain className="w-4 h-4 text-white" />
         </div>
         <div className="min-w-0">
           <span className="font-bold text-slate-900 text-sm tracking-tight">ART-AI System</span>
-          <p className="text-[11px] font-semibold text-indigo-600 truncate">{roleLabels[role]}</p>
+          <p className="text-[11px] font-semibold text-indigo-600 truncate">{roleLabels[user.role]}</p>
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="ml-auto p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors lg:hidden"
+            className="ml-auto p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors lg:hidden cursor-pointer"
             aria-label="Close sidebar"
           >
             <X className="w-4 h-4" />
@@ -85,7 +87,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
         )}
       </div>
 
-      {/* Navigation */}
+      {/* Grouped Sidebar Items */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
         {visibleGroups.map((group) => (
           <div key={group.groupLabel}>
@@ -103,7 +105,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
         ))}
       </nav>
 
-      {/* Footer */}
+      {/* Navigation Footer */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-slate-200">
         <p className="text-[10px] text-slate-400 text-center">© 2026 ART-AI System</p>
       </div>
@@ -119,7 +121,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         <SidebarContent />
       </aside>
 
-      {/* Mobile overlay */}
+      {/* Mobile drawer layout */}
       {isOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div
