@@ -1,6 +1,6 @@
 export const USERS_MESSAGES = {
   VALIDATION_ERROR: 'User validation failed',
-  LOGIN_SUCCESSFUL: 'Login successful',
+  LOGIN_SUCCESSFUL: 'Login successfully',
   LOGIN_FAILED: 'Login failed',
   REGISTER_SUCCESSFUL: 'Register successful',
   REGISTER_FAILED: 'Register failed',
@@ -15,7 +15,7 @@ export const USERS_MESSAGES = {
   PASSWORD_MUST_BE_STRING: 'Password must be a string',
   PASSWORD_LENGTH_MUST_BE_FROM_6_TO_50_CHARACTERS: 'Password length must be from 6 to 50 characters',
   PASSWORD_NOT_STRONG_ENOUGH:
-    'Password must be at least 6 characters long and include uppercase, lowercase, number, and symbol.',
+    'Password must be at least 8 characters long and include uppercase, lowercase, number, and symbol.',
   CONFIRM_PASSWORD_IS_REQUIRED: 'Confirm password is required',
   CONFIRM_PASSWORDS_DOES_NOT_MATCH: 'Confirm password does not match password do not match',
   DATE_OF_BIRTH_MUST_BE_ISO8601: 'Date of birth must be in ISO 8601 format',
@@ -55,6 +55,43 @@ export const USERS_MESSAGES = {
   UPLOAD_VIDEO_HLS_SUCCESSFUL: 'Upload video HLS successful',
   GET_VIDEO_STATUS_SUCCESSFUL: 'Get video status successful',
   ACCESS_TOKEN_IS_REQUIRED: 'Access token is required',
+
+  // ==========================================
+  // MODULE 1: AUTHENTICATION MESSAGES (ART-AI)
+  // ==========================================
+
+  // Register Student
+  REGISTER_STUDENT_SUCCESSFUL: 'Student registered successfully',
+  STUDENT_CODE_IS_REQUIRED: 'Student code is required',
+  STUDENT_CODE_IS_INVALID: 'Student code must be a string between 1 and 20 characters',
+
+  // Login
+  STUDENT_CODE_OR_PASSWORD_INCORRECT: 'Student code or password is incorrect',
+  USERNAME_OR_PASSWORD_INCORRECT: 'Username or password is incorrect',
+  ACCOUNT_INACTIVE: 'Your account has been deactivated. Please contact administrator.',
+  INVALID_LOGIN_CREDENTIALS: 'Invalid credentials. Please provide studentCode or username with password.',
+  STUDENT_CANNOT_LOGIN_WITH_USERNAME: 'Students must login with studentCode, not username',
+  STAFF_CANNOT_LOGIN_WITH_STUDENT_CODE: 'Staff accounts must login with username, not studentCode',
+
+  // Username
+  USERNAME_IS_REQUIRED: 'Username is required',
+  USERNAME_IS_INVALID: 'Username must be a string between 1 and 50 characters',
+
+  // Forgot Password
+  FORGOT_PASSWORD_SUCCESSFUL: 'If an account with that email exists, a password reset link has been sent',
+
+  // Reset Password
+  RESET_TOKEN_IS_REQUIRED: 'Reset token is required',
+  RESET_TOKEN_IS_INVALID: 'Reset token is invalid or has expired',
+  RESET_TOKEN_ALREADY_USED: 'Reset token has already been used',
+  RESET_TOKEN_EXPIRED: 'Reset token has expired',
+
+  // Change Password
+  CHANGE_PASSWORD_SUCCESSFUL: 'Password changed successfully',
+  OLD_PASSWORD_IS_REQUIRED: 'Old password is required',
+  OLD_PASSWORD_IS_INCORRECT: 'Old password is incorrect',
+  NEW_PASSWORD_IS_REQUIRED: 'New password is required',
+  NEW_PASSWORD_SAME_AS_OLD: 'New password must be different from old password',
 
   // ==========================================
   // MODULE 2: USER MANAGEMENT MESSAGES

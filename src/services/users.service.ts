@@ -4,7 +4,7 @@ import User from '~/models/schemas/users.schema'
 import databaseService from '~/services/database.service'
 import dotenv from 'dotenv'
 import { signToken, verifyToken } from '~/utils/jwt'
-import { TokenType, UserVerifyStatus } from '~/constants/enums'
+import { TokenType, UserStatus } from '~/constants/enums'
 import {
   RegisterReqBody,
   CreateUserReqBody,
@@ -14,8 +14,8 @@ import {
   UpdateMeReqBody,
   GetUsersQuery
 } from '~/models/requests/users.request'
-import { UserRole } from '~/models/schemas/users.schema'
-import { hashPassword } from '~/constants/crypto'
+import { UserRoleType } from '~/models/schemas/users.schema'
+import { hashPassword, hashToken } from '~/constants/crypto'
 import RefreshToken from '~/models/schemas/refreshToken.schema'
 import { USERS_MESSAGES } from '~/constants/messages'
 import axios from 'axios'
@@ -29,15 +29,14 @@ dotenv.config()
 // CONSTANTS
 // ==========================================
 
-const VALID_ROLES: UserRole[] = ['STUDENT', 'LECTURER', 'SUBJECT_HEAD', 'ADMIN']
+const VALID_ROLES: UserRoleType[] = ['STUDENT', 'LECTURER', 'SUBJECT_HEAD', 'ADMIN']
 
 // ==========================================
 // SAFE PROJECTION — excludes sensitive fields from user documents
 // ==========================================
 const SAFE_USER_PROJECTION = {
   password: 0,
-  email_verify_token: 0,
-  forgot_password_token: 0
+  passwordHash: 0
 }
 
 class UserService {
@@ -45,12 +44,12 @@ class UserService {
   // MODULE 1: AUTH PRIVATE HELPERS (preserved)
   // ==========================================
 
-  private signAccessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
+  private signAccessToken({ user_id, role }: { user_id: string; role: UserRoleType }) {
     return signToken({
       payload: {
         user_id,
         token_type: TokenType.ACCESS_TOKEN,
-        verify
+        role
       },
       privateKey: process.env.JWT_SECRET_ACCESS_TOKEN as string,
       options: {
@@ -59,13 +58,13 @@ class UserService {
     })
   }
 
-  private signRefreshToken({ user_id, verify, exp }: { user_id: string; verify: UserVerifyStatus; exp?: number }) {
+  private signRefreshToken({ user_id, role, exp }: { user_id: string; role: UserRoleType; exp?: number }) {
     if (exp) {
       return signToken({
         payload: {
           user_id,
           token_type: TokenType.REFRESH_TOKEN,
-          verify,
+          role,
           exp
         },
         privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string
@@ -75,7 +74,7 @@ class UserService {
       payload: {
         user_id,
         token_type: TokenType.REFRESH_TOKEN,
-        verify
+        role
       },
       privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string,
       options: {
@@ -84,8 +83,8 @@ class UserService {
     })
   }
 
-  private signAccessAndRefreshToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
-    return Promise.all([this.signAccessToken({ user_id, verify }), this.signRefreshToken({ user_id, verify })])
+  private signAccessAndRefreshToken({ user_id, role }: { user_id: string; role: UserRoleType }) {
+    return Promise.all([this.signAccessToken({ user_id, role }), this.signRefreshToken({ user_id, role })])
   }
 
   private decodeRefreshToken(refresh_token: string) {
@@ -95,30 +94,16 @@ class UserService {
     })
   }
 
-  private signForgotPasswordToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
+  // signForgotPasswordToken and signEmailVerifyToken are kept for legacy routes on /api/users
+  private signForgotPasswordToken({ user_id }: { user_id: string }) {
     return signToken({
       payload: {
         user_id,
-        token_type: TokenType.FORGOT_PASSWORD_TOKEN,
-        verify
+        token_type: TokenType.FORGOT_PASSWORD_TOKEN
       },
       privateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string,
       options: {
         expiresIn: process.env.FORGOT_PASSWORD_TOKEN_EXPIRES_IN as StringValue
-      }
-    })
-  }
-
-  private signEmailVerifyToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
-    return signToken({
-      payload: {
-        user_id,
-        token_type: TokenType.EMAIL_VERIFY_TOKEN,
-        verify
-      },
-      privateKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string,
-      options: {
-        expiresIn: process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN as StringValue
       }
     })
   }
@@ -129,31 +114,28 @@ class UserService {
 
   async register(payload: RegisterReqBody) {
     const user_id = new ObjectId()
-    const email_verify_token = await this.signEmailVerifyToken({
-      user_id: user_id.toString(),
-      verify: UserVerifyStatus.UNVERIFIED
-    })
     const role = (payload.role as any) || 'STUDENT'
     await databaseService.users.insertOne(
       new User({
         ...payload,
         _id: user_id,
-        email_verify_token,
-        password: hashPassword(payload.password),
-        role
+        passwordHash: hashPassword(payload.password),
+        role,
+        status: UserStatus.ACTIVE,
+        isActive: true
       })
     )
     const [access_token, refresh_token] = await this.signAccessAndRefreshToken({
       user_id: user_id.toString(),
-      verify: UserVerifyStatus.UNVERIFIED
+      role
     })
     const { iat, exp } = await this.decodeRefreshToken(refresh_token)
     await databaseService.refreshTokens.insertOne(
       new RefreshToken({
-        user_id: new ObjectId(user_id),
-        token: refresh_token,
-        iat,
-        exp
+        userId: new ObjectId(user_id),
+        tokenHash: hashToken(refresh_token),
+        expiresAt: new Date(exp * 1000),
+        iat
       })
     )
     return {
@@ -167,18 +149,18 @@ class UserService {
     return Boolean(user)
   }
 
-  async login({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
+  async login({ user_id, role }: { user_id: string; role: UserRoleType }) {
     const [access_token, refresh_token] = await this.signAccessAndRefreshToken({
       user_id,
-      verify
+      role
     })
     const { iat, exp } = await this.decodeRefreshToken(refresh_token)
     await databaseService.refreshTokens.insertOne(
       new RefreshToken({
-        user_id: new ObjectId(user_id),
-        token: refresh_token,
-        iat,
-        exp
+        userId: new ObjectId(user_id),
+        tokenHash: hashToken(refresh_token),
+        expiresAt: new Date(exp * 1000),
+        iat
       })
     )
     return {
@@ -188,7 +170,7 @@ class UserService {
   }
 
   async logout(refresh_token: string) {
-    await databaseService.refreshTokens.deleteOne({ token: refresh_token })
+    await databaseService.refreshTokens.deleteOne({ tokenHash: hashToken(refresh_token) })
     return {
       message: USERS_MESSAGES.LOGOUT_SUCCESSFUL
     }
@@ -243,27 +225,27 @@ class UserService {
     }
     const isEmailExists = await databaseService.users.findOne({ email: userInfo.email })
     if (isEmailExists) {
+      const role = (isEmailExists as any).role || 'STUDENT'
       const [access_token, refresh_token] = await this.signAccessAndRefreshToken({
         user_id: isEmailExists._id.toString(),
-        verify: isEmailExists.verify
+        role
       })
       const { iat, exp } = await this.decodeRefreshToken(refresh_token)
       await databaseService.refreshTokens.insertOne(
         new RefreshToken({
-          user_id: isEmailExists._id,
-          token: refresh_token,
-          iat,
-          exp
+          userId: isEmailExists._id,
+          tokenHash: hashToken(refresh_token),
+          expiresAt: new Date(exp * 1000),
+          iat
         })
       )
       return {
         access_token,
         refresh_token,
         newUser: 0,
-        verify: isEmailExists.verify
+        role
       }
     } else {
-      // random password
       const password = Math.random().toString(36).substring(2, 15)
       const newUser = await this.register({
         fullName: userInfo.name,
@@ -272,33 +254,34 @@ class UserService {
         confirm_password: password,
         role: 'STUDENT'
       })
-      return { ...newUser, newUser: 1, verify: UserVerifyStatus.UNVERIFIED }
+      return { ...newUser, newUser: 1, role: 'STUDENT' }
     }
   }
 
   async refreshToken({
     user_id,
-    verify,
+    role,
     refresh_token,
     exp
   }: {
     user_id: string
-    verify: UserVerifyStatus
+    role: UserRoleType
     refresh_token: string
     exp: number
   }) {
+    const old_hash = hashToken(refresh_token)
     const [new_access_token, new_refresh_token] = await Promise.all([
-      this.signAccessToken({ user_id, verify }),
-      this.signRefreshToken({ user_id, verify, exp }),
-      databaseService.refreshTokens.deleteOne({ token: refresh_token })
+      this.signAccessToken({ user_id, role }),
+      this.signRefreshToken({ user_id, role, exp }),
+      databaseService.refreshTokens.deleteOne({ tokenHash: old_hash })
     ])
     const decoded_refresh_token = await this.decodeRefreshToken(refresh_token)
     await databaseService.refreshTokens.insertOne(
       new RefreshToken({
-        user_id: new ObjectId(user_id),
-        token: new_refresh_token,
-        iat: decoded_refresh_token.iat,
-        exp: decoded_refresh_token.exp
+        userId: new ObjectId(user_id),
+        tokenHash: hashToken(new_refresh_token),
+        expiresAt: new Date(decoded_refresh_token.exp * 1000),
+        iat: decoded_refresh_token.iat
       })
     )
     return {
@@ -308,53 +291,18 @@ class UserService {
   }
 
   async verifyEmail(user_id: string) {
-    const [token] = await Promise.all([
-      this.signAccessAndRefreshToken({
-        user_id,
-        verify: UserVerifyStatus.VERIFIED
-      }),
-      databaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
-        {
-          $set: {
-            verify: UserVerifyStatus.VERIFIED,
-            updated_at: '$$NOW'
-          }
-        }
-      ])
-    ])
-    const [access_token, refresh_token] = token
-    const { iat, exp } = await this.decodeRefreshToken(refresh_token)
-    await databaseService.refreshTokens.insertOne(
-      new RefreshToken({
-        user_id: new ObjectId(user_id),
-        token: refresh_token,
-        iat,
-        exp
-      })
-    )
-    return { access_token, refresh_token }
+    // ART-AI không dùng email verify flow nữa.
+    // Phương thức này giữ lại để backward compat với users.routes.ts
+    return { message: USERS_MESSAGES.EMAIL_VERIFY_SUCCESSFUL }
   }
 
   async resendVerifyEmail(user_id: string) {
-    const email_verify_token = await this.signEmailVerifyToken({
-      user_id: user_id.toString(),
-      verify: UserVerifyStatus.UNVERIFIED
-    })
-    await databaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
-      {
-        $set: {
-          email_verify_token,
-          updated_at: '$$NOW'
-        }
-      }
-    ])
-    return {
-      message: USERS_MESSAGES.RESEND_EMAIL_VERIFY_SUCCESSFUL
-    }
+    // ART-AI không dùng email verify flow.
+    return { message: USERS_MESSAGES.RESEND_EMAIL_VERIFY_SUCCESSFUL }
   }
 
-  async forgotPassword({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
-    const forgot_password_token = await this.signForgotPasswordToken({ user_id, verify })
+  async forgotPassword({ user_id }: { user_id: string }) {
+    const forgot_password_token = await this.signForgotPasswordToken({ user_id })
     await databaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
       {
         $set: {
@@ -537,20 +485,17 @@ class UserService {
       _id: user_id,
       fullName: payload.fullName,
       email: payload.email,
-      password: hashPassword(payload.password),
+      passwordHash: hashPassword(payload.password),
       role: payload.role,
-      studentCode: payload.studentCode ?? null,
+      studentCode: payload.studentCode,
+      username: (payload as any).username,
       profile: payload.profile ?? {},
       isActive: true,
-      // Admin-created users are pre-verified (no email flow needed)
-      verify: UserVerifyStatus.VERIFIED,
-      email_verify_token: '',
-      forgot_password_token: ''
+      status: UserStatus.ACTIVE
     })
 
     await databaseService.users.insertOne(newUser)
 
-    // Return safe version (no password)
     return databaseService.users.findOne(
       { _id: user_id },
       { projection: SAFE_USER_PROJECTION }
@@ -571,14 +516,24 @@ class UserService {
         updateData[key] = (payload as any)[key]
       }
     }
+    const unsetData: Record<string, any> = {}
+
     if (updateData.role && updateData.role !== 'STUDENT') {
-      updateData.studentCode = null
+      unsetData.studentCode = ''
+      delete updateData.studentCode
     } else if (updateData.studentCode === '') {
-      updateData.studentCode = null
+      unsetData.studentCode = ''
+      delete updateData.studentCode
     }
+
+    const updateQuery: any = { $set: { ...updateData, updatedAt: new Date() } }
+    if (Object.keys(unsetData).length > 0) {
+      updateQuery.$unset = unsetData
+    }
+
     const result = await databaseService.users.findOneAndUpdate(
       { _id: new ObjectId(id) },
-      { $set: { ...updateData, updatedAt: new Date() } },
+      updateQuery,
       { returnDocument: 'after', projection: SAFE_USER_PROJECTION }
     )
     if (result) {
@@ -624,7 +579,7 @@ class UserService {
    * PATCH /users/:id/role — Admin changes a user's role.
    * Returns updated user.
    */
-  async updateUserRole(id: string, role: UserRole) {
+  async updateUserRole(id: string, role: UserRoleType) {
     if (!ObjectId.isValid(id)) return null
 
     const result = await databaseService.users.findOneAndUpdate(
@@ -709,7 +664,7 @@ class UserService {
       const fullName = (row.fullName || row['Full Name'] || row['full_name'] || '').trim()
       const email = (row.email || row['Email'] || '').trim().toLowerCase()
       const password = (row.password || row['Password'] || '').trim()
-      const roleRaw = (row.role || row['Role'] || 'STUDENT').trim().toUpperCase() as UserRole
+      const roleRaw = (row.role || row['Role'] || 'STUDENT').trim().toUpperCase() as UserRoleType
       const studentCode = (row.studentCode || row['Student Code'] || row['student_code'] || '').trim() || null
 
       if (!fullName) {
@@ -769,14 +724,12 @@ class UserService {
           _id: user_id,
           fullName,
           email,
-          password: hashPassword(password),
+          passwordHash: hashPassword(password),
           role: roleRaw,
           studentCode,
           profile: {},
           isActive: true,
-          verify: UserVerifyStatus.VERIFIED,
-          email_verify_token: '',
-          forgot_password_token: ''
+          status: UserStatus.ACTIVE
         })
 
         await databaseService.users.insertOne(newUser)

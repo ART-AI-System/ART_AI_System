@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { ObjectId } from 'mongodb'
-import { UserRole } from '~/models/schemas/users.schema'
+import { UserRoleType } from '~/models/schemas/users.schema'
+import { UserStatus } from '~/constants/enums'
 import { TokenPayload } from '~/models/requests/users.request'
 import { ErrorWithStatus } from '~/models/Errors'
 import HTTP_STATUS from '~/constants/httpStatus'
@@ -117,8 +118,13 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
 
       // Kiểm tra (b): tài khoản có đang active không?
       // Trường hợp: Admin deactivate user nhưng token vẫn chưa hết hạn.
-      // isActive mặc định là true (xem users.schema.ts), explicit check false.
-      if (user.isActive === false) {
+      // Check status field (ART-AI spec) với fallback sang isActive (backward compat)
+      const isDeactivated =
+        (user as any).status === UserStatus.INACTIVE ||
+        (user as any).status === 'inactive' ||
+        (user as any).isActive === false
+
+      if (isDeactivated) {
         return next(
           new ErrorWithStatus({
             message: AUTH_ERRORS.USER_NOT_FOUND_OR_DEACTIVATED,
@@ -167,7 +173,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
  *   // Tất cả user đã đăng nhập đều có quyền (không cần requireRole, chỉ dùng requireAuth):
  *   router.get('/api/users/me', requireAuth, getMeController)
  */
-export const requireRole = (...roles: UserRole[]) => {
+export const requireRole = (...roles: UserRoleType[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     // Guard: requireAuth phải được gọi trước requireRole trong chain.
     // Nếu req.user chưa được gắn, đây là lỗi cấu hình route.
@@ -180,7 +186,7 @@ export const requireRole = (...roles: UserRole[]) => {
       )
     }
 
-    const userRole = req.user.role as UserRole
+    const userRole = req.user.role as UserRoleType
 
     // Kiểm tra role của user có nằm trong danh sách roles được phép không.
     // roles.includes() có O(n) với n = số roles truyền vào.
@@ -220,7 +226,13 @@ export const requireActiveAccount = (req: Request, res: Response, next: NextFunc
     )
   }
 
-  if (req.user.isActive === false) {
+  // Check status field (ART-AI spec) với fallback sang isActive (backward compat)
+  const isDeactivated =
+    (req.user as any).status === UserStatus.INACTIVE ||
+    (req.user as any).status === 'inactive' ||
+    (req.user as any).isActive === false
+
+  if (isDeactivated) {
     return next(
       new ErrorWithStatus({
         message: AUTH_ERRORS.USER_NOT_FOUND_OR_DEACTIVATED,

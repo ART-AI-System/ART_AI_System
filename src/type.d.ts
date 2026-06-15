@@ -13,11 +13,8 @@ declare module 'express' {
   export interface Request {
     user?: User
     decoded_auth?: TokenPayload
-    decored_refresh_token?: TokenPayload
-    decoded_email_verify_token?: TokenPayload
+    decored_refresh_token?: TokenPayload  // typo giữ lại để backward compat
     decoded_forgot_password_token?: TokenPayload
     submissionFile?: UploadedSubmissionFile
-    tweet?: any
   }
 }
-

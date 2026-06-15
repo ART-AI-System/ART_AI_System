@@ -1,121 +1,145 @@
 import { Router } from 'express'
-import { loginController, logoutController, refreshTokenController } from '~/controllers/auth.controllers'
-import { accessTokenValidator, loginValidator, refreshTokenValidator } from '~/middlewares/validation.middlewares'
+import {
+  registerStudentController,
+  loginController,
+  logoutController,
+  refreshTokenController,
+  forgotPasswordController,
+  resetPasswordController,
+  changePasswordController
+} from '~/controllers/auth.controllers'
+import {
+  accessTokenValidator,
+  loginValidator,
+  refreshTokenValidator,
+  registerStudentValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
+  changePasswordValidator
+} from '~/middlewares/validation.middlewares'
+import { requireAuth } from '~/middlewares/auth.middlewares'
 import { wrapRequestHandler } from '~/utils/handlers'
 
 // ==========================================
-// AUTH ROUTER
+// AUTH ROUTER — ART-AI System
 // ==========================================
-// Định nghĩa các endpoint xác thực theo API Spec (ART_AI_API_SPEC.md, Section 1.1):
-//   POST /api/auth/login          - Đăng nhập
-//   POST /api/auth/refresh-token  - Làm mới cặp token (Rotation)
-//   POST /api/auth/logout         - Đăng xuất
+// Base path: /api/auth (định nghĩa trong src/index.ts)
 //
-// Tuân thủ Request Flow trong ARCHITECTURE.md:
-//   Route → Authentication/Validation Middleware → Controller → Service → DB → Response
+// Endpoints theo ART_AI_API_SPEC.md Section 1.1:
+//   POST   /api/auth/register/student   — Đăng ký sinh viên (Public)
+//   POST   /api/auth/login              — Đăng nhập (Public)
+//   POST   /api/auth/refresh-token      — Refresh token (Public + valid refresh token)
+//   POST   /api/auth/logout             — Đăng xuất (Private)
+//   POST   /api/auth/forgot-password    — Yêu cầu reset password (Public)
+//   POST   /api/auth/reset-password     — Đặt lại password bằng token (Public)
+//   PATCH  /api/auth/change-password    — Đổi password khi đã login (Private)
 //
-// Nguyên tắc thiết kế:
-//   - Route file chỉ chứa định nghĩa endpoint, gắn middleware và mapping controller.
-//   - Không chứa business logic và database queries.
-//   - Tất cả controller async được bọc bởi wrapRequestHandler() để tự động
-//     bắt lỗi và chuyển lên defaultErrorHandler, không cần try-catch.
+// Request Flow (ARCHITECTURE.md):
+//   Route → Validation Middleware → [Auth Middleware] → Controller → Service → DB → Response
 // ==========================================
 
 const authRouter = Router()
 
-/**
- * @route  POST /api/auth/login
- * @desc   Đăng nhập bằng email và password.
- * @access Public
- *
- * Request Body:
- *   {
- *     email:    string  - Email đã đăng ký, bắt buộc, đúng format email.
- *     password: string  - Mật khẩu, bắt buộc, 6-50 ký tự.
- *   }
- *
- * Response 200:
- *   {
- *     message: "Login successful",
- *     result: {
- *       access_token:  string  - JWT Access Token (ngắn hạn).
- *       refresh_token: string  - JWT Refresh Token (dài hạn, lưu vào DB).
- *     }
- *   }
- *
- * Response 422 (Validation Error):
- *   { message: "...", errors: { email: {...}, password: {...} } }
- *
- * Middleware chain:
- *   loginValidator → Xác thực format + truy vấn DB tìm user → gắn req.user
- *   loginController → Ký token + lưu refresh token vào DB → trả response
- */
+// ==========================================
+// POST /api/auth/register/student
+// ==========================================
+// Student tự đăng ký tài khoản.
+// Role mặc định: STUDENT, Status: active
+//
+// Body: { studentCode, fullName, email, password }
+// Response 201: { message, result: { id, studentCode, fullName, email, role } }
+// Response 422: validation errors
+// ==========================================
+authRouter.post(
+  '/register/student',
+  registerStudentValidator,
+  wrapRequestHandler(registerStudentController)
+)
+
+// ==========================================
+// POST /api/auth/login
+// ==========================================
+// Đăng nhập. Tự động phân biệt student/staff qua body fields:
+//   - { studentCode, password } → Student Login
+//   - { username, password }    → Staff Login
+//
+// Response 200: { message, result: { access_token, refresh_token, user } }
+// Response 401: credentials incorrect hoặc account inactive
+// Response 422: format validation errors
+// ==========================================
 authRouter.post('/login', loginValidator, wrapRequestHandler(loginController))
 
-/**
- * @route  POST /api/auth/refresh-token
- * @desc   Làm mới cặp Access Token + Refresh Token (Immutable Rotation).
- *         Refresh token cũ bị revoke, refresh token mới được phát hành
- *         với cùng thời gian hết hạn (exp) như token cũ.
- * @access Public (chỉ cần refresh token hợp lệ trong body)
- *
- * Request Body:
- *   {
- *     refresh_token: string  - Refresh token còn hiệu lực và tồn tại trong DB.
- *   }
- *
- * Response 200:
- *   {
- *     message: "Refresh token successful",
- *     result: {
- *       access_token:  string  - Access Token mới.
- *       refresh_token: string  - Refresh Token mới (token cũ đã bị revoke).
- *     }
- *   }
- *
- * Response 401 (Unauthorized):
- *   { message: "Refresh token is required" }         - Thiếu token
- *   { message: "Refresh token is invalid" }          - Sai chữ ký / hết hạn
- *   { message: "Used refresh token or not exists" }  - Token đã revoke / không tồn tại
- *
- * Middleware chain:
- *   refreshTokenValidator → Xác thực chữ ký JWT + kiểm tra DB → gắn req.decored_refresh_token
- *   refreshTokenController → Rotation: revoke cũ + phát hành mới → trả response
- */
+// ==========================================
+// POST /api/auth/refresh-token
+// ==========================================
+// Làm mới token pair (Immutable Rotation).
+// Token cũ bị revoke ngay lập tức. Token mới có cùng exp với token cũ.
+//
+// Body: { refresh_token }
+// Response 200: { message, result: { access_token, refresh_token } }
+// Response 401: token invalid/expired/revoked
+// ==========================================
 authRouter.post('/refresh-token', refreshTokenValidator, wrapRequestHandler(refreshTokenController))
 
-/**
- * @route  POST /api/auth/logout
- * @desc   Đăng xuất. Revoke refresh token khỏi DB để ngăn tái sử dụng.
- * @access Private (yêu cầu cả Access Token hợp lệ lẫn Refresh Token hợp lệ)
- *
- * Request Headers:
- *   Authorization: Bearer <access_token>
- *
- * Request Body:
- *   {
- *     refresh_token: string  - Refresh token cần revoke.
- *   }
- *
- * Response 200:
- *   { message: "Logout successful" }
- *
- * Response 401 (Unauthorized):
- *   { message: "Access token is required" }      - Thiếu / sai access token
- *   { message: "Access token is invalid" }        - Hết hạn / chữ ký sai
- *   { message: "Refresh token is required" }      - Thiếu refresh token
- *   { message: "Refresh token is invalid" }       - Chữ ký / hết hạn sai
- *   { message: "Used refresh token or not exists" } - Token đã revoke
- *
- * Middleware chain:
- *   accessTokenValidator  → Xác thực access token → gắn req.decoded_auth
- *   refreshTokenValidator → Xác thực refresh token + DB → gắn req.decored_refresh_token
- *   logoutController      → Xóa refresh token khỏi DB → trả response
- *
- * Lý do yêu cầu cả hai token để logout:
- *   Ngăn chặn attacker chỉ có refresh token của người dùng khác
- *   thực hiện logout session của họ (Denial of Service).
- */
-authRouter.post('/logout', accessTokenValidator, refreshTokenValidator, wrapRequestHandler(logoutController))
+// ==========================================
+// POST /api/auth/logout
+// ==========================================
+// Đăng xuất. Revoke refresh token (xóa tokenHash khỏi DB).
+// Yêu cầu cả Access Token + Refresh Token để ngăn DoS attack.
+//
+// Headers: Authorization: Bearer <access_token>
+// Body: { refresh_token }
+// Response 200: { message: "Logout successful" }
+// ==========================================
+authRouter.post(
+  '/logout',
+  accessTokenValidator,
+  refreshTokenValidator,
+  wrapRequestHandler(logoutController)
+)
+
+// ==========================================
+// POST /api/auth/forgot-password
+// ==========================================
+// Yêu cầu gửi email reset password.
+// Luôn trả về cùng message dù email có tồn tại hay không (security).
+// DEV: log raw token ra console. PROD: gửi qua email service.
+//
+// Body: { email }
+// Response 200: { message: "Check your email..." }
+// ==========================================
+authRouter.post('/forgot-password', forgotPasswordValidator, wrapRequestHandler(forgotPasswordController))
+
+// ==========================================
+// POST /api/auth/reset-password
+// ==========================================
+// Đặt lại password bằng token từ email.
+// Token chỉ dùng được 1 lần và có thời hạn 1 giờ.
+//
+// Body: { token, newPassword }
+// Response 200: { message: "Reset password successful" }
+// Response 400: token invalid/expired/used
+// ==========================================
+authRouter.post('/reset-password', resetPasswordValidator, wrapRequestHandler(resetPasswordController))
+
+// ==========================================
+// PATCH /api/auth/change-password
+// ==========================================
+// Đổi password khi đang đăng nhập.
+// Yêu cầu xác thực old password và new password phải khác old.
+//
+// Headers: Authorization: Bearer <access_token>
+// Body: { oldPassword, newPassword }
+// Response 200: { message: "Password changed successfully" }
+// Response 400: old password incorrect / same as new
+// Response 401: access token invalid
+// ==========================================
+authRouter.patch(
+  '/change-password',
+  accessTokenValidator,
+  requireAuth,
+  changePasswordValidator,
+  wrapRequestHandler(changePasswordController)
+)
 
 export default authRouter
