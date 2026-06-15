@@ -1,91 +1,343 @@
-# ART-AI Backend API Specification
+# ART-AI BUSINESS REQUIREMENT SPECIFICATION (BRS)
 
-## Overview
-
-ART-AI (Academic Research Transparency & AI Audit System) is a platform designed to evaluate how students use Generative AI during academic work.
-
-The system does not detect AI-generated content from uploaded files.
-
-Instead, it focuses on:
-
-* AI Usage Declaration
-* Prompt & Response Tracking
-* Reflection & Critical Thinking Assessment
-* AI Dependency Evaluation
-* Lecturer Review & Monitoring
+Version: 2.0
+Project: ART-AI (Academic Research Transparency & AI Audit System)
 
 ---
 
-# Base URL
+# 1. SYSTEM OVERVIEW
 
-```http
-/api/
-```
+## 1.1 Purpose
+
+ART-AI is an academic learning and transparency platform designed to support assignment management, submission management, grading, communication, and responsible Generative AI usage in higher education.
+
+The platform evaluates:
+
+* How students use AI
+* How students reflect on AI responses
+* How students critically engage with AI
+* Whether students depend excessively on AI
+
+The platform does NOT evaluate:
+
+* AI Generated Percentage
+* AI Generated Text Detection
+* Plagiarism Detection
 
 ---
 
-# 1. Authentication
+# 2. ACTORS
 
-## 1.1 Auth
+## ACT-001 Student
 
-* Login
+Responsibilities:
+
+* Study course materials
+* Submit assignments
+* Declare AI usage
+* View grades
+* Communicate with lecturers
+
+---
+
+## ACT-002 Lecturer
+
+Responsibilities:
+
+* Manage assignments
+* Review submissions
+* Grade students
+* Review AI declarations
+* Communicate with students
+
+---
+
+## ACT-003 Subject Head
+
+Responsibilities:
+
+* Monitor classes
+* Monitor lecturers
+* Monitor AI transparency
+* View reports and analytics
+
+---
+
+## ACT-004 Administrator
+
+Responsibilities:
+
+* Manage users
+* Manage permissions
+* Manage system settings
+
+---
+
+# 3. DOMAIN STRUCTURE
+
+Academic Hierarchy
+
+Semester
+└── Subject
+└── Class
+└── Session
+└── Assignment
+└── Submission
+└── AI Declaration
+
+## BR-CLASS-001 Import Students To Class
+
+Actor:
+Lecturer
+
+Description:
+Lecturers may import students into a class using an Excel file containing StudentCode.
+
+Inputs:
+
+* Excel File
+* StudentCode
+
+Business Rules:
+
+* StudentCode is used as the primary identifier for mapping students to the class.
+* If StudentCode already exists in the system, the existing student account ID shall be used.
+* If StudentCode does not exist in the system, the system shall automatically create a new student account.
+* Auto-provisioned accounts shall be created with pending activation status.
+* Auto-provisioned accounts shall use the system default password policy.
+* The created account ID shall be assigned to the class student list.
+
+Outputs:
+
+* Students imported to class.
+* Missing student accounts auto-provisioned when needed.
+
+---
+
+# 4. AUTHENTICATION REQUIREMENTS
+
+## BR-AUTH-001 Student Registration
+
+Actor:
+Student
+
+Description:
+Students may self-register an account.
+
+Inputs:
+
+* StudentCode
+* FullName
+* Email
+* Password
+
+Business Rules:
+
+* StudentCode must be unique.
+* Email must be unique.
+* Password minimum length = 8.
+* Account status defaults to ACTIVE.
+
+Outputs:
+
+* New account created.
+
+---
+
+## BR-AUTH-002 Login
+
+Actors:
+
+* Student
+* Lecturer
+* Subject Head
+* Admin
+
+Description:
+
+Users shall authenticate before accessing the system.
+
+Credentials:
+
+Student:
+
+* StudentCode
+* Password
+
+Staff:
+
+* Username
+* Password
+
+Outputs:
+
+* Access Token
 * Refresh Token
-* Logout
 
 ---
 
-# 2. User Management
+## BR-AUTH-003 Change Password
 
-## 2.1 Users
+Authenticated users may change password.
 
-* Profile
-* Create User
-* Update User
-* Activate / Deactivate User
+Business Rules:
 
----
-
-# 3. Academic Structure Management
-
-## 3.1 Classes
-
-* Create Class
-* Update Class
-* Delete Class
-* Get Class Detail
-
-### 3.1.1 Students In Class
-
-* Add Student
-* Remove Student
-* Import Students
-* View Students
+* Old password required.
+* New password must differ from current password.
 
 ---
 
-## 3.2 Grade Items
+## BR-AUTH-004 Forgot Password
 
-Examples:
-
-* Proposal
-* Literature Review
-* Methodology
-* Final Report
-
-Features:
-
-* Create Grade Item
-* Update Grade Item
-* Delete Grade Item
-* View Grade Item
+Users may request password reset via email.
 
 ---
 
-# 4. Assignment Submission Management
+# 5. SEMESTER & SUBJECT REQUIREMENTS
 
-Submission files are final academic deliverables.
+## BR-SEM-001 View Semester
 
-Supported:
+Actor:
+Student
+
+Flow:
+
+1. Login.
+2. System loads current semester.
+3. Student may switch semester.
+
+Business Rules:
+
+* Current semester selected by default.
+
+---
+
+## BR-SUBJECT-001 View Subjects
+
+Actor:
+Student
+
+Flow:
+
+1. Select semester.
+2. System loads enrolled subjects.
+
+Outputs:
+
+* Subject list.
+
+---
+
+# 6. SESSION MANAGEMENT
+
+## BR-SESSION-001 View Sessions
+
+Actor:
+Student
+
+Description:
+
+Students shall view all sessions belonging to a selected subject.
+
+Business Rules:
+
+* 10 sessions displayed per page.
+* Pagination required.
+
+Outputs:
+
+* Session list.
+
+---
+
+## BR-SESSION-002 View Session Detail
+
+Actor:
+Student
+
+Displayed Information:
+
+* Session Name
+* Description
+* Learning Materials
+* Assignments
+
+---
+
+# 7. ASSIGNMENT MANAGEMENT
+
+## BR-ASSIGNMENT-001 Create Assignment
+
+Actor:
+Lecturer
+
+Inputs:
+
+* Title
+* Description
+* Instructions
+* Deadline
+* AI Declaration Required
+
+Business Rules:
+
+* Assignment belongs to one session.
+* Deadline must be future datetime.
+
+Outputs:
+
+* Assignment created.
+
+---
+
+## BR-ASSIGNMENT-002 Upload Learning Materials
+
+Actor:
+Lecturer
+
+Supported Formats:
+
+* PDF
+* DOCX
+* PPTX
+* ZIP
+
+Outputs:
+
+* Materials attached to assignment.
+
+---
+
+## BR-ASSIGNMENT-003 Assignment Publication Notification
+
+Trigger:
+
+Assignment published.
+
+Recipients:
+
+All students in class.
+
+Channels:
+
+* Email
+* In-App Notification
+
+---
+
+# 8. SUBMISSION MANAGEMENT
+
+## BR-SUBMISSION-001 Submit Assignment
+
+Actor:
+Student
+
+Inputs:
+
+* Assignment File
+* AI Interactions, if AI declaration is required
+
+Supported Formats:
 
 * PDF
 * DOCX
@@ -93,319 +345,448 @@ Supported:
 * PPTX
 * ZIP
 
-Constraints:
+Submission Status:
 
-```text
-Maximum file size: 10 MB
-```
+* DRAFT
+* SUBMITTED
+* LATE
 
-Files are stored for review purposes only.
+Business Rules:
 
-Files are not used for AI detection.
+* Maximum file size = 10 MB.
+* Submission must occur before deadline.
+* Late submission status shall be recorded.
+* A submission is finalized with status SUBMITTED only when the student has uploaded the assignment file and completed the required minimum number of AI interactions.
+* If the student exits, loses connection, or has not completed the required minimum number of AI interactions, the submission shall remain in DRAFT status.
+* DRAFT submissions are visible only to the student and shall not be visible to lecturers for review or grading.
 
-## 4.1 Submission APIs
+Outputs:
 
-* Submit Assignment
-* View Submission
-* Download Submission
-* View My Submissions
-* Get all submissions of the current student
-
----
-
-# 5. Lecturer Review
-
-## 5.1 Lecturer Review APIs
-
-* Review Submission
-* Add Comment
-* Update Review Status
-
-### Review Status
-
-```text
-PENDING
-REVIEWED
-NEEDS_REVISION
-FLAGGED
-```
+* Submission created or updated.
+* Submission finalized only when all required conditions are satisfied.
 
 ---
 
-# 6. Score & Grading Management
+## BR-SUBMISSION-002 Submission Versioning
 
-## 6.1 Submission Grading APIs
+Description:
 
-* Grade Submission
-* Update Grade
-* View Grade
-* View Grade Item Grades
-* Get gradebook of a class
+Every resubmission creates a new version.
 
-### Grade Structure
+Example:
 
-```json
-{
-  "score": 8.5,
-  "maxScore": 10,
-  "feedback": "Strong critical engagement with AI."
-}
-```
+Version 1
+Version 2
+Version 3
 
-### Grade Response Example
+Business Rules:
 
-```json
-{
-  "submissionId": "submission_id",
-  "score": 8.5,
-  "maxScore": 10,
-  "feedback": "Student demonstrated strong critical engagement with AI responses.",
-  "gradedBy": "lecturer_id",
-  "gradedAt": "2026-06-05T10:00:00Z"
-}
-```
+* Latest version is active.
+* Previous versions remain immutable.
 
 ---
 
-# 7. Final Result Management
+## BR-SUBMISSION-003 Submission Confirmation Email
 
-## 7.1 Final Result APIs
+Trigger:
 
-* Calculate Final Result
-* View Final Result
-* Export Final Result
-* Get final academic results of the current student
+Successful submission.
 
-### Final Score Formula
+Email Content:
 
-```text
-Final Score =
-Σ (Grade Item Score × Grade Item Weight)
-```
+* Student Name
+* Subject
+* Assignment
+* Submission Time
+* Version Number
 
 ---
 
-# 8. Academic Classification
+# 9. AI DECLARATION REQUIREMENTS
 
-## 8.1 Classification APIs
+## BR-AI-001 AI Declaration Requirement
 
-* View Rankings
-* View Classifications
-* View Student Classification
+Description:
 
-### Classification Rules
+Assignments may require AI declaration.
 
-```text
-0.0 - 4.9   = POOR
-5.0 - 6.4   = AVERAGE
-6.5 - 7.9   = GOOD
-8.0 - 8.9   = VERY_GOOD
-9.0 - 10.0  = EXCELLENT
-```
+Configuration:
 
----
+* Require AI Declaration
+* Minimum Interactions
+* Maximum Interactions
 
-# 9. Reporting & Export
+Business Rules:
 
-## 9.1 Academic Reports
-
-* Grade Summary
-* Final Results
-* Rankings
-* Classifications
-
-## 9.2 AI Usage Reports
-
-* AI Usage Summary
-* Semester Analytics
-* Suspicious Cases
-
-## 9.3 Export Reports
-
-* Excel
-* PDF
-* CSV
-
-## 9.4 Dashboard Analytics
-
-### Student Dashboard
-
-* Submitted Assignments
-* Pending Assignments
-* Average Score
-* AI Usage Pattern
-* Flags Received
-
-### Lecturer Dashboard
-
-* Total Classes
-* Total Students
-* Pending Reviews
-* Flagged Submissions
-* AI Usage Distribution
-
-### Subject Head Dashboard
-
-* AI Usage Trends
-* High Dependency Cases
-* Academic Performance Summary
-
-### Admin Dashboard
-
-* Total Users
-* Total Classes
-* Total Submissions
-* Total AI Interactions
+* If required, submission cannot be finalized until the minimum AI interaction requirement is satisfied.
+* The minimum AI interaction requirement is defined by Minimum Interactions.
+* Submissions that do not satisfy the minimum AI interaction requirement shall remain in DRAFT status.
 
 ---
 
-# 10. AI Usage Declaration
+## BR-AI-002 Create AI Interaction
 
-## 10.1 Business Rules
+Actor:
+Student
 
-Each submission must contain:
-
-```text
-Minimum interactions: 5
-Maximum interactions: 10
-```
-
-Each interaction consists of:
+Required Fields:
 
 * AI Tool
 * Usage Purpose
 * Prompt
-* AI Response
-* Student Decision
+* Response Summary
+* Decision
 * Reflection
 
-## 10.2 AI Interaction APIs
+Outputs:
 
-* Create Interaction
-* Update Interaction
-* Delete Interaction
-* View Interaction
-* View Submission Interactions
-
-### AI Tool Types
-
-```text
-CHATGPT
-GEMINI
-CLAUDE
-COPILOT
-OTHER
-```
-
-### Usage Purpose Types
-
-```text
-BRAINSTORMING
-TOPIC_RESEARCH
-SUMMARIZATION
-WRITING_IMPROVEMENT
-CRITICAL_FEEDBACK
-METHODOLOGY_REVIEW
-DATA_ANALYSIS
-OTHER
-```
-
-### Decision Types
-
-```text
-ACCEPTED
-PARTIALLY_ACCEPTED
-REJECTED
-REFERENCE_ONLY
-```
+* Interaction stored.
 
 ---
 
-# 11. AI Usage Evaluation
+## BR-AI-003 AI Tool Types
 
-## 11.1 Evaluation APIs
+Allowed Values:
 
-* Evaluate AI Usage
-* View Evaluation
-* View Class Evaluations
+* CHATGPT
+* GEMINI
+* CLAUDE
+* COPILOT
+* OTHER
 
-### AI Usage Pattern
+---
 
-```text
-CRITICAL_ENGAGEMENT
-COLLABORATIVE_USAGE
-PASSIVE_USAGE
-HIGH_DEPENDENCY
-```
+## BR-AI-004 Usage Purpose Types
 
-### Evaluation Dimensions
+Allowed Values:
+
+* BRAINSTORMING
+* TOPIC_RESEARCH
+* SUMMARIZATION
+* WRITING_IMPROVEMENT
+* CRITICAL_FEEDBACK
+* METHODOLOGY_REVIEW
+* DATA_ANALYSIS
+* OTHER
+
+---
+
+## BR-AI-005 Decision Types
+
+Allowed Values:
+
+* ACCEPTED
+* PARTIALLY_ACCEPTED
+* REJECTED
+* REFERENCE_ONLY
+
+---
+
+# 10. AI EVALUATION
+
+## BR-AI-EVAL-001 Evaluate AI Usage
+
+Description:
+
+System evaluates transparency and responsible AI usage.
+
+Evaluation Dimensions:
 
 * Prompt Quality
 * Reflection Quality
 * Critical Thinking
 * AI Dependency
 
----
+Outputs:
 
-# 12. Flag Management
+* Transparency Score
 
-## 12.1 Flag APIs
+Range:
 
-* View Flags
-* Create Flag
-* Resolve Flag
-* Update Flag Level
-
-### Flag Types
-
-```text
-LOW_QUALITY_PROMPT
-HIGH_AI_DEPENDENCY
-WEAK_REFLECTION
-ALL_RESPONSES_ACCEPTED
-MISSING_AI_INTERACTIONS
-SUSPICIOUS_DECLARATION
-MANUAL
-```
-
-### Suspect Levels
-
-```text
-LOW
-MEDIUM
-HIGH
-```
+0 - 100
 
 ---
 
-# 13. Core MVP APIs
+## BR-AI-EVAL-002 Transparency Score
 
-Priority Order:
+Business Rules:
 
-1. Authentication
-2. Classes
-3. Grade Items
-4. Submission
-5. AI Interaction
-6. AI Evaluation
-7. Lecturer Review
-8. Reports
+* Transparency Score does NOT affect academic grade.
+* Transparency Score is reported separately.
 
 ---
 
-# 14. Core Philosophy
+# 11. REVIEW MANAGEMENT
 
-ART-AI does not evaluate:
+## BR-REVIEW-001 Review Submission
 
-* AI Generated Percentage
-* AI Generated Text Detection
-* Plagiarism Detection
+Actor:
+Lecturer
 
-ART-AI evaluates:
+Review Status:
 
-* How students use AI
-* Whether students critically engage with AI
-* Whether students reflect on AI responses
-* Whether students depend excessively on AI
+* PENDING
+* REVIEWED
+* NEEDS_REVISION
+* FLAGGED
 
-The system promotes transparency, accountability, and responsible AI-assisted learning.
+Outputs:
+
+* Updated review record.
+
+---
+
+# 12. GRADING MANAGEMENT
+
+## BR-GRADE-001 Grade Submission
+
+Actor:
+Lecturer
+
+Inputs:
+
+* Score
+* Max Score
+* Feedback
+
+Business Rules:
+
+* Score cannot exceed Max Score.
+* Max Score is the maximum score configured for the assignment or grade item.
+
+Outputs:
+
+* Grade created.
+
+---
+
+## BR-GRADE-003 Final Score Calculation
+
+Description:
+
+Final Score shall be normalized to a 10-point scale regardless of the Max Score configured for each assignment or grade item.
+
+Formula:
+
+Final Score = Σ ((Score / Max Score) * 10 * Weight)
+
+Business Rules:
+
+* Score is the raw score given by the lecturer for a grade item.
+* Max Score is the maximum score configured for that grade item.
+* Weight is the grade item's contribution ratio to the final score.
+* The normalized contribution of each grade item shall be calculated before applying Weight.
+* Final Score shall always be represented on a 10-point scale.
+
+Outputs:
+
+* Normalized final score calculated.
+
+---
+
+## BR-GRADE-002 Gradebook
+
+Actor:
+Lecturer
+
+Capabilities:
+
+* View class grades.
+* Update grades.
+* Export grades.
+
+Supported Export Formats:
+
+* Excel
+* CSV
+
+---
+
+# 13. NOTIFICATION REQUIREMENTS
+
+## BR-NOTIFY-001 Assignment Created
+
+Trigger:
+
+Assignment published.
+
+Recipients:
+
+Students.
+
+---
+
+## BR-NOTIFY-002 Submission Successful
+
+Trigger:
+
+Student submission.
+
+Recipients:
+
+Student.
+
+---
+
+## BR-NOTIFY-003 Deadline Reminder
+
+Trigger:
+
+Before deadline.
+
+Reminder Schedule:
+
+* 24 hours
+* 12 hours
+* 1 hour
+
+---
+
+## BR-NOTIFY-004 Grade Published
+
+Trigger:
+
+Grade released.
+
+Recipients:
+
+Student.
+
+---
+
+# 14. REALTIME CHAT REQUIREMENTS
+
+## BR-CHAT-001 Student ↔ Lecturer Chat
+
+Condition:
+
+Lecturer teaches student's subject.
+
+---
+
+## BR-CHAT-002 Student ↔ Student Chat
+
+Condition:
+
+Students belong to same class.
+
+---
+
+## BR-CHAT-003 Lecturer ↔ Subject Head Chat
+
+Condition:
+
+Same department.
+
+---
+
+## BR-CHAT-004 Message Types
+
+Supported:
+
+* TEXT
+* IMAGE
+* FILE
+
+---
+
+## BR-CHAT-005 Chat Features
+
+Supported:
+
+* Online Status
+* Last Seen
+* Unread Count
+* Search Messages
+
+---
+
+# 15. REPORTING & ANALYTICS
+
+## BR-REPORT-001 Lecturer Dashboard
+
+Metrics:
+
+* Total Classes
+* Total Students
+* Pending Reviews
+* Average Score
+* AI Usage Distribution
+
+---
+
+## BR-REPORT-002 Subject Head Dashboard
+
+Metrics:
+
+* AI Usage By Class
+* AI Usage By Subject
+* Average Score
+* Pass Rate
+* Lecturer Activity
+
+---
+
+## BR-REPORT-003 Administrator Dashboard
+
+Metrics:
+
+* Total Users
+* Total Classes
+* Total Subjects
+* Total Submissions
+* Total AI Interactions
+
+---
+
+# 16. FLAG MANAGEMENT
+
+## BR-FLAG-001 Create Flag
+
+Flag Types:
+
+* LOW_QUALITY_PROMPT
+* HIGH_AI_DEPENDENCY
+* WEAK_REFLECTION
+* ALL_RESPONSES_ACCEPTED
+* MISSING_AI_INTERACTIONS
+* SUSPICIOUS_DECLARATION
+* MANUAL
+
+---
+
+## BR-FLAG-002 Flag Severity
+
+Allowed Values:
+
+* LOW
+* MEDIUM
+* HIGH
+
+---
+
+## BR-FLAG-003 Resolve Flag
+
+Authorized Roles:
+
+* Lecturer
+* Subject Head
+
+Outputs:
+
+* Flag status updated.
+
+---
+
+# 17. CORE PHILOSOPHY
+
+The purpose of ART-AI is not to detect AI-generated content.
+
+The purpose of ART-AI is to promote:
+
+* Transparency
+* Accountability
+* Responsible AI Usage
+* Critical Thinking
+
+through structured declaration, reflection, evaluation and academic monitoring.
