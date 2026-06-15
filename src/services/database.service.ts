@@ -250,6 +250,34 @@ class DatabaseService {
   get notifications(): Collection<any> {
     return this.db.collection(process.env.DB_NOTIFICATIONS_COLLECTION || 'notifications')
   }
+
+  get emailLogs(): Collection<any> {
+    return this.db.collection(process.env.DB_EMAIL_LOGS_COLLECTION || 'email_logs')
+  }
+
+  get departments(): Collection<any> {
+    return this.db.collection(process.env.DB_DEPARTMENTS_COLLECTION || 'departments')
+  }
+
+  get semesters(): Collection<any> {
+    return this.db.collection(process.env.DB_SEMESTERS_COLLECTION || 'semesters')
+  }
+
+  get subjects(): Collection<any> {
+    return this.db.collection(process.env.DB_SUBJECTS_COLLECTION || 'subjects')
+  }
+
+  get classMembers(): Collection<any> {
+    return this.db.collection(process.env.DB_CLASS_MEMBERS_COLLECTION || 'class_members')
+  }
+
+  get sessions(): Collection<any> {
+    return this.db.collection(process.env.DB_SESSIONS_COLLECTION || 'sessions')
+  }
+
+  get assignments(): Collection<any> {
+    return this.db.collection(process.env.DB_ASSIGNMENTS_COLLECTION || 'assignments')
+  }
 }
 
 // run().catch(console.dir)
