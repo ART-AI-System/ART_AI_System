@@ -13,7 +13,8 @@
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "test:auth": "ts-node -r tsconfig-paths/register src/tests/auth.test.ts",
-    "seed:auth-test": "ts-node -r tsconfig-paths/register src/scripts/seed-auth-test-users.ts"
+    "test:users": "ts-node -r tsconfig-paths/register src/tests/user-management.test.ts",
+    "seed:test-users": "ts-node -r tsconfig-paths/register src/scripts/seed-auth-test-users.ts"
   },
   "repository": {
     "type": "git",

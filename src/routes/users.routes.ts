@@ -19,6 +19,7 @@ import {
   updateUserController,
   updateUserStatusController,
   updateUserRoleController,
+  adminResetPasswordController,
   deleteUserController,
   importUsersController
 } from '~/controllers/users.controller'
@@ -35,7 +36,8 @@ import {
   createUserValidator,
   updateUserValidator,
   updateUserStatusValidator,
-  updateUserRoleValidator
+  updateUserRoleValidator,
+  adminResetPasswordValidator
 } from '~/middlewares/users.middleware'
 
 import { accessTokenValidator } from '~/middlewares/validation.middlewares'
@@ -208,6 +210,21 @@ usersRouter.patch(
   requireRole('ADMIN'),
   updateUserRoleValidator,
   wrapRequestHandler(updateUserRoleController)
+)
+
+/**
+ * PATCH /api/users/:id/reset-password — Admin resets a user's password.
+ *   Body: { password: string }
+ *
+ * Flow:
+ *   requireAuth → requireRole('ADMIN') → adminResetPasswordValidator → Controller → Service → DB → Response
+ */
+usersRouter.patch(
+  '/:id/reset-password',
+  requireAuth,
+  requireRole('ADMIN'),
+  adminResetPasswordValidator,
+  wrapRequestHandler(adminResetPasswordController)
 )
 
 /**
