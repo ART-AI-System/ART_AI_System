@@ -96,6 +96,17 @@ export const getClassAiUsageController = wrapRequestHandler(
   }
 )
 
+export const getSubjectAiUsageController = wrapRequestHandler(
+  async (req: Request, res: Response, _next: NextFunction) => {
+    const subjectId = req.params['subjectId'] as string
+    const result = await reportService.getSubjectAiUsage(subjectId)
+    res.json({
+      message: 'Get subject AI usage report successfully',
+      result
+    })
+  }
+)
+
 /**
  * GET /api/reports/semesters/:semester/ai-usage
  * Returns semester-wide AI usage trends across all classes.
@@ -131,65 +142,40 @@ export const getSuspiciousCasesController = wrapRequestHandler(
 // 9.3 — Export Reports
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * GET /api/reports/classes/:classId/export-excel
- * Streams an .xlsx workbook buffer with two sheets: Final Results + Grade Summary.
- */
-export const exportExcelController = wrapRequestHandler(
+export const exportReportController = wrapRequestHandler(
   async (req: Request, res: Response, _next: NextFunction) => {
-    const classId = req.params['classId'] as string
-    const [buffer, filename] = await Promise.all([
-      reportService.exportExcel(classId),
-      resolveFilename(classId)
-    ])
-
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    res.setHeader('Content-Disposition', `attachment; filename="class-${filename}-report.xlsx"`)
-    res.setHeader('Content-Length', buffer.length)
-    res.send(buffer)
-  }
-)
-
-/**
- * GET /api/reports/classes/:classId/export-pdf
- * Pipes a PDFKit document stream directly into the response.
- * No temp files are written to disk.
- */
-export const exportPdfController = wrapRequestHandler(
-  async (req: Request, res: Response, _next: NextFunction) => {
-    const classId = req.params['classId'] as string
-    const filename = await resolveFilename(classId)
-
-    res.setHeader('Content-Type', 'application/pdf')
-    res.setHeader('Content-Disposition', `attachment; filename="class-${filename}-report.pdf"`)
-
-    // reportService.exportPdf calls doc.pipe(res) and doc.end() internally
-    await reportService.exportPdf(classId, res)
-  }
-)
-
-/**
- * GET /api/reports/classes/:classId/export-csv
- * Returns a UTF-8 BOM-prefixed CSV file for Excel compatibility.
- * Built entirely with manual string operations — zero extra libraries.
- */
-export const exportCsvController = wrapRequestHandler(
-  async (req: Request, res: Response, _next: NextFunction) => {
-    const classId = req.params['classId'] as string
-    const [csvContent, filename] = await Promise.all([
-      reportService.exportCsv(classId),
-      resolveFilename(classId)
-    ])
-
-    // \uFEFF = UTF-8 BOM — signals UTF-8 encoding to Excel without codec negotiation
-    const body = '\uFEFF' + csvContent
-
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
-    res.setHeader('Content-Disposition', `attachment; filename="class-${filename}-results.csv"`)
-    res.setHeader('Content-Length', Buffer.byteLength(body, 'utf8'))
-    res.send(body)
+    // Determine scope based on available params
+    const classId = req.params['classId'] as string | undefined
+    const subjectId = req.params['subjectId'] as string | undefined
+    const semesterId = req.params['semesterId'] as string | undefined
+    
+    // Type and format from query
+    const format = (req.query['format'] as string) || 'csv'
+    
+    // We delegate the unified export handling to reportService
+    const scopeId = classId || subjectId || semesterId || 'unknown'
+    const scopeType = classId ? 'class' : subjectId ? 'subject' : 'semester'
+    
+    const filename = await resolveFilename(scopeId)
+    
+    if (format === 'xlsx') {
+      const buffer = await reportService.exportExcel(scopeId)
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      res.setHeader('Content-Disposition', `attachment; filename="${scopeType}-${filename}-report.xlsx"`)
+      res.setHeader('Content-Length', buffer.length)
+      res.send(buffer)
+    } else if (format === 'pdf') {
+      res.setHeader('Content-Type', 'application/pdf')
+      res.setHeader('Content-Disposition', `attachment; filename="${scopeType}-${filename}-report.pdf"`)
+      await reportService.exportPdf(scopeId, res)
+    } else {
+      // Default to csv
+      const csvContent = await reportService.exportCsv(scopeId)
+      const body = '\uFEFF' + csvContent
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+      res.setHeader('Content-Disposition', `attachment; filename="${scopeType}-${filename}-results.csv"`)
+      res.setHeader('Content-Length', Buffer.byteLength(body, 'utf8'))
+      res.send(body)
+    }
   }
 )

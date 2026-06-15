@@ -10,9 +10,8 @@ import {
   getClassAiUsageController,
   getSemesterAiUsageController,
   getSuspiciousCasesController,
-  exportExcelController,
-  exportPdfController,
-  exportCsvController
+  exportReportController,
+  getSubjectAiUsageController
 } from '~/controllers/report.controllers'
 
 /**
@@ -79,6 +78,24 @@ const validateSuspiciousQueryParams = validate(
   } as any
 )
 
+const validateExportQueryParams = validate(
+  {
+    run: async (req: any) => {
+      await Promise.all([
+        query('format')
+          .optional()
+          .isIn(['xlsx', 'pdf', 'csv'])
+          .withMessage('format must be one of xlsx, pdf, csv')
+          .run(req),
+        query('type')
+          .optional()
+          .isString()
+          .run(req)
+      ])
+    }
+  } as any
+)
+
 const reportRouter = Router()
 
 // ── Section 9.1 — Academic Reports ───────────────────────────────────────────
@@ -127,6 +144,14 @@ reportRouter.get(
 )
 
 reportRouter.get(
+  '/subjects/:subjectId/ai-usage',
+  requireAuth,
+  requireRole('SUBJECT_HEAD'),
+  validateObjectIdParam('subjectId'),
+  getSubjectAiUsageController
+)
+
+reportRouter.get(
   '/semesters/:semester/ai-usage',
   requireAuth,
   requireRole('SUBJECT_HEAD'),
@@ -146,27 +171,30 @@ reportRouter.get(
 // Role: LECTURER or SUBJECT_HEAD
 
 reportRouter.get(
-  '/classes/:classId/export-excel',
+  '/classes/:classId/export',
   requireAuth,
   requireRole('LECTURER', 'SUBJECT_HEAD'),
   validateObjectIdParam('classId'),
-  exportExcelController
+  validateExportQueryParams,
+  exportReportController
 )
 
 reportRouter.get(
-  '/classes/:classId/export-pdf',
+  '/subjects/:subjectId/export',
   requireAuth,
-  requireRole('LECTURER', 'SUBJECT_HEAD'),
-  validateObjectIdParam('classId'),
-  exportPdfController
+  requireRole('SUBJECT_HEAD'),
+  validateObjectIdParam('subjectId'),
+  validateExportQueryParams,
+  exportReportController
 )
 
 reportRouter.get(
-  '/classes/:classId/export-csv',
+  '/semesters/:semesterId/export',
   requireAuth,
-  requireRole('LECTURER', 'SUBJECT_HEAD'),
-  validateObjectIdParam('classId'),
-  exportCsvController
+  requireRole('SUBJECT_HEAD'),
+  validateObjectIdParam('semesterId'),
+  validateExportQueryParams,
+  exportReportController
 )
 
 export default reportRouter
