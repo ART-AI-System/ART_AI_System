@@ -1,6 +1,6 @@
 # ART-AI Mongoose Database Schema Specification
 
-Version: 2.1  
+Version: 2.1.1  
 Status: Revised for New Business Requirements  
 Project: ART-AI (Academic Research Transparency & AI Audit System)
 
@@ -254,12 +254,6 @@ Auto-provisioned student accounts are created during class import when an import
 ```js
 const UserSchema = new Schema(
   {
-    uuid: {
-      type: String,
-      required: true,
-      unique: true
-    },
-
     email: {
       type: String,
       required: true,
@@ -780,12 +774,6 @@ Examples:
 ```js
 const AssignmentSchema = new Schema(
   {
-    uuid: {
-      type: String,
-      required: true,
-      unique: true
-    },
-
     classId: {
       type: Schema.Types.ObjectId,
       ref: 'Class',
@@ -891,7 +879,6 @@ const AssignmentSchema = new Schema(
   { timestamps: true }
 )
 
-AssignmentSchema.index({ uuid: 1 }, { unique: true })
 AssignmentSchema.index({ classId: 1, sessionId: 1 })
 AssignmentSchema.index({ semesterId: 1, subjectId: 1 })
 AssignmentSchema.index({ deadline: 1 })
@@ -913,12 +900,6 @@ A submission starts as `draft` after file upload and becomes `submitted` or `lat
 ```js
 const SubmissionSchema = new Schema(
   {
-    uuid: {
-      type: String,
-      required: true,
-      unique: true
-    },
-
     assignmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Assignment',
@@ -1001,7 +982,6 @@ const SubmissionSchema = new Schema(
   { timestamps: true }
 )
 
-SubmissionSchema.index({ uuid: 1 }, { unique: true })
 SubmissionSchema.index({ assignmentId: 1, studentId: 1 }, { unique: true })
 SubmissionSchema.index({ studentId: 1, semesterId: 1 })
 SubmissionSchema.index({ classId: 1, assignmentId: 1 })
@@ -1122,12 +1102,6 @@ Each interaction should belong to a submission version because AI declaration ma
 ```js
 const AiInteractionSchema = new Schema(
   {
-    uuid: {
-      type: String,
-      required: true,
-      unique: true
-    },
-
     submissionId: {
       type: Schema.Types.ObjectId,
       ref: 'Submission',
@@ -1202,7 +1176,6 @@ const AiInteractionSchema = new Schema(
   { timestamps: true }
 )
 
-AiInteractionSchema.index({ uuid: 1 }, { unique: true })
 AiInteractionSchema.index({ submissionId: 1 })
 AiInteractionSchema.index({ submissionVersionId: 1 })
 AiInteractionSchema.index({ assignmentId: 1, studentId: 1 })
