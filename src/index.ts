@@ -1,4 +1,6 @@
 import express from 'express'
+import { createServer } from 'http'
+import { initChatSocket } from '~/socket/chat.socket'
 import usersRouter from '~/routes/users.routes'
 import authRouter from '~/routes/auth.routes'
 import classesRouter from '~/routes/classes.routes'
@@ -12,6 +14,7 @@ import studentRouter from '~/routes/student.routes'
 import lecturerRouter from '~/routes/lecturer.routes'
 import subjectHeadRouter from '~/routes/subjectHead.routes'
 import adminRouter from '~/routes/admin.routes'
+import chatRouter from '~/routes/chat.routes'
 import databaseService from '~/services/database.service'
 import { defaultErrorHandler } from '~/middlewares/error.middleware'
 import { config } from 'dotenv'
@@ -24,6 +27,8 @@ databaseService.connect().then(async () => {
   databaseService.indexPasswordResetTokens()
   databaseService.indexSubmissions()
   databaseService.indexSubmissionReviews()
+  databaseService.indexChatRooms()
+  databaseService.indexChatMessages()
 })
 
 const app = express()
@@ -49,8 +54,13 @@ app.use('/api/student', studentRouter)
 app.use('/api/lecturer', lecturerRouter)
 app.use('/api/subject-head', subjectHeadRouter)
 app.use('/api/admin', adminRouter)
+app.use('/api/chat', chatRouter)
 
 app.use(defaultErrorHandler)
-app.listen(port, () => {
+
+const httpServer = createServer(app)
+initChatSocket(httpServer)
+
+httpServer.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })

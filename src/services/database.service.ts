@@ -9,6 +9,8 @@ import Grade from '~/models/schemas/grades.schema'
 import FinalResult from '~/models/schemas/finalResults.schema'
 import Submission from '~/models/schemas/submissions.schema'
 import SubmissionReview from '~/models/schemas/submissionReviews.schema'
+import ChatRoom from '~/models/schemas/chatRoom.schema'
+import ChatMessage from '~/models/schemas/chatMessage.schema'
 dotenv.config()
 
 const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USERNAME as string)}:${encodeURIComponent(process.env.DB_PASSWORD as string)}@art-ai-system.rpdlfxc.mongodb.net/`
@@ -137,7 +139,9 @@ class DatabaseService {
         process.env.DB_AI_EVALUATIONS_COLLECTION || 'ai_evaluations',
         process.env.DB_SUBMISSION_FLAGS_COLLECTION || 'submission_flags',
         process.env.DB_SUBMISSION_REVIEWS_COLLECTION || 'submission_reviews',
-        process.env.DB_NOTIFICATIONS_COLLECTION || 'notifications'
+        process.env.DB_NOTIFICATIONS_COLLECTION || 'notifications',
+        process.env.DB_CHAT_ROOMS_COLLECTION || 'chat_rooms',
+        process.env.DB_CHAT_MESSAGES_COLLECTION || 'chat_messages'
       ]
 
       for (const colName of requiredCollections) {
@@ -195,6 +199,41 @@ class DatabaseService {
         await this.submissionReviews.createIndex({ lecturerId: 1 })
       } else {
         console.error('Error indexing submission reviews:', error)
+      }
+    }
+  }
+
+  async indexChatRooms() {
+    try {
+      const memberIdsIndexExists = await this.chatRooms.indexExists(['memberIds_1'])
+      if (!memberIdsIndexExists) {
+        await this.chatRooms.createIndex({ memberIds: 1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.chatRooms.createIndex({ memberIds: 1 })
+      } else {
+        console.error('Error indexing chat rooms:', error)
+      }
+    }
+  }
+
+  async indexChatMessages() {
+    try {
+      const roomIdIndexExists = await this.chatMessages.indexExists(['roomId_1_createdAt_1'])
+      if (!roomIdIndexExists) {
+        await this.chatMessages.createIndex({ roomId: 1, createdAt: 1 })
+      }
+      const senderIdIndexExists = await this.chatMessages.indexExists(['senderId_1'])
+      if (!senderIdIndexExists) {
+        await this.chatMessages.createIndex({ senderId: 1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.chatMessages.createIndex({ roomId: 1, createdAt: 1 })
+        await this.chatMessages.createIndex({ senderId: 1 })
+      } else {
+        console.error('Error indexing chat messages:', error)
       }
     }
   }
@@ -277,6 +316,14 @@ class DatabaseService {
 
   get assignments(): Collection<any> {
     return this.db.collection(process.env.DB_ASSIGNMENTS_COLLECTION || 'assignments')
+  }
+
+  get chatRooms(): Collection<ChatRoom> {
+    return this.db.collection(process.env.DB_CHAT_ROOMS_COLLECTION || 'chat_rooms')
+  }
+
+  get chatMessages(): Collection<ChatMessage> {
+    return this.db.collection(process.env.DB_CHAT_MESSAGES_COLLECTION || 'chat_messages')
   }
 }
 
