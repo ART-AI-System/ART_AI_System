@@ -1,24 +1,30 @@
 import { ObjectId } from 'mongodb'
+import { randomBytes } from 'crypto'
 import type { StringValue } from 'ms'
-import { TokenType, UserVerifyStatus } from '~/constants/enums'
-import { hashPassword } from '~/constants/crypto'
+import { TokenType, UserStatus } from '~/constants/enums'
+import { hashPassword, hashToken } from '~/constants/crypto'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { USERS_MESSAGES } from '~/constants/messages'
 import { ErrorWithStatus } from '~/models/Errors'
 import RefreshToken from '~/models/schemas/refreshToken.schema'
+import PasswordResetToken from '~/models/schemas/passwordResetToken.schema'
+import User from '~/models/schemas/users.schema'
 import databaseService from '~/services/database.service'
 import { signToken, verifyToken } from '~/utils/jwt'
+import { TokenPayload, RegisterStudentReqBody } from '~/models/requests/users.request'
+import { UserRoleType } from '~/models/schemas/users.schema'
 import dotenv from 'dotenv'
 dotenv.config()
 
 // ==========================================
-// Tầng Service xử lý toàn bộ logic nghiệp vụ xác thực (Authentication).
-// Tuân thủ nguyên tắc:
-//   - Không truy cập trực tiếp HTTP layer (req/res).
-//   - Mọi thao tác DB thực hiện qua databaseService (Native MongoDB Driver).
-//   - Refresh Token được cập nhật theo Immutable Operations:
-//     delete bản cũ + insert bản mới (không dùng $set).
-//   - Secret keys luôn đọc từ process.env, không hardcode.
+// AuthService — xử lý toàn bộ business logic xác thực ART-AI
+//
+// Nguyên tắc:
+//   - Không truy cập HTTP layer (req/res)
+//   - Refresh token lưu theo tokenHash (SHA-256), không lưu raw token
+//   - PasswordResetToken lưu theo tokenHash
+//   - Token Rotation: immutable expiry (refresh token mới giữ nguyên exp)
+//   - Secret keys đọc từ process.env
 // ==========================================
 
 class AuthService {
@@ -28,21 +34,14 @@ class AuthService {
 
   /**
    * Ký Access Token.
-   * Payload: { user_id, token_type: ACCESS_TOKEN, verify }
-   * Expiry: ACCESS_TOKEN_EXPIRES_IN từ environment variable.
+   * Payload: { user_id, token_type: ACCESS_TOKEN, role }
    */
-  private signAccessToken({
-    user_id,
-    verify
-  }: {
-    user_id: string
-    verify: UserVerifyStatus
-  }): Promise<string> {
+  private signAccessToken({ user_id, role }: { user_id: string; role: UserRoleType }): Promise<string> {
     return signToken({
       payload: {
         user_id,
         token_type: TokenType.ACCESS_TOKEN,
-        verify
+        role
       },
       privateKey: process.env.JWT_SECRET_ACCESS_TOKEN as string,
       options: {
@@ -52,44 +51,37 @@ class AuthService {
   }
 
   /**
-   * Có hai chế độ:
-   *   1. Ký mới từ đầu (không truyền exp): sử dụng expiresIn từ env.
-   *   2. Ký lại với exp cố định (truyền exp): dùng khi rotate refresh token
-   *      để giữ nguyên thời gian hết hạn ban đầu, tránh kéo dài thêm session.
-   *
-   * Immutable Rotation: khi rotate, refresh token mới có cùng exp với token cũ.
-   * Đây là cơ chế bảo mật quan trọng: attacker không thể kéo dài phiên vô hạn.
+   * Ký Refresh Token.
+   * Hai chế độ:
+   *   1. Ký mới: dùng expiresIn từ env
+   *   2. Rotate: truyền exp cũ để giữ nguyên expiry (Immutable Rotation)
    */
   private signRefreshToken({
     user_id,
-    verify,
+    role,
     exp
   }: {
     user_id: string
-    verify: UserVerifyStatus
+    role: UserRoleType
     exp?: number
   }): Promise<string> {
     if (exp !== undefined) {
-      // Chế độ rotate: nhúng trực tiếp exp vào payload thay vì dùng expiresIn.
-      // Lý do: khi exp đã được nhúng vào payload, jwt.sign sẽ ưu tiên nó
-      // hơn options.expiresIn. Đây là cách duy nhất giữ nguyên exp gốc.
       return signToken({
         payload: {
           user_id,
           token_type: TokenType.REFRESH_TOKEN,
-          verify,
+          role,
           exp
         },
         privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string
       })
     }
 
-    // Chế độ tạo mới: sử dụng expiresIn từ env.
     return signToken({
       payload: {
         user_id,
         token_type: TokenType.REFRESH_TOKEN,
-        verify
+        role
       },
       privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string,
       options: {
@@ -99,27 +91,25 @@ class AuthService {
   }
 
   /**
-   * Ký đồng thời cặp [Access Token, Refresh Token] bằng Promise.all
-   * để tối ưu hiệu năng (song song, không tuần tự).
+   * Ký đồng thời [Access Token, Refresh Token] song song.
    */
   private signAccessAndRefreshToken({
     user_id,
-    verify
+    role
   }: {
     user_id: string
-    verify: UserVerifyStatus
+    role: UserRoleType
   }): Promise<[string, string]> {
     return Promise.all([
-      this.signAccessToken({ user_id, verify }),
-      this.signRefreshToken({ user_id, verify })
+      this.signAccessToken({ user_id, role }),
+      this.signRefreshToken({ user_id, role })
     ])
   }
 
   /**
    * Giải mã Refresh Token để lấy payload (iat, exp).
-   * Được dùng sau khi ký để trích xuất iat/exp lưu vào DB.
    */
-  private decodeRefreshToken(refresh_token: string) {
+  private decodeRefreshToken(refresh_token: string): Promise<TokenPayload> {
     return verifyToken({
       token: refresh_token,
       secretOrPublicKey: process.env.JWT_SECRET_REFRESH_TOKEN as string
@@ -131,131 +121,154 @@ class AuthService {
   // ==========================================
 
   /**
-   * Luồng:
-   *   1. Tìm user theo email trên DB. Nếu không tồn tại → 401.
-   *   2. So sánh mật khẩu bằng hashPassword(password) với giá trị trong DB.
-   *      Nếu không khớp → 401 EMAIL_OR_PASSWORD_INCORRECT.
-   *      (Tầng validation middleware có thể đã check, nhưng service tự kiểm
-   *       tra độc lập để bảo đảm tính correct khi gọi service trực tiếp.)
-   *   3. Ký cặp [access_token, refresh_token] song song.
-   *   4. Giải mã refresh_token để lấy iat và exp.
-   *   5. Lưu refresh_token vào DB (collection refreshTokens).
-   *   6. Trả về { access_token, refresh_token }.
+   * Đăng ký student mới.
+   * - Kiểm tra duplicate email và studentCode
+   * - Hash password, tạo User với role=STUDENT, status=active
+   * - Trả về user object (không có passwordHash)
+   */
+  async registerStudent(body: RegisterStudentReqBody): Promise<{
+    id: string
+    studentCode: string
+    fullName: string
+    email: string
+    role: string
+  }> {
+    const { studentCode, fullName, email, password } = body
+
+    // Kiểm tra email duplicate
+    const emailExists = await databaseService.users.findOne({ email: email.toLowerCase() })
+    if (emailExists) {
+      throw new ErrorWithStatus({
+        message: USERS_MESSAGES.EMAIL_ALREADY_IN_USE,
+        status: HTTP_STATUS.UNPROCESSABLE_ENTITY
+      })
+    }
+
+    // Kiểm tra studentCode duplicate
+    const codeExists = await databaseService.users.findOne({ studentCode })
+    if (codeExists) {
+      throw new ErrorWithStatus({
+        message: USERS_MESSAGES.STUDENT_CODE_ALREADY_IN_USE,
+        status: HTTP_STATUS.UNPROCESSABLE_ENTITY
+      })
+    }
+
+    const user = new User({
+      email: email.toLowerCase(),
+      passwordHash: hashPassword(password),
+      fullName,
+      studentCode,
+      role: 'STUDENT',
+      status: UserStatus.ACTIVE,
+      isActive: true
+    })
+
+    const result = await databaseService.users.insertOne(user)
+
+    return {
+      id: result.insertedId.toString(),
+      studentCode: studentCode,
+      fullName,
+      email: email.toLowerCase(),
+      role: 'student' // map sang lowercase cho response FE
+    }
+  }
+
+  /**
+   * Login — sinh token pair và lưu tokenHash vào DB.
    *
-   * Quyết định thiết kế:
-   *   - Nhận user_id và verify thay vì nhận toàn bộ object User,
-   *     giữ cho interface service gọn gàng, dễ test, dễ mock.
-   *   - loginValidator trong middleware đã gắn req.user, controller
-   *     truyền user_id và verify xuống, không cần tái truy vấn DB.
-   *
-   * @param user_id - ObjectId string của user đã được xác thực.
-   * @param verify  - Trạng thái verify email của user.
+   * @param user_id  - ObjectId string của user đã được xác thực
+   * @param role     - UserRole của user
+   * @param req      - Express request (optional, dùng lấy userAgent/ip)
    */
   async login({
     user_id,
-    verify
+    role,
+    userAgent = '',
+    ipAddress = ''
   }: {
     user_id: string
-    verify: UserVerifyStatus
-  }): Promise<{ access_token: string; refresh_token: string }> {
-    const [access_token, refresh_token] = await this.signAccessAndRefreshToken({
-      user_id,
-      verify
-    })
+    role: UserRoleType
+    userAgent?: string
+    ipAddress?: string
+  }): Promise<{
+    access_token: string
+    refresh_token: string
+  }> {
+    const [access_token, refresh_token] = await this.signAccessAndRefreshToken({ user_id, role })
 
     const { iat, exp } = await this.decodeRefreshToken(refresh_token)
 
-    await databaseService.refreshTokens.insertOne(
-      new RefreshToken({
-        user_id: new ObjectId(user_id),
-        token: refresh_token,
-        iat,
-        exp
-      })
-    )
+    // Lưu tokenHash thay vì raw token
+    const tokenHash = hashToken(refresh_token)
 
-    return {
-      access_token,
-      refresh_token
-    }
+    await Promise.all([
+      databaseService.refreshTokens.insertOne(
+        new RefreshToken({
+          userId: new ObjectId(user_id),
+          tokenHash,
+          expiresAt: new Date(exp * 1000),
+          iat,
+          userAgent,
+          ipAddress
+        })
+      ),
+      // Cập nhật lastLoginAt
+      databaseService.users.updateOne(
+        { _id: new ObjectId(user_id) },
+        { $set: { lastLoginAt: new Date() } }
+      )
+    ])
+
+    return { access_token, refresh_token }
   }
 
   /**
-   * Luồng:
-   *   1. Xóa document refresh_token khỏi collection refreshTokens theo field token.
-   *   2. Trả về message xác nhận.
-   *
-   * Bảo mật:
-   *   - Refreshe Token Validator đã xác thực token hợp lệ và còn trong DB
-   *     trước khi controller gọi service này.
-   *   - Xóa token khỏi DB đảm bảo token không thể dùng lại sau khi logout
-   *     (chống lại refresh token replay attack).
-   *
-   * @param refresh_token - Refresh token cần revoke.
+   * Logout — revoke refresh token (xóa tokenHash khỏi DB).
    */
   async logout(refresh_token: string): Promise<{ message: string }> {
-    await databaseService.refreshTokens.deleteOne({ token: refresh_token })
+    const tokenHash = hashToken(refresh_token)
+    await databaseService.refreshTokens.deleteOne({ tokenHash })
 
-    return {
-      message: USERS_MESSAGES.LOGOUT_SUCCESSFUL
-    }
+    return { message: USERS_MESSAGES.LOGOUT_SUCCESSFUL }
   }
 
   /**
-   * Cơ chế Immutable Rotation:
-   *   - Ký refresh token mới với exp GIỐNG HỆT token cũ (không kéo dài thêm).
-   *   - Xóa token cũ và insert token mới trong một chuỗi operation song song.
-   *   - Kết quả: attacker không thể dùng token cũ sau rotation,
-   *     và session không bị kéo dài vô hạn qua việc rotate liên tục.
-   *
-   * Luồng chi tiết:
-   *   1. Song song:
-   *      a. Ký access_token mới.
-   *      b. Ký refresh_token mới với exp từ token cũ (immutable expiry).
-   *      c. Xóa refresh_token cũ khỏi DB.
-   *   2. Giải mã refresh_token cũ để lấy iat gốc (iat không đổi qua rotation).
-   *   3. Insert refresh_token mới vào DB với iat gốc và exp gốc.
-   *   4. Trả về cặp token mới.
-   *
-   * Lưu ý: decodeRefreshToken(refresh_token) dùng token CŨ (đã có trong tham số)
-   * để lấy iat gốc. Token cũ đã được xác thực ở tầng middleware trước đó.
-   *
-   * @param user_id       - ID của user.
-   * @param verify        - Trạng thái verify của user.
-   * @param refresh_token - Refresh token CŨ cần rotate.
-   * @param exp           - Thời điểm hết hạn của token cũ (Unix timestamp).
+   * Refresh Token Rotation (Immutable).
+   *   - Ký access token mới
+   *   - Ký refresh token mới với exp cũ (không kéo dài session)
+   *   - Revoke token cũ, lưu token mới (theo tokenHash)
    */
   async refreshToken({
     user_id,
-    verify,
+    role,
     refresh_token,
     exp
   }: {
     user_id: string
-    verify: UserVerifyStatus
+    role: UserRoleType
     refresh_token: string
     exp: number
   }): Promise<{ access_token: string; refresh_token: string }> {
-    // Thực hiện ba operation song song để tối ưu hiệu năng:
-    // - Ký access_token mới
-    // - Ký refresh_token mới với exp cố định (immutable rotation)
-    // - Xóa refresh_token cũ khỏi DB (revoke ngay khi rotation bắt đầu)
-    const [new_access_token, new_refresh_token] = await Promise.all([
-      this.signAccessToken({ user_id, verify }),
-      this.signRefreshToken({ user_id, verify, exp }),
-      databaseService.refreshTokens.deleteOne({ token: refresh_token })
+    const old_token_hash = hashToken(refresh_token)
+
+    const [[new_access_token, new_refresh_token]] = await Promise.all([
+      Promise.all([
+        this.signAccessToken({ user_id, role }),
+        this.signRefreshToken({ user_id, role, exp })
+      ]),
+      databaseService.refreshTokens.deleteOne({ tokenHash: old_token_hash })
     ])
 
-    // Lấy iat từ token CŨ để bảo toàn thời điểm phát hành ban đầu.
-    // iat (issued at) không nên thay đổi qua các lần rotation.
-    const decoded_old_refresh_token = await this.decodeRefreshToken(refresh_token)
+    const decoded_old = await this.decodeRefreshToken(refresh_token)
+    const new_token_hash = hashToken(new_refresh_token)
 
     await databaseService.refreshTokens.insertOne(
       new RefreshToken({
-        user_id: new ObjectId(user_id),
-        token: new_refresh_token,
-        iat: decoded_old_refresh_token.iat,
-        exp: decoded_old_refresh_token.exp
+        userId: new ObjectId(user_id),
+        tokenHash: new_token_hash,
+        expiresAt: new Date(decoded_old.exp * 1000),
+        iat: decoded_old.iat
       })
     )
 
@@ -266,28 +279,204 @@ class AuthService {
   }
 
   /**
-   * Kiểm tra email có tồn tại trong hệ thống không.
-   * Dùng để validate trước khi login nếu cần tách logic check email.
+   * Forgot Password — sinh reset token, lưu hash, chuẩn bị gửi email.
    *
-   * @param email - Địa chỉ email cần kiểm tra.
+   * Bảo mật: Luôn trả về cùng message dù email tồn tại hay không
+   * (ngăn email enumeration attack).
+   *
+   * DEV MODE: Log raw token ra console.
+   * PROD MODE: Gửi qua email service (placeholder).
+   */
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const user = await databaseService.users.findOne({ email: email.toLowerCase() })
+
+    // Không reveal thông tin về email có tồn tại không
+    if (!user) {
+      return { message: USERS_MESSAGES.FORGOT_PASSWORD_SUCCESSFUL }
+    }
+
+    // Sinh random reset token (32 bytes = 64 hex chars)
+    const rawToken = randomBytes(32).toString('hex')
+    const tokenHash = hashToken(rawToken)
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 giờ
+
+    // Xóa các token cũ của user này (chỉ giữ 1 token active)
+    await databaseService.passwordResetTokens.deleteMany({ userId: user._id })
+
+    await databaseService.passwordResetTokens.insertOne(
+      new PasswordResetToken({
+        userId: user._id as ObjectId,
+        tokenHash,
+        expiresAt
+      })
+    )
+
+    // TODO: Tích hợp email service khi sẵn sàng
+    // Hiện tại log ra console trong dev mode
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[DEV] Password Reset Token:', rawToken)
+      console.log('[DEV] Reset URL: /auth/reset-password?token=' + rawToken)
+    }
+
+    // Placeholder: gửi email service
+    // await emailService.sendPasswordReset({ to: email, token: rawToken, expiresAt })
+
+    return { message: USERS_MESSAGES.FORGOT_PASSWORD_SUCCESSFUL }
+  }
+
+  /**
+   * Reset Password — verify token, đổi password, đánh dấu token đã dùng.
+   */
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    const tokenHash = hashToken(token)
+    const resetToken = await databaseService.passwordResetTokens.findOne({ tokenHash })
+
+    if (!resetToken) {
+      throw new ErrorWithStatus({
+        message: USERS_MESSAGES.RESET_TOKEN_IS_INVALID,
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    if (resetToken.usedAt) {
+      throw new ErrorWithStatus({
+        message: USERS_MESSAGES.RESET_TOKEN_ALREADY_USED,
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    if (resetToken.expiresAt < new Date()) {
+      throw new ErrorWithStatus({
+        message: USERS_MESSAGES.RESET_TOKEN_EXPIRED,
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    const newPasswordHash = hashPassword(newPassword)
+
+    // Cập nhật password và đánh dấu token đã dùng (parallel)
+    await Promise.all([
+      databaseService.users.updateOne(
+        { _id: resetToken.userId },
+        { $set: { passwordHash: newPasswordHash, updatedAt: new Date() } }
+      ),
+      databaseService.passwordResetTokens.updateOne(
+        { _id: resetToken._id },
+        { $set: { usedAt: new Date() } }
+      )
+    ])
+
+    return { message: USERS_MESSAGES.RESET_PASSWORD_SUCCESSFUL }
+  }
+
+  /**
+   * Change Password — xác thực old password, cập nhật new password.
+   * Yêu cầu user đã đăng nhập.
+   */
+  async changePassword(
+    user_id: string,
+    oldPassword: string,
+    newPassword: string
+  ): Promise<{ message: string }> {
+    const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
+
+    if (!user) {
+      throw new ErrorWithStatus({
+        message: USERS_MESSAGES.USER_NOT_FOUND,
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+
+    const oldPasswordHash = hashPassword(oldPassword)
+
+    // So sánh với passwordHash trong DB
+    // Backward compat: nếu DB còn dùng field 'password' thì check cả hai
+    const storedHash = (user as any).passwordHash || (user as any).password
+    if (storedHash !== oldPasswordHash) {
+      throw new ErrorWithStatus({
+        message: USERS_MESSAGES.OLD_PASSWORD_IS_INCORRECT,
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    // New password phải khác old password
+    const newPasswordHash = hashPassword(newPassword)
+    if (newPasswordHash === oldPasswordHash) {
+      throw new ErrorWithStatus({
+        message: USERS_MESSAGES.NEW_PASSWORD_SAME_AS_OLD,
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      { $set: { passwordHash: newPasswordHash, updatedAt: new Date() } }
+    )
+
+    return { message: USERS_MESSAGES.CHANGE_PASSWORD_SUCCESSFUL }
+  }
+
+  /**
+   * Tìm student theo studentCode + password.
+   * Dùng bởi loginValidator (student flow).
+   */
+  async findStudentByCodeAndPassword(
+    studentCode: string,
+    password: string
+  ): Promise<InstanceType<typeof User> | null> {
+    const passwordHash = hashPassword(password)
+
+    const user = await databaseService.users.findOne({
+      studentCode,
+      $or: [
+        { passwordHash },
+        { password: passwordHash } // backward compat
+      ]
+    })
+
+    return user as InstanceType<typeof User> | null
+  }
+
+  /**
+   * Tìm staff theo username + password.
+   * Dùng bởi loginValidator (staff flow).
+   */
+  async findStaffByUsernameAndPassword(
+    username: string,
+    password: string
+  ): Promise<InstanceType<typeof User> | null> {
+    const passwordHash = hashPassword(password)
+
+    const user = await databaseService.users.findOne({
+      username,
+      $or: [
+        { passwordHash },
+        { password: passwordHash } // backward compat
+      ]
+    })
+
+    return user as InstanceType<typeof User> | null
+  }
+
+  /**
+   * Kiểm tra email có tồn tại trong hệ thống không.
    */
   async checkEmailExists(email: string): Promise<boolean> {
-    const user = await databaseService.users.findOne({ email })
+    const user = await databaseService.users.findOne({ email: email.toLowerCase() })
     return Boolean(user)
   }
 
   /**
-   * Tìm user theo email và mật khẩu đã hash.
-   * Dùng bởi loginValidator để xác thực thông tin đăng nhập.
-   * Trả về null nếu không tìm thấy (email sai hoặc password sai).
-   *
-   * @param email    - Địa chỉ email.
-   * @param password - Mật khẩu thô (chưa hash), hàm này tự hash trước khi query.
+   * @deprecated Dùng findStudentByCodeAndPassword hoặc findStaffByUsernameAndPassword
+   * Giữ lại để backward compat với một số module cũ.
    */
   async findUserByEmailAndPassword(email: string, password: string) {
     const user = await databaseService.users.findOne({
       email,
-      password: hashPassword(password)
+      $or: [
+        { passwordHash: hashPassword(password) },
+        { password: hashPassword(password) }
+      ]
     })
 
     if (!user) {

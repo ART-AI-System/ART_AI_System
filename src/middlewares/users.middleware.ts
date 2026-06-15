@@ -3,7 +3,7 @@ import { checkSchema, ParamSchema } from 'express-validator'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import { capitalize } from 'lodash'
 import { ObjectId } from 'mongodb'
-import { UserVerifyStatus } from '~/constants/enums'
+import { UserStatus } from '~/constants/enums'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { USERS_MESSAGES } from '~/constants/messages'
 import { ErrorWithStatus } from '~/models/Errors'
@@ -73,7 +73,9 @@ const forgotPasswordTokenSchema: ParamSchema = {
         })
         const user = await databaseService.users.findOne({ _id: new ObjectId(decoded_forgot_password_token.user_id) })
         if (!user) throw new ErrorWithStatus({ message: USERS_MESSAGES.USER_NOT_FOUND, status: HTTP_STATUS.UNAUTHORIZED })
-        if (user.forgot_password_token !== value) throw new ErrorWithStatus({ message: USERS_MESSAGES.FORGOT_PASSWORD_TOKEN_IS_INVALID, status: HTTP_STATUS.UNAUTHORIZED })
+        // ART-AI: forgot_password_token field removed from User schema.
+        // Validation is JWT-based only for legacy /users/reset-password route.
+        // New /auth/reset-password route uses PasswordResetToken collection.
         req.decoded_forgot_password_token = decoded_forgot_password_token
       } catch (error) {
         throw error instanceof JsonWebTokenError
@@ -169,10 +171,13 @@ export const resetPasswordValidator = validate(
   }, ['body'])
 )
 
+/**
+ * @deprecated — ART-AI không dùng email verify flow.
+ * Giữ lại để backward compat với users.routes.ts.
+ * Luôn gọi next() — không block bất kỳ request nào.
+ */
 export const verifiedUserValidator = (req: Request, res: Response, next: NextFunction) => {
-  if ((req.decoded_auth as TokenPayload).verify !== UserVerifyStatus.VERIFIED) {
-    return next(new ErrorWithStatus({ message: USERS_MESSAGES.USER_NOT_VERIFIED, status: HTTP_STATUS.FORBIDDEN }))
-  }
+  // ART-AI không có email verification flow. Luôn allow.
   next()
 }
 

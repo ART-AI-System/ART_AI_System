@@ -23,7 +23,6 @@ import usersService from '~/services/users.service'
 import { ParamsDictionary } from 'express-serve-static-core'
 import databaseService from '~/services/database.service'
 import HTTP_STATUS from '~/constants/httpStatus'
-import { UserVerifyStatus } from '~/constants/enums'
 import path from 'path'
 import fs from 'fs'
 
@@ -34,7 +33,8 @@ import fs from 'fs'
 export const loginController = async (req: Request<ParamsDictionary, any, LoginReqBody>, res: Response) => {
   const user = req.user as User
   const user_id = user._id as ObjectId
-  const result = await usersService.login({ user_id: user_id.toString(), verify: user.verify })
+  const role = user.role || 'STUDENT'
+  const result = await usersService.login({ user_id: user_id.toString(), role })
   return res.json({
     message: USERS_MESSAGES.LOGIN_SUCCESSFUL,
     result
@@ -66,7 +66,7 @@ export const oauthController = async (req: Request, res: Response) => {
   const { code } = req.query
   const result = await usersService.oauthGoogle(code as string)
   const urlRedirect = `${process.env.CLIENT_REDIRECT_CALLBACK}?access_token=${result.access_token}
-  &refresh_token=${result.refresh_token}&newUser=${result.newUser}&verify=${result.verify}`
+  &refresh_token=${result.refresh_token}&newUser=${result.newUser}&role=${result.role}`
   console.log('Redirecting to:', urlRedirect)
   return res.redirect(urlRedirect)
 }
@@ -77,8 +77,8 @@ export const refreshTokenController = async (
   next: NextFunction
 ) => {
   const { refresh_token } = req.body
-  const { user_id, verify, exp } = req.decored_refresh_token as TokenPayload
-  const result = await usersService.refreshToken({ user_id, verify, refresh_token, exp })
+  const { user_id, role, exp } = req.decored_refresh_token as TokenPayload
+  const result = await usersService.refreshToken({ user_id, role, refresh_token, exp })
   return res.json({
     message: USERS_MESSAGES.REFRESH_TOKEN_SUCCESSFUL,
     result
@@ -90,38 +90,15 @@ export const emailVerifyController = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { user_id } = req.decoded_email_verify_token as TokenPayload
-  const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
-  if (!user) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({
-      message: USERS_MESSAGES.USER_NOT_FOUND
-    })
-  }
-  if (user.email_verify_token === '') {
-    return res.json({
-      message: USERS_MESSAGES.EMAIL_ALREADY_VERIFIED
-    })
-  }
-  const result = await usersService.verifyEmail(user_id)
+  // ART-AI không dùng email verify flow
   return res.json({
-    message: USERS_MESSAGES.EMAIL_VERIFY_SUCCESSFUL,
-    result
+    message: USERS_MESSAGES.EMAIL_VERIFY_SUCCESSFUL
   })
 }
 
 export const resendVerifyEmailController = async (req: Request, res: Response, next: NextFunction) => {
   const { user_id } = req.decoded_auth as TokenPayload
-  const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
-  if (!user) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({
-      message: USERS_MESSAGES.USER_NOT_FOUND
-    })
-  }
-  if (user.verify === UserVerifyStatus.VERIFIED) {
-    return res.json({
-      message: USERS_MESSAGES.EMAIL_ALREADY_VERIFIED
-    })
-  }
+  // ART-AI không dùng email verify flow
   const result = await usersService.resendVerifyEmail(user_id)
   return res.json(result)
 }
@@ -131,8 +108,8 @@ export const forgotPasswordController = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { _id, verify } = req.user as User
-  const result = await usersService.forgotPassword({ user_id: (_id as ObjectId).toString(), verify })
+  const { _id } = req.user as User
+  const result = await usersService.forgotPassword({ user_id: (_id as ObjectId).toString() })
   return res.json(result)
 }
 
@@ -151,9 +128,12 @@ export const resetPasswordController = async (
   res: Response,
   next: NextFunction
 ) => {
+  // Legacy route: dùng forgot_password_token JWT (qua users.routes.ts)
+  // New route (auth.routes.ts) dùng authService.resetPassword() riêng biệt.
   const { user_id } = req.decoded_forgot_password_token as TokenPayload
-  const { password } = req.body
-  const result = await usersService.resetPassword(user_id, password)
+  // Giữ lại resetPassword(user_id, password) trong usersService cho backward compat
+  const newPassword = (req.body as any).password || (req.body as any).newPassword || ''
+  const result = await usersService.resetPassword(user_id, newPassword)
   return res.json(result)
 }
 

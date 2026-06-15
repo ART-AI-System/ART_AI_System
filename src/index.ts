@@ -18,6 +18,7 @@ databaseService.connect().then(async () => {
   await databaseService.initCollections()
   databaseService.indexUsers()
   databaseService.indexRefreshTokens()
+  databaseService.indexPasswordResetTokens()
   databaseService.indexSubmissions()
   databaseService.indexSubmissionReviews()
 })

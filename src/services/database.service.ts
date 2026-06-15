@@ -2,6 +2,7 @@ import { MongoClient, Db, Collection } from 'mongodb'
 import dotenv from 'dotenv'
 import User from '~/models/schemas/users.schema'
 import RefreshToken from '~/models/schemas/refreshToken.schema'
+import PasswordResetToken from '~/models/schemas/passwordResetToken.schema'
 import Class from '~/models/schemas/classes.schema'
 import GradeItem from '~/models/schemas/gradeItems.schema'
 import Grade from '~/models/schemas/grades.schema'
@@ -33,9 +34,8 @@ class DatabaseService {
 
   async indexUsers() {
     try {
-      const exists = await this.users.indexExists(['email_1', 'email_1_password_1'])
-      if (!exists) {
-        await this.users.createIndex({ email: 1, password: 1 })
+      const emailIndexExists = await this.users.indexExists(['email_1'])
+      if (!emailIndexExists) {
         await this.users.createIndex({ email: 1 }, { unique: true })
       }
       // ART_AI_DB_SCHEMA_SPEC: studentCode must be unique when present (sparse)
@@ -43,11 +43,24 @@ class DatabaseService {
       if (!studentCodeIndexExists) {
         await this.users.createIndex({ studentCode: 1 }, { unique: true, sparse: true })
       }
+      // username unique sparse (staff accounts)
+      const usernameIndexExists = await this.users.indexExists(['username_1'])
+      if (!usernameIndexExists) {
+        await this.users.createIndex({ username: 1 }, { unique: true, sparse: true })
+      }
+      // role and status indexes for filtering
+      const roleIndexExists = await this.users.indexExists(['role_1'])
+      if (!roleIndexExists) {
+        await this.users.createIndex({ role: 1 })
+        await this.users.createIndex({ status: 1 })
+      }
     } catch (error: any) {
       if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
-        await this.users.createIndex({ email: 1, password: 1 })
         await this.users.createIndex({ email: 1 }, { unique: true })
         await this.users.createIndex({ studentCode: 1 }, { unique: true, sparse: true })
+        await this.users.createIndex({ username: 1 }, { unique: true, sparse: true })
+        await this.users.createIndex({ role: 1 })
+        await this.users.createIndex({ status: 1 })
       } else {
         console.error('Error indexing users:', error)
       }
@@ -56,17 +69,52 @@ class DatabaseService {
 
   async indexRefreshTokens() {
     try {
-      const exists = await this.refreshTokens.indexExists(['token_1', 'exp_1'])
-      if (!exists) {
-        await this.refreshTokens.createIndex({ token: 1 }, { unique: true })
-        await this.refreshTokens.createIndex({ exp: 1 }, { expireAfterSeconds: 0 })
+      const tokenHashIndexExists = await this.refreshTokens.indexExists(['tokenHash_1'])
+      if (!tokenHashIndexExists) {
+        await this.refreshTokens.createIndex({ tokenHash: 1 }, { unique: true })
+      }
+      const expiresAtIndexExists = await this.refreshTokens.indexExists(['expiresAt_1'])
+      if (!expiresAtIndexExists) {
+        // TTL index: MongoDB tự xóa document khi expiresAt < now
+        await this.refreshTokens.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+      }
+      const userIdIndexExists = await this.refreshTokens.indexExists(['userId_1'])
+      if (!userIdIndexExists) {
+        await this.refreshTokens.createIndex({ userId: 1 })
       }
     } catch (error: any) {
       if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
-        await this.refreshTokens.createIndex({ token: 1 }, { unique: true })
-        await this.refreshTokens.createIndex({ exp: 1 }, { expireAfterSeconds: 0 })
+        await this.refreshTokens.createIndex({ tokenHash: 1 }, { unique: true })
+        await this.refreshTokens.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+        await this.refreshTokens.createIndex({ userId: 1 })
       } else {
         console.error('Error indexing refresh tokens:', error)
+      }
+    }
+  }
+
+  async indexPasswordResetTokens() {
+    try {
+      const tokenHashIndexExists = await this.passwordResetTokens.indexExists(['tokenHash_1'])
+      if (!tokenHashIndexExists) {
+        await this.passwordResetTokens.createIndex({ tokenHash: 1 }, { unique: true })
+      }
+      const expiresAtIndexExists = await this.passwordResetTokens.indexExists(['expiresAt_1'])
+      if (!expiresAtIndexExists) {
+        // TTL index: tự động xóa token hết hạn
+        await this.passwordResetTokens.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+      }
+      const userIdIndexExists = await this.passwordResetTokens.indexExists(['userId_1'])
+      if (!userIdIndexExists) {
+        await this.passwordResetTokens.createIndex({ userId: 1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.passwordResetTokens.createIndex({ tokenHash: 1 }, { unique: true })
+        await this.passwordResetTokens.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+        await this.passwordResetTokens.createIndex({ userId: 1 })
+      } else {
+        console.error('Error indexing password reset tokens:', error)
       }
     }
   }
@@ -79,6 +127,7 @@ class DatabaseService {
       const requiredCollections = [
         process.env.DB_USERS_COLLECTION || 'users',
         process.env.DB_REFRESH_TOKENS_COLLECTION || 'refresh_tokens',
+        process.env.DB_PASSWORD_RESET_TOKENS_COLLECTION || 'password_reset_tokens',
         process.env.DB_CLASSES_COLLECTION || 'classes',
         process.env.DB_GRADE_ITEMS_COLLECTION || 'grade_items',
         process.env.DB_GRADES_COLLECTION || 'grades',
@@ -156,6 +205,10 @@ class DatabaseService {
 
   get refreshTokens(): Collection<RefreshToken> {
     return this.db.collection(process.env.DB_REFRESH_TOKENS_COLLECTION || 'refresh_tokens')
+  }
+
+  get passwordResetTokens(): Collection<PasswordResetToken> {
+    return this.db.collection(process.env.DB_PASSWORD_RESET_TOKENS_COLLECTION || 'password_reset_tokens')
   }
 
   get classes(): Collection<Class> {
