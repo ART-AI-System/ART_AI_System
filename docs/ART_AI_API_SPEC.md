@@ -1,6 +1,6 @@
 # ART-AI Backend API Specification
 
-Version: 3.1 Revised  
+Version: 3.2 BRS Aligned  
 Status: Draft for implementation  
 Project: ART-AI (Academic Research Transparency & AI Audit System)  
 Base URL: `/api`
@@ -139,6 +139,8 @@ PDF, DOCX, PPTX, ZIP
 
 ---
 
+---
+
 # 1. Authentication APIs
 
 ## 1.1 Auth Endpoints
@@ -222,6 +224,8 @@ Response:
 
 ---
 
+---
+
 # 2. User Management APIs
 
 ## 2.1 User Endpoints
@@ -259,6 +263,8 @@ Business rules:
 - Admin cannot delete or deactivate their own account.
 - When role changes from `student` to another role, `studentCode` may be set to `null`.
 - `studentCode` is required only for student users.
+
+---
 
 ---
 
@@ -403,9 +409,9 @@ Content-Type: multipart/form-data
 
 Fields:
 
-| Field  | Type | Required | Description                                      |
-| ------ | ---- | -------- | ------------------------------------------------ |
-| `file` | File | Yes      | Excel file containing studentCode values         |
+| Field  | Type | Required | Description                              |
+| ------ | ---- | -------- | ---------------------------------------- |
+| `file` | File | Yes      | Excel file containing studentCode values |
 
 Business rules:
 
@@ -425,7 +431,11 @@ Business rules:
 
 ---
 
-## 3.5 Session / Slot APIs
+---
+
+# 4. Session Management APIs
+
+## 4.1 Session / Slot APIs
 
 A session represents a learning slot inside a class and subject.
 
@@ -463,7 +473,9 @@ Business rules:
 
 ---
 
-# 4. Assignment APIs
+---
+
+# 5. Assignment Management APIs
 
 Assignments replace the old `grade-items` concept for the new business flow.
 
@@ -547,7 +559,9 @@ PDF, DOCX, PPTX, ZIP
 
 ---
 
-# 5. Submission APIs
+---
+
+# 5. Submission Management APIs
 
 ## 5.1 Submission Endpoints
 
@@ -651,7 +665,9 @@ Business rules:
 
 ---
 
-# 6. AI Usage Declaration APIs
+---
+
+# 6. AI Declaration APIs
 
 ## 6.1 AI Interaction Endpoints
 
@@ -708,6 +724,8 @@ Business rules:
 
 ---
 
+---
+
 # 7. AI Evaluation APIs
 
 ## 7.1 AI Evaluation Endpoints
@@ -753,17 +771,19 @@ Business rules:
 
 ---
 
-# 8. Lecturer Review APIs
+---
+
+# 8. Review Management APIs
 
 ## 8.1 Review Endpoints
 
-| Method | Endpoint                                         | Role                   | Description                   |
-| ------ | ------------------------------------------------ | ---------------------- | ----------------------------- |
+| Method | Endpoint                                         | Role                   | Description                         |
+| ------ | ------------------------------------------------ | ---------------------- | ----------------------------------- |
 | GET    | `/lecturer/classes/:classId/submission-overview` | Lecturer               | View finalized submissions in class |
-| GET    | `/submissions/:submissionId/review`              | Lecturer, Subject Head | Get review                    |
-| POST   | `/submissions/:submissionId/review`              | Lecturer               | Create review                 |
-| PATCH  | `/submissions/:submissionId/review-status`       | Lecturer               | Update review status          |
-| POST   | `/submissions/:submissionId/comments`            | Lecturer               | Add review comment            |
+| GET    | `/submissions/:submissionId/review`              | Lecturer, Subject Head | Get review                          |
+| POST   | `/submissions/:submissionId/review`              | Lecturer               | Create review                       |
+| PATCH  | `/submissions/:submissionId/review-status`       | Lecturer               | Update review status                |
+| POST   | `/submissions/:submissionId/comments`            | Lecturer               | Add review comment                  |
 
 Review status:
 
@@ -785,9 +805,13 @@ Create review request:
 
 ---
 
-# 9. Grading APIs
+---
 
-## 9.1 Grade Endpoints
+# 9. Grading Management APIs
+
+## 9.1 Grade APIs
+
+### 9.1.1 Grade Endpoints
 
 | Method | Endpoint                                  | Role                            | Description            |
 | ------ | ----------------------------------------- | ------------------------------- | ---------------------- |
@@ -818,9 +842,11 @@ Business rules:
 
 ---
 
-# 10. Final Result & Academic Classification APIs
+---
 
-## 10.1 Final Result Endpoints
+## 9.2 Final Result & Academic Classification APIs
+
+### 9.2.1 Final Result Endpoints
 
 | Method | Endpoint                                             | Role                            | Description                    |
 | ------ | ---------------------------------------------------- | ------------------------------- | ------------------------------ |
@@ -866,7 +892,7 @@ Classification rules:
 9.0 - 10.0  = excellent
 ```
 
-## 10.2 Classification Endpoints
+### 9.2.2 Classification Endpoints
 
 | Method | Endpoint                              | Role                            | Description                 |
 | ------ | ------------------------------------- | ------------------------------- | --------------------------- |
@@ -876,9 +902,288 @@ Classification rules:
 
 ---
 
-# 11. Flag Management APIs
+---
 
-## 11.1 Flag Endpoints
+# 10. Notification & Email APIs
+
+## 10.1 Notification Endpoints
+
+| Method | Endpoint                       | Role                          | Description                       |
+| ------ | ------------------------------ | ----------------------------- | --------------------------------- |
+| GET    | `/notifications`               | All                           | List current user's notifications |
+| GET    | `/notifications/unread-count`  | All                           | Get unread count                  |
+| PATCH  | `/notifications/:id/read`      | All                           | Mark notification as read         |
+| PATCH  | `/notifications/read-all`      | All                           | Mark all as read                  |
+| DELETE | `/notifications/:id`           | All                           | Delete notification               |
+| POST   | `/notifications/announcements` | Lecturer, Subject Head, Admin | Send announcement                 |
+
+Notification types:
+
+```text
+assignment_created
+assignment_updated
+deadline_reminder
+submission_success
+submission_reviewed
+grade_published
+flag_created
+final_result_released
+chat_message
+system_announcement
+```
+
+## 10.2 Email Log Endpoints
+
+| Method | Endpoint                | Role  | Description          |
+| ------ | ----------------------- | ----- | -------------------- |
+| GET    | `/email-logs`           | Admin | List email logs      |
+| GET    | `/email-logs/:id`       | Admin | Get email log detail |
+| POST   | `/email-logs/:id/retry` | Admin | Retry failed email   |
+
+System email triggers:
+
+- Assignment published.
+- Submission finalized successfully.
+- Deadline reminder.
+- Grade published.
+- Password reset.
+- System announcement.
+
+---
+
+---
+
+# 11. Realtime Chat APIs
+
+Socket.IO is recommended for realtime message delivery. REST APIs are used for chat room discovery, history, and message management.
+
+## 11.1 Chat Room Endpoints
+
+| Method | Endpoint                      | Role                            | Description                    |
+| ------ | ----------------------------- | ------------------------------- | ------------------------------ |
+| GET    | `/chat/rooms`                 | Student, Lecturer, Subject Head | List my chat rooms             |
+| POST   | `/chat/rooms`                 | Student, Lecturer, Subject Head | Create or get direct chat room |
+| GET    | `/chat/rooms/:roomId`         | Room Member                     | Get room detail                |
+| PATCH  | `/chat/rooms/:roomId/archive` | Room Member                     | Archive room                   |
+| GET    | `/chat/contacts`              | Student, Lecturer, Subject Head | List available contacts        |
+
+Create room request:
+
+```json
+{
+  "memberIds": ["user_id_1", "user_id_2"],
+  "context": {
+    "classId": "class_id",
+    "subjectId": "subject_id"
+  }
+}
+```
+
+Business rules:
+
+- Student can chat with classmates in the same class.
+- Student can chat with lecturers who teach their classes.
+- Lecturer can chat with students in their classes.
+- Lecturer can chat with Subject Head in the same department/subject scope.
+- Subject Head can chat with lecturers and students within managed scope.
+
+## 11.2 Chat Message Endpoints
+
+| Method | Endpoint                         | Role                            | Description          |
+| ------ | -------------------------------- | ------------------------------- | -------------------- |
+| GET    | `/chat/rooms/:roomId/messages`   | Room Member                     | Get message history  |
+| POST   | `/chat/rooms/:roomId/messages`   | Room Member                     | Send message         |
+| PATCH  | `/chat/messages/:messageId/read` | Room Member                     | Mark message as read |
+| DELETE | `/chat/messages/:messageId`      | Sender                          | Delete own message   |
+| GET    | `/chat/messages/search`          | Student, Lecturer, Subject Head | Search messages      |
+
+Send message request:
+
+```json
+{
+  "messageType": "text",
+  "content": "Please check the deadline for assignment 1."
+}
+```
+
+Supported message types:
+
+```text
+text
+image
+file
+```
+
+## 11.3 Socket Events
+
+Client emits:
+
+```text
+chat:join_room
+chat:send_message
+chat:typing
+chat:mark_read
+```
+
+Server emits:
+
+```text
+chat:new_message
+chat:typing
+chat:message_read
+chat:room_updated
+notification:new
+```
+
+---
+
+---
+
+# 12. Reporting & Analytics APIs
+
+## 12.1 Dashboard, Reporting & Analytics APIs
+
+Student does not have a dashboard in the new business flow. Student home is semester → subject → session.
+
+### 12.1.1 Student Home APIs
+
+| Method | Endpoint                                  | Role    | Description                                           |
+| ------ | ----------------------------------------- | ------- | ----------------------------------------------------- |
+| GET    | `/student/home`                           | Student | Load current semester, enrolled subjects, and classes |
+| GET    | `/student/semesters/:semesterId/subjects` | Student | Load enrolled subjects in selected semester           |
+| GET    | `/student/classes/:classId/sessions`      | Student | Load sessions of selected class                       |
+
+Student home response example:
+
+```json
+{
+  "currentSemester": {
+    "id": "semester_id",
+    "name": "Summer 2026"
+  },
+  "subjects": [
+    {
+      "subjectId": "subject_id",
+      "subjectCode": "SWD392",
+      "subjectName": "Software Architecture and Design",
+      "classId": "class_id",
+      "classCode": "SE18D01",
+      "lecturerName": "Nguyen Van A"
+    }
+  ]
+}
+```
+
+### 12.1.2 Lecturer Home & Analytics APIs
+
+| Method | Endpoint                                           | Role     | Description                                |
+| ------ | -------------------------------------------------- | -------- | ------------------------------------------ |
+| GET    | `/lecturer/home`                                   | Lecturer | Load lecturer classes and current semester |
+| GET    | `/lecturer/classes/:classId/overview`              | Lecturer | Overview of selected class                 |
+| GET    | `/lecturer/classes/:classId/submission-statistics` | Lecturer | Submission statistics                      |
+| GET    | `/lecturer/classes/:classId/ai-statistics`         | Lecturer | AI usage statistics                        |
+
+Metrics:
+
+- Total students.
+- Draft / submitted / late submissions.
+- Pending reviews.
+- Average score.
+- AI usage distribution.
+- Flagged submissions.
+
+### 12.1.3 Subject Head Analytics APIs
+
+| Method | Endpoint                                        | Role         | Description                       |
+| ------ | ----------------------------------------------- | ------------ | --------------------------------- |
+| GET    | `/subject-head/overview`                        | Subject Head | Overall managed scope analytics   |
+| GET    | `/subject-head/classes`                         | Subject Head | View classes in managed scope     |
+| GET    | `/subject-head/classes/:classId/analytics`      | Subject Head | Class analytics                   |
+| GET    | `/subject-head/subjects/:subjectId/analytics`   | Subject Head | Subject analytics                 |
+| GET    | `/subject-head/students/:studentId/detail`      | Subject Head | View detailed student information |
+| GET    | `/subject-head/lecturers/:lecturerId/analytics` | Subject Head | Lecturer activity analytics       |
+
+Metrics:
+
+- AI usage by class.
+- AI usage by subject.
+- High dependency cases.
+- Average score by class.
+- Average score by subject.
+- Lecturer review activity.
+- Pass rate.
+- Score distribution.
+
+### 12.1.4 Admin Dashboard APIs
+
+| Method | Endpoint                 | Role  | Description               |
+| ------ | ------------------------ | ----- | ------------------------- |
+| GET    | `/admin/dashboard`       | Admin | Admin system dashboard    |
+| GET    | `/admin/system-activity` | Admin | View system activity logs |
+
+Metrics:
+
+- Total users.
+- Total classes.
+- Total subjects.
+- Total submissions.
+- Total AI interactions.
+- Email success/failure.
+- Active users.
+
+---
+
+---
+
+## 12.2 Report & Export APIs
+
+### 12.2.1 Academic Reports
+
+| Method | Endpoint                                    | Role                   | Description           |
+| ------ | ------------------------------------------- | ---------------------- | --------------------- |
+| GET    | `/reports/classes/:classId/grade-summary`   | Lecturer, Subject Head | Grade summary         |
+| GET    | `/reports/classes/:classId/final-results`   | Lecturer, Subject Head | Final results report  |
+| GET    | `/reports/classes/:classId/rankings`        | Lecturer, Subject Head | Ranking report        |
+| GET    | `/reports/classes/:classId/classifications` | Lecturer, Subject Head | Classification report |
+
+### 12.2.2 AI Usage Reports
+
+| Method | Endpoint                                  | Role                   | Description              |
+| ------ | ----------------------------------------- | ---------------------- | ------------------------ |
+| GET    | `/reports/classes/:classId/ai-usage`      | Lecturer, Subject Head | Class AI usage report    |
+| GET    | `/reports/subjects/:subjectId/ai-usage`   | Subject Head           | Subject AI usage report  |
+| GET    | `/reports/semesters/:semesterId/ai-usage` | Subject Head           | Semester AI usage report |
+| GET    | `/reports/suspicious-cases`               | Subject Head           | Suspicious cases report  |
+
+### 12.2.3 Export APIs
+
+| Method | Endpoint                                | Role                   | Description            |
+| ------ | --------------------------------------- | ---------------------- | ---------------------- |
+| GET    | `/reports/classes/:classId/export`      | Lecturer, Subject Head | Export class report    |
+| GET    | `/reports/subjects/:subjectId/export`   | Subject Head           | Export subject report  |
+| GET    | `/reports/semesters/:semesterId/export` | Subject Head           | Export semester report |
+
+Export query:
+
+```http
+GET /reports/classes/:classId/export?type=grade-summary&format=xlsx
+```
+
+Supported formats:
+
+```text
+xlsx
+pdf
+csv
+```
+
+---
+
+---
+
+# 13. Flag Management APIs
+
+## 13.1 Flag Endpoints
 
 | Method | Endpoint                           | Role                   | Description           |
 | ------ | ---------------------------------- | ---------------------- | --------------------- |
@@ -916,274 +1221,9 @@ Business rules:
 
 ---
 
-# 12. Notification & Email APIs
-
-## 12.1 Notification Endpoints
-
-| Method | Endpoint                       | Role                          | Description                       |
-| ------ | ------------------------------ | ----------------------------- | --------------------------------- |
-| GET    | `/notifications`               | All                           | List current user's notifications |
-| GET    | `/notifications/unread-count`  | All                           | Get unread count                  |
-| PATCH  | `/notifications/:id/read`      | All                           | Mark notification as read         |
-| PATCH  | `/notifications/read-all`      | All                           | Mark all as read                  |
-| DELETE | `/notifications/:id`           | All                           | Delete notification               |
-| POST   | `/notifications/announcements` | Lecturer, Subject Head, Admin | Send announcement                 |
-
-Notification types:
-
-```text
-assignment_created
-assignment_updated
-deadline_reminder
-submission_success
-submission_reviewed
-grade_published
-flag_created
-final_result_released
-chat_message
-system_announcement
-```
-
-## 12.2 Email Log Endpoints
-
-| Method | Endpoint                | Role  | Description          |
-| ------ | ----------------------- | ----- | -------------------- |
-| GET    | `/email-logs`           | Admin | List email logs      |
-| GET    | `/email-logs/:id`       | Admin | Get email log detail |
-| POST   | `/email-logs/:id/retry` | Admin | Retry failed email   |
-
-System email triggers:
-
-- Assignment published.
-- Submission finalized successfully.
-- Deadline reminder.
-- Grade published.
-- Password reset.
-- System announcement.
-
 ---
 
-# 13. Realtime Chat APIs
-
-Socket.IO is recommended for realtime message delivery. REST APIs are used for chat room discovery, history, and message management.
-
-## 13.1 Chat Room Endpoints
-
-| Method | Endpoint                      | Role                            | Description                    |
-| ------ | ----------------------------- | ------------------------------- | ------------------------------ |
-| GET    | `/chat/rooms`                 | Student, Lecturer, Subject Head | List my chat rooms             |
-| POST   | `/chat/rooms`                 | Student, Lecturer, Subject Head | Create or get direct chat room |
-| GET    | `/chat/rooms/:roomId`         | Room Member                     | Get room detail                |
-| PATCH  | `/chat/rooms/:roomId/archive` | Room Member                     | Archive room                   |
-| GET    | `/chat/contacts`              | Student, Lecturer, Subject Head | List available contacts        |
-
-Create room request:
-
-```json
-{
-  "memberIds": ["user_id_1", "user_id_2"],
-  "context": {
-    "classId": "class_id",
-    "subjectId": "subject_id"
-  }
-}
-```
-
-Business rules:
-
-- Student can chat with classmates in the same class.
-- Student can chat with lecturers who teach their classes.
-- Lecturer can chat with students in their classes.
-- Lecturer can chat with Subject Head in the same department/subject scope.
-- Subject Head can chat with lecturers and students within managed scope.
-
-## 13.2 Chat Message Endpoints
-
-| Method | Endpoint                         | Role                            | Description          |
-| ------ | -------------------------------- | ------------------------------- | -------------------- |
-| GET    | `/chat/rooms/:roomId/messages`   | Room Member                     | Get message history  |
-| POST   | `/chat/rooms/:roomId/messages`   | Room Member                     | Send message         |
-| PATCH  | `/chat/messages/:messageId/read` | Room Member                     | Mark message as read |
-| DELETE | `/chat/messages/:messageId`      | Sender                          | Delete own message   |
-| GET    | `/chat/messages/search`          | Student, Lecturer, Subject Head | Search messages      |
-
-Send message request:
-
-```json
-{
-  "messageType": "text",
-  "content": "Please check the deadline for assignment 1."
-}
-```
-
-Supported message types:
-
-```text
-text
-image
-file
-```
-
-## 13.3 Socket Events
-
-Client emits:
-
-```text
-chat:join_room
-chat:send_message
-chat:typing
-chat:mark_read
-```
-
-Server emits:
-
-```text
-chat:new_message
-chat:typing
-chat:message_read
-chat:room_updated
-notification:new
-```
-
----
-
-# 14. Dashboard, Reporting & Analytics APIs
-
-Student does not have a dashboard in the new business flow. Student home is semester → subject → session.
-
-## 14.1 Student Home APIs
-
-| Method | Endpoint                                  | Role    | Description                                           |
-| ------ | ----------------------------------------- | ------- | ----------------------------------------------------- |
-| GET    | `/student/home`                           | Student | Load current semester, enrolled subjects, and classes |
-| GET    | `/student/semesters/:semesterId/subjects` | Student | Load enrolled subjects in selected semester           |
-| GET    | `/student/classes/:classId/sessions`      | Student | Load sessions of selected class                       |
-
-Student home response example:
-
-```json
-{
-  "currentSemester": {
-    "id": "semester_id",
-    "name": "Summer 2026"
-  },
-  "subjects": [
-    {
-      "subjectId": "subject_id",
-      "subjectCode": "SWD392",
-      "subjectName": "Software Architecture and Design",
-      "classId": "class_id",
-      "classCode": "SE18D01",
-      "lecturerName": "Nguyen Van A"
-    }
-  ]
-}
-```
-
-## 14.2 Lecturer Home & Analytics APIs
-
-| Method | Endpoint                                           | Role     | Description                                |
-| ------ | -------------------------------------------------- | -------- | ------------------------------------------ |
-| GET    | `/lecturer/home`                                   | Lecturer | Load lecturer classes and current semester |
-| GET    | `/lecturer/classes/:classId/overview`              | Lecturer | Overview of selected class                 |
-| GET    | `/lecturer/classes/:classId/submission-statistics` | Lecturer | Submission statistics                      |
-| GET    | `/lecturer/classes/:classId/ai-statistics`         | Lecturer | AI usage statistics                        |
-
-Metrics:
-
-- Total students.
-- Draft / submitted / late submissions.
-- Pending reviews.
-- Average score.
-- AI usage distribution.
-- Flagged submissions.
-
-## 14.3 Subject Head Analytics APIs
-
-| Method | Endpoint                                        | Role         | Description                       |
-| ------ | ----------------------------------------------- | ------------ | --------------------------------- |
-| GET    | `/subject-head/overview`                        | Subject Head | Overall managed scope analytics   |
-| GET    | `/subject-head/classes`                         | Subject Head | View classes in managed scope     |
-| GET    | `/subject-head/classes/:classId/analytics`      | Subject Head | Class analytics                   |
-| GET    | `/subject-head/subjects/:subjectId/analytics`   | Subject Head | Subject analytics                 |
-| GET    | `/subject-head/students/:studentId/detail`      | Subject Head | View detailed student information |
-| GET    | `/subject-head/lecturers/:lecturerId/analytics` | Subject Head | Lecturer activity analytics       |
-
-Metrics:
-
-- AI usage by class.
-- AI usage by subject.
-- High dependency cases.
-- Average score by class.
-- Average score by subject.
-- Lecturer review activity.
-- Pass rate.
-- Score distribution.
-
-## 14.4 Admin Dashboard APIs
-
-| Method | Endpoint                 | Role  | Description               |
-| ------ | ------------------------ | ----- | ------------------------- |
-| GET    | `/admin/dashboard`       | Admin | Admin system dashboard    |
-| GET    | `/admin/system-activity` | Admin | View system activity logs |
-
-Metrics:
-
-- Total users.
-- Total classes.
-- Total subjects.
-- Total submissions.
-- Total AI interactions.
-- Email success/failure.
-- Active users.
-
----
-
-# 15. Report & Export APIs
-
-## 15.1 Academic Reports
-
-| Method | Endpoint                                    | Role                   | Description           |
-| ------ | ------------------------------------------- | ---------------------- | --------------------- |
-| GET    | `/reports/classes/:classId/grade-summary`   | Lecturer, Subject Head | Grade summary         |
-| GET    | `/reports/classes/:classId/final-results`   | Lecturer, Subject Head | Final results report  |
-| GET    | `/reports/classes/:classId/rankings`        | Lecturer, Subject Head | Ranking report        |
-| GET    | `/reports/classes/:classId/classifications` | Lecturer, Subject Head | Classification report |
-
-## 15.2 AI Usage Reports
-
-| Method | Endpoint                                  | Role                   | Description              |
-| ------ | ----------------------------------------- | ---------------------- | ------------------------ |
-| GET    | `/reports/classes/:classId/ai-usage`      | Lecturer, Subject Head | Class AI usage report    |
-| GET    | `/reports/subjects/:subjectId/ai-usage`   | Subject Head           | Subject AI usage report  |
-| GET    | `/reports/semesters/:semesterId/ai-usage` | Subject Head           | Semester AI usage report |
-| GET    | `/reports/suspicious-cases`               | Subject Head           | Suspicious cases report  |
-
-## 15.3 Export APIs
-
-| Method | Endpoint                                | Role                   | Description            |
-| ------ | --------------------------------------- | ---------------------- | ---------------------- |
-| GET    | `/reports/classes/:classId/export`      | Lecturer, Subject Head | Export class report    |
-| GET    | `/reports/subjects/:subjectId/export`   | Subject Head           | Export subject report  |
-| GET    | `/reports/semesters/:semesterId/export` | Subject Head           | Export semester report |
-
-Export query:
-
-```http
-GET /reports/classes/:classId/export?type=grade-summary&format=xlsx
-```
-
-Supported formats:
-
-```text
-xlsx
-pdf
-csv
-```
-
----
-
-# 16. System Monitoring APIs
+# 14. System Monitoring APIs
 
 | Method | Endpoint                | Role   | Description     |
 | ------ | ----------------------- | ------ | --------------- |
@@ -1194,7 +1234,9 @@ csv
 
 ---
 
-# 17. Backward Compatibility Notes
+---
+
+# 15. Backward Compatibility Notes
 
 The old API used `grade-items` as the main assignment milestone resource.
 
@@ -1214,27 +1256,32 @@ During transition, the backend may support both names:
 
 ---
 
-# 18. Core MVP API Priority
+---
+
+# 16. Core MVP API Priority
 
 Recommended implementation order:
 
-1. Authentication and User Management.
-2. Semesters, Subjects, Classes, Class Members.
-3. Sessions / Slots.
-4. Assignments and Materials.
-5. Submission and Submission Versions.
-6. AI Interactions.
-7. AI Evaluation and Flags.
-8. Lecturer Review.
-9. Gradebook and Final Results.
-10. Notifications and Email Logs.
-11. Reports and Analytics.
-12. Realtime Chat.
-13. Monitoring.
+1. Module 1 Authentication APIs.
+2. Module 2 User Management APIs.
+3. Module 3 Academic Structure APIs.
+4. Module 4 Session Management APIs.
+5. Module 5 Assignment Management APIs.
+6. Module 6 Submission Management APIs.
+7. Module 7 AI Declaration & AI Evaluation APIs.
+8. Module 8 Review Management APIs.
+9. Module 9 Grading Management APIs.
+10. Module 10 Notification & Email APIs.
+11. Module 11 Realtime Chat APIs.
+12. Module 12 Reporting & Analytics APIs.
+13. Module 13 Flag Management APIs.
+14. Module 14 System Monitoring APIs.
 
 ---
 
-# 19. Core Philosophy
+---
+
+# 17. Core Philosophy
 
 ART-AI does not evaluate:
 
@@ -1250,3 +1297,102 @@ ART-AI evaluates:
 - Whether students depend excessively on AI.
 
 The system promotes transparency, accountability, responsible AI-assisted learning, and academic monitoring.
+
+---
+
+# 18. BRS Traceability Matrix
+
+This section maps BUSINESS REQUIREMENT SPECIFICATION (BRS) modules to implementation modules and owners.
+
+| BRS Module | BR Code / Scope         | API Module                          | Owner                 |
+| ---------- | ----------------------- | ----------------------------------- | --------------------- |
+| Module 1   | BR-AUTH-\*              | Authentication APIs                 | Member 129            |
+| Module 2   | User Management         | User Management APIs                | Member 129            |
+| Module 3   | BR-CLASS-\*             | Academic Structure APIs             | Member 36             |
+| Module 4   | BR-SESSION-\*           | Session Management APIs             | Member 36             |
+| Module 5   | BR-ASSIGNMENT-\*        | Assignment Management APIs          | Member 45             |
+| Module 6   | BR-SUBMISSION-\*        | Submission Management APIs          | Member 45             |
+| Module 7   | BR-AI-_ / BR-AI-EVAL-_  | AI Declaration & AI Evaluation APIs | Member 78             |
+| Module 8   | BR-REVIEW-\*            | Review Management APIs              | Member 78             |
+| Module 9   | BR-GRADE-\*             | Grading & Final Result APIs         | Member 36 + Member 78 |
+| Module 9.1 | BR-GRADE-001 + 002      | Grade & Gradebook APIs              | Member 36             |
+| Module 9.2 | BR-GRADE-003            | Final Result APIs                   | Member 78             |
+| Module 9.3 | Academic Classification | Classification / Ranking APIs       | Member 78             |
+| Module 10  | BR-NOTIFY-\*            | Notification & Email APIs           | Member 45             |
+| Module 11  | BR-CHAT-\*              | Realtime Chat APIs                  | Member 129            |
+| Module 12  | BR-REPORT-\*            | Reporting & Analytics APIs          | Member 129            |
+| Module 13  | BR-FLAG-\*              | Flag Management APIs                | TBD                   |
+| Module 14  | Monitoring / System Ops | System Monitoring APIs              | TBD                   |
+
+---
+
+## 19.1 Updated BR Impact Mapping
+
+### BR-CLASS-001 Import Students To Class
+
+Related APIs:
+
+- `POST /classes/:classId/students/import`
+- `POST /classes/:classId/students`
+- `GET /classes/:classId/students`
+
+Implementation owner:
+
+- Member 36
+
+Support owner:
+
+- Member 129 for User auto-provision helper.
+
+---
+
+### BR-SUBMISSION-001 Submit Assignment
+
+Related APIs:
+
+- `POST /assignments/:assignmentId/submissions`
+- `POST /submissions/:id/finalize`
+- `GET /assignments/:assignmentId/submissions`
+- `GET /assignments/:assignmentId/submissions/my`
+
+Implementation owner:
+
+- Member 56
+
+Support owner:
+
+- Member 78 for AI interaction validation.
+
+---
+
+### BR-AI-001 AI Declaration Requirement
+
+Related APIs:
+
+- `POST /submissions/:submissionId/ai-interactions/validate`
+- `POST /submissions/:submissionId/ai-interactions`
+- `GET /submissions/:submissionId/ai-interactions`
+
+Implementation owner:
+
+- Member 78
+
+---
+
+### BR-GRADE-003 Final Score Calculation
+
+Related APIs:
+
+- `POST /classes/:classId/final-results/calculate`
+- `GET /classes/:classId/final-results`
+- `GET /students/:studentId/classes/:classId/final-result`
+
+Formula:
+
+```text
+Final Score = Σ((Score / Max Score) × 10 × Weight)
+```
+
+Implementation owner:
+
+- Member 129
