@@ -312,6 +312,29 @@ export const updateUserRoleController = async (
 }
 
 /**
+ * PATCH /users/:id/reset-password — Admin resets a user's password.
+ * Access: ADMIN only
+ */
+export const adminResetPasswordController = async (
+  req: Request<ParamsDictionary, any, any>, // Body typed in routes or directly accessed
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.params
+  const { password } = req.body
+  const result = await usersService.adminResetPassword(id as string, password)
+  if (!result) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({
+      message: USERS_MESSAGES.USER_NOT_FOUND
+    })
+  }
+  return res.json({
+    message: USERS_MESSAGES.RESET_PASSWORD_SUCCESSFUL,
+    result
+  })
+}
+
+/**
  * DELETE /users/:id
  * Soft delete: sets isActive = false. User record is NEVER physically removed.
  * Security: Admin cannot delete themselves.

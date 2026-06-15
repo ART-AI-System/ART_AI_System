@@ -509,7 +509,7 @@ class UserService {
    */
   async updateUser(id: string, payload: UpdateUserReqBody) {
     if (!ObjectId.isValid(id)) return null
-    const allowedFields: Array<keyof UpdateUserReqBody | 'email'> = ['fullName', 'role', 'studentCode', 'profile', 'email']
+    const allowedFields: Array<keyof UpdateUserReqBody> = ['fullName', 'role', 'studentCode', 'profile']
     const updateData: Record<string, any> = {}
     for (const key of allowedFields) {
       if ((payload as any)[key] !== undefined) {
@@ -539,7 +539,6 @@ class UserService {
     if (result) {
       await this.syncUserSnapshots(id, {
         fullName: updateData.fullName,
-        email: updateData.email,
         studentCode: updateData.studentCode
       })
     }
@@ -582,11 +581,40 @@ class UserService {
   async updateUserRole(id: string, role: UserRoleType) {
     if (!ObjectId.isValid(id)) return null
 
+    const updateOps: any = {
+      $set: {
+        role,
+        updatedAt: new Date()
+      }
+    }
+    if (role !== 'STUDENT') {
+      updateOps.$unset = { studentCode: '' }
+    }
+
+    const result = await databaseService.users.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      updateOps,
+      {
+        returnDocument: 'after',
+        projection: SAFE_USER_PROJECTION
+      }
+    )
+
+    return result
+  }
+
+  /**
+   * PATCH /users/:id/reset-password — Admin resets a user's password.
+   * Returns updated user (without password).
+   */
+  async adminResetPassword(id: string, password: string) {
+    if (!ObjectId.isValid(id)) return null
+
     const result = await databaseService.users.findOneAndUpdate(
       { _id: new ObjectId(id) },
       {
         $set: {
-          role,
+          passwordHash: hashPassword(password),
           updatedAt: new Date()
         }
       },
@@ -665,7 +693,11 @@ class UserService {
       const email = (row.email || row['Email'] || '').trim().toLowerCase()
       const password = (row.password || row['Password'] || '').trim()
       const roleRaw = (row.role || row['Role'] || 'STUDENT').trim().toUpperCase() as UserRoleType
-      const studentCode = (row.studentCode || row['Student Code'] || row['student_code'] || '').trim() || null
+      
+      let studentCode = (row.studentCode || row['Student Code'] || row['student_code'] || '').trim() || null
+      if (roleRaw !== 'STUDENT') {
+        studentCode = null
+      }
 
       if (!fullName) {
         errors.push({ row: rowNumber, reason: 'Missing required field: fullName' })

@@ -134,6 +134,13 @@ export interface UpdateUserRoleReqBody {
 }
 
 /**
+ * PATCH /api/users/:id/reset-password — Admin resets a user's password.
+ */
+export interface AdminResetPasswordReqBody {
+  password: string
+}
+
+/**
  * PATCH /api/users/me — Authenticated user updates their own profile.
  * Cannot change role, email, or password via this route.
  */

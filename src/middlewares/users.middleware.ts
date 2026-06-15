@@ -304,6 +304,7 @@ export const updateUserValidator = validate(
       }
     },
     studentCode: {
+      optional: true,
       trim: true,
       custom: {
         options: async (value: string, { req }) => {
@@ -398,5 +399,29 @@ export const updateUserRoleValidator = validate(
       }
     },
     role: roleSchema
+  }, ['body', 'params'])
+)
+
+/**
+ * PATCH /users/:id/reset-password — Admin resets a user's password.
+ */
+export const adminResetPasswordValidator = validate(
+  checkSchema({
+    id: {
+      in: ['params'],
+      custom: {
+        options: async (value: string) => {
+          if (!ObjectId.isValid(value)) {
+            throw new ErrorWithStatus({ message: USERS_MESSAGES.USER_NOT_FOUND, status: HTTP_STATUS.NOT_FOUND })
+          }
+          const user = await databaseService.users.findOne({ _id: new ObjectId(value) })
+          if (!user) {
+            throw new ErrorWithStatus({ message: USERS_MESSAGES.USER_NOT_FOUND, status: HTTP_STATUS.NOT_FOUND })
+          }
+          return true
+        }
+      }
+    },
+    password: passwordRules()
   }, ['body', 'params'])
 )
