@@ -1,31 +1,27 @@
-import { cn } from '../../utils/cn';
+import type { ReactNode } from 'react';
 
 type StatusVariant = 'success' | 'warning' | 'error' | 'info' | 'default';
 
 interface StatusBadgeProps {
-  label: string;
+  label: ReactNode;
   variant?: StatusVariant;
+  className?: string;
 }
 
-const variantStyles: Record<StatusVariant, string> = {
-  success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  warning: 'bg-amber-50 text-amber-700 border-amber-200',
-  error: 'bg-red-50 text-red-700 border-red-200',
-  info: 'bg-blue-50 text-blue-700 border-blue-200',
-  default: 'bg-slate-100 text-slate-700 border-slate-200',
-};
+export const StatusBadge = ({ label, variant = 'default', className = '' }: StatusBadgeProps) => {
+  const getStyles = () => {
+    switch(variant) {
+      case 'success': return 'bg-green-100 text-green-700';
+      case 'error': return 'bg-red-100 text-red-700';
+      case 'warning': return 'bg-orange-50 text-orange-500';
+      case 'info': return 'bg-blue-50 text-[#4318FF] border border-blue-100';
+      default: return 'bg-gray-100 text-gray-600 border border-gray-200';
+    }
+  };
 
-const StatusBadge = ({ label, variant = 'default' }: StatusBadgeProps) => {
   return (
-    <span
-      className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
-        variantStyles[variant],
-      )}
-    >
+    <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center ${getStyles()} ${className}`}>
       {label}
     </span>
   );
 };
-
-export default StatusBadge;

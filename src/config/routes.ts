@@ -13,6 +13,7 @@ export const ROUTES = {
   USERS: '/users',
   USER_DETAIL: '/users/:id',
   PROFILE: '/profile',
+  SETTINGS: '/settings',
 
   // Academic Structure
   CLASSES: '/classes',
@@ -40,4 +41,8 @@ export const ROUTES = {
   // Reporting & Export
   CLASS_REPORTS: '/reports/classes/:classId',
   SUSPICIOUS_CASES: '/reports/suspicious-cases',
+
+  // General Features
+  SCHEDULE: '/schedule',
+  MESSAGES: '/messages',
 } as const;

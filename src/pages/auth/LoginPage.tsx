@@ -1,188 +1,160 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, LogIn, ShieldAlert, GraduationCap, User, BookOpen, ShieldAlert as HeadIcon } from 'lucide-react';
-import Button from '../../components/common/Button';
+import { useState } from 'react';
+import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../app/App';
-import {
-  MOCK_ADMIN_USER,
-  MOCK_LECTURER_USER,
-  MOCK_SUBJECT_HEAD_USER,
-  MOCK_STUDENT_USER,
-} from '../../config/roles';
+// removed useNavigate
+import { MOCK_STUDENT_USER, MOCK_LECTURER_USER, MOCK_SUBJECT_HEAD_USER, MOCK_ADMIN_USER } from '../../config/roles';
 
 const LoginPage = () => {
-  const navigate = useNavigate();
   const { login } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('khoanc@artai.edu.vn');
+  const [studentCode, setStudentCode] = useState('SE18D01');
   const [password, setPassword] = useState('password123');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setErrorMsg('');
-
-    // Simulate login verification against mock users
-    setTimeout(() => {
-      setIsLoading(false);
-      if (email === MOCK_ADMIN_USER.email && password === 'password123') {
-        login(MOCK_ADMIN_USER);
-        navigate('/dashboard');
-      } else if (email === MOCK_LECTURER_USER.email && password === 'password123') {
-        login(MOCK_LECTURER_USER);
-        navigate('/dashboard');
-      } else if (email === MOCK_SUBJECT_HEAD_USER.email && password === 'password123') {
-        login(MOCK_SUBJECT_HEAD_USER);
-        navigate('/dashboard');
-      } else if (email === MOCK_STUDENT_USER.email && password === 'password123') {
-        login(MOCK_STUDENT_USER);
-        navigate('/dashboard');
-      } else {
-        setErrorMsg('Invalid email or password. Hint: Use Dev Mode buttons below.');
-      }
-    }, 600);
+  // Quick login helper for demo purposes
+  const quickLogin = (roleUser: string, rolePass: string) => {
+    setStudentCode(roleUser);
+    setPassword(rolePass);
   };
 
-  const handleQuickLogin = (userType: 'ADMIN' | 'LECTURER' | 'SUBJECT_HEAD' | 'STUDENT') => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      let targetUser = MOCK_ADMIN_USER;
-      if (userType === 'LECTURER') targetUser = MOCK_LECTURER_USER;
-      else if (userType === 'SUBJECT_HEAD') targetUser = MOCK_SUBJECT_HEAD_USER;
-      else if (userType === 'STUDENT') targetUser = MOCK_STUDENT_USER;
 
-      login(targetUser);
-      navigate('/dashboard');
-    }, 300);
+    try {
+      // Mock API call delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      let userSession = MOCK_STUDENT_USER;
+      if (studentCode === 'lecturer') userSession = MOCK_LECTURER_USER;
+      else if (studentCode === 'head') userSession = MOCK_SUBJECT_HEAD_USER;
+      else if (studentCode === 'admin') userSession = MOCK_ADMIN_USER;
+
+      login(userSession);
+      // Let the DashboardRedirector handle the routing
+    } catch (err) {
+      setError('Invalid credentials. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-white mb-1">Academic Portal Login</h2>
-        <p className="text-slate-400 text-sm">Access academic audits and submission transparency metrics.</p>
+    <div className="w-full max-w-md bg-white p-10 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-extrabold text-[#1B2559] mb-2">Welcome Back</h2>
+        <p className="text-gray-500 font-medium text-sm">Sign in with your ID</p>
       </div>
 
-      {errorMsg && (
-        <div className="p-3 bg-red-500/20 border border-red-500/30 text-red-200 text-xs rounded-lg flex items-start gap-2 animate-pulse">
-          <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-medium">
+            {error}
+          </div>
+        )}
 
-      <form onSubmit={handleLogin} className="space-y-4">
+        {/* Student Code */}
         <div>
-          <label htmlFor="login-email" className="block text-sm font-medium text-slate-300 mb-1.5">
-            Email Address
-          </label>
-          <input
-            id="login-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-            placeholder="Enter your email"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="login-password" className="block text-sm font-medium text-slate-300 mb-1.5">
-            Password
-          </label>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Student/Staff Code</label>
           <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <User className="h-5 w-5 text-gray-400" />
+            </div>
             <input
-              id="login-password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2.5 pr-10 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-              placeholder="Enter your password"
+              type="text"
+              value={studentCode}
+              onChange={(e) => setStudentCode(e.target.value)}
               required
+              className="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-[#4318FF] focus:border-[#4318FF] transition-colors font-medium"
+              placeholder="e.g. SE12345"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((p) => !p)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors cursor-pointer"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
           </div>
         </div>
 
-        <Button
+        {/* Password */}
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-sm font-bold text-gray-700">Password</label>
+            <a href="#" className="text-xs font-bold text-[#4318FF] hover:underline">Forgot password?</a>
+          </div>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Lock className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="block w-full pl-11 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-[#4318FF] focus:border-[#4318FF] transition-colors font-medium"
+              placeholder="••••••••"
+            />
+            <div 
+              className="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer text-gray-400 hover:text-gray-600"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </div>
+          </div>
+        </div>
+
+        {/* Remember me */}
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            defaultChecked
+            className="h-4 w-4 text-[#4318FF] focus:ring-[#4318FF] border-gray-300 rounded cursor-pointer"
+          />
+          <label className="ml-2 block text-sm font-medium text-gray-600 cursor-pointer">
+            Remember me for 30 days
+          </label>
+        </div>
+
+        {/* Submit */}
+        <button
           type="submit"
-          variant="primary"
-          size="lg"
-          isLoading={isLoading}
-          className="w-full justify-center mt-2 cursor-pointer"
-          id="login-submit"
+          disabled={isLoading}
+          className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg shadow-orange-500/30 text-sm font-bold text-white bg-gradient-to-br from-[#F26F21] to-[#F79C65] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all hover:-translate-y-0.5 disabled:opacity-70"
         >
-          <LogIn className="w-4 h-4" />
-          Sign In
-        </Button>
+          {isLoading ? 'Signing in...' : 'Sign In'}
+        </button>
       </form>
 
-      {/* Dev Mode Quick Login Block */}
-      <div className="pt-4 border-t border-white/10 space-y-3">
-        <p className="text-xs font-semibold text-slate-400 tracking-wider uppercase text-center">
-          Đăng nhập nhanh (Dev Mode)
+      {/* Demo Quick Login */}
+      <div className="mt-8 pt-6 border-t border-slate-100">
+        <p className="text-xs text-slate-500 font-medium mb-3 uppercase tracking-wider text-center">
+          Test Roles Quick Login
         </p>
         <div className="grid grid-cols-2 gap-2">
-          {/* Admin */}
           <button
             type="button"
-            onClick={() => handleQuickLogin('ADMIN')}
-            className="flex items-center gap-2 px-3 py-2 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 hover:text-white border border-indigo-500/30 hover:border-indigo-400/40 rounded-lg text-xs font-medium transition-all text-left cursor-pointer"
+            onClick={() => quickLogin('student', 'pass')}
+            className="text-xs py-2 px-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg transition-colors border border-slate-200"
           >
-            <User className="w-3.5 h-3.5 flex-shrink-0 text-indigo-400" />
-            <div className="min-w-0">
-              <p className="font-semibold truncate">N.C. Khoa</p>
-              <p className="opacity-60 text-[9px] truncate">Admin</p>
-            </div>
+            🧑‍🎓 Student
           </button>
-
-          {/* Lecturer */}
           <button
             type="button"
-            onClick={() => handleQuickLogin('LECTURER')}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 hover:text-white border border-blue-500/30 hover:border-blue-400/40 rounded-lg text-xs font-medium transition-all text-left cursor-pointer"
+            onClick={() => quickLogin('lecturer', 'pass')}
+            className="text-xs py-2 px-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg transition-colors border border-slate-200"
           >
-            <BookOpen className="w-3.5 h-3.5 flex-shrink-0 text-blue-400" />
-            <div className="min-w-0">
-              <p className="font-semibold truncate">P.M. Hoàng</p>
-              <p className="opacity-60 text-[9px] truncate">Lecturer</p>
-            </div>
+            👨‍🏫 Lecturer
           </button>
-
-          {/* Subject Head */}
           <button
             type="button"
-            onClick={() => handleQuickLogin('SUBJECT_HEAD')}
-            className="flex items-center gap-2 px-3 py-2 bg-amber-600/30 hover:bg-amber-600/50 text-amber-200 hover:text-white border border-amber-500/30 hover:border-amber-400/40 rounded-lg text-xs font-medium transition-all text-left cursor-pointer"
+            onClick={() => quickLogin('head', 'pass')}
+            className="text-xs py-2 px-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg transition-colors border border-slate-200"
           >
-            <HeadIcon className="w-3.5 h-3.5 flex-shrink-0 text-amber-400" />
-            <div className="min-w-0">
-              <p className="font-semibold truncate">L.T.K. Vân</p>
-              <p className="opacity-60 text-[9px] truncate">Head</p>
-            </div>
+            👨‍💼 Subject Head
           </button>
-
-          {/* Student */}
           <button
             type="button"
-            onClick={() => handleQuickLogin('STUDENT')}
-            className="flex items-center gap-2 px-3 py-2 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 hover:text-white border border-emerald-500/30 hover:border-emerald-400/40 rounded-lg text-xs font-medium transition-all text-left cursor-pointer"
+            onClick={() => quickLogin('admin', 'pass')}
+            className="text-xs py-2 px-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg transition-colors border border-slate-200"
           >
-            <GraduationCap className="w-3.5 h-3.5 flex-shrink-0 text-emerald-400" />
-            <div className="min-w-0">
-              <p className="font-semibold truncate">T.V. Tài</p>
-              <p className="opacity-60 text-[9px] truncate">Student</p>
-            </div>
+            🛡️ Admin
           </button>
         </div>
       </div>

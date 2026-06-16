@@ -1,35 +1,77 @@
-import PageHeader from '../../components/common/PageHeader';
-import StatCard from '../../components/common/StatCard';
+import { BookOpen, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ROUTES } from '../../config/routes';
+import { SubjectCard } from '../../components/common/SubjectCard';
 import { Card } from '../../components/common/Card';
-import EmptyState from '../../components/common/EmptyState';
-import { studentDashboardStats } from '../../mocks/dashboard.mock';
+import { MOCK_CLASSES } from '../../mocks/classes.mock';
+import { Heatmap } from '../../components/common/Heatmap';
+import { EmptyState } from '../../components/common/EmptyState';
 
-// TODO: Replace mock data with API integration
 const StudentDashboardPage = () => {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Student Dashboard"
-        description="Track your assignments, scores, and AI usage across all your courses."
-      />
+    <div className="space-y-8">
+      {/* Top Section: Semester Selector & Heatmap */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+        {/* Left: Semester Info / Quick Stats */}
+        <Card className="xl:col-span-1 flex flex-col justify-center relative overflow-hidden">
+          <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-orange-50 rounded-full opacity-50 blur-2xl pointer-events-none"></div>
+          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">My Progress</h2>
+          
+          <p className="text-3xl font-extrabold text-[#1B2559] mb-4">Summer 2026</p>
+          
+          <div className="flex items-center mt-2">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-[#4318FF] mr-4">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[#1B2559]">4 Subjects</p>
+              <p className="text-sm font-medium text-gray-500">Enrolled this term</p>
+            </div>
+          </div>
+        </Card>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {studentDashboardStats.map((stat) => (
-          <StatCard key={stat.label} {...stat} />
-        ))}
+        {/* Right: Learning Activity Heatmap */}
+        <Card className="xl:col-span-2 flex flex-col justify-between">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-[#1B2559]">Learning & AI Activity</h3>
+            <div className="flex items-center text-xs text-gray-400 font-medium space-x-2">
+              <span>Less</span>
+              <div className="w-3 h-3 rounded-sm bg-[#f1f5f9]"></div>
+              <div className="w-3 h-3 rounded-sm bg-[#fed7aa]"></div>
+              <div className="w-3 h-3 rounded-sm bg-[#fb923c]"></div>
+              <div className="w-3 h-3 rounded-sm bg-[#ea580c]"></div>
+              <div className="w-3 h-3 rounded-sm bg-[#9a3412]"></div>
+              <span>More</span>
+            </div>
+          </div>
+          
+          <Heatmap />
+        </Card>
       </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <h3 className="text-base font-semibold text-slate-900 mb-3">Recent Submissions</h3>
-          <EmptyState title="No submissions yet" description="Your submitted assignments will appear here." actionText="Coming Soon" />
-        </Card>
-        <Card>
-          <h3 className="text-base font-semibold text-slate-900 mb-3">Upcoming Deadlines</h3>
-          <EmptyState title="No deadlines" description="Assignment deadlines will appear here." actionText="Coming Soon" />
-        </Card>
+      {/* Subjects Grid Section */}
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-extrabold text-[#1B2559]">Recently Accessed</h2>
+          <Link 
+            to={ROUTES.CLASSES} 
+            className="text-sm font-bold text-[#4318FF] bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            View All Subjects
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {MOCK_CLASSES.map((subject) => (
+            <SubjectCard key={subject.id} {...subject} />
+          ))}
+
+          <EmptyState 
+            icon={<Plus className="w-6 h-6" />} 
+            title="Enroll New Subject" 
+            onClick={() => {}} 
+          />
+        </div>
       </div>
     </div>
   );

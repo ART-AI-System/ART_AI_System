@@ -1,62 +1,44 @@
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-interface Column<T> {
-  key: keyof T | string;
+export interface Column<T> {
+  key: string;
   label: string;
-  render?: (value: unknown, row: T) => ReactNode;
-  className?: string;
+  render?: (row: T) => ReactNode;
+  headerClassName?: string;
+  cellClassName?: string;
 }
 
-interface DataTableProps<T extends Record<string, unknown>> {
+interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
-  emptyMessage?: string;
+  keyExtractor: (row: T) => string;
 }
 
-function DataTable<T extends Record<string, unknown>>({
-  columns,
-  data,
-  emptyMessage = 'No data available.',
-}: DataTableProps<T>) {
+export function DataTable<T>({ columns, data, keyExtractor }: DataTableProps<T>) {
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
-      <table className="w-full text-sm text-left">
-        <thead className="bg-slate-50 border-b border-slate-200">
-          <tr>
-            {columns.map((col) => (
-              <th
-                key={String(col.key)}
-                className="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-slate-500 whitespace-nowrap"
-              >
+    <div className="overflow-x-auto">
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr className="bg-white border-b border-gray-100 text-xs text-gray-400 uppercase tracking-wider">
+            {columns.map(col => (
+              <th key={col.key} className={`p-4 font-bold ${col.headerClassName || ''}`}>
                 {col.label}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
-          {data.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length} className="px-4 py-8 text-center text-slate-400">
-                {emptyMessage}
-              </td>
+        <tbody className="text-sm">
+          {data.map((row, i) => (
+            <tr key={keyExtractor(row)} className={`border-b border-gray-50 hover:bg-blue-50/30 transition-colors ${i === data.length - 1 ? 'border-b-0' : ''}`}>
+              {columns.map(col => (
+                <td key={col.key} className={`p-4 ${col.cellClassName || ''}`}>
+                  {col.render ? col.render(row) : (row as any)[col.key]}
+                </td>
+              ))}
             </tr>
-          ) : (
-            data.map((row, i) => (
-              <tr key={i} className="hover:bg-slate-50 transition-colors">
-                {columns.map((col) => (
-                  <td key={String(col.key)} className={`px-4 py-3 text-slate-700 ${col.className ?? ''}`}>
-                    {col.render
-                      ? col.render(row[col.key as keyof T], row)
-                      : String(row[col.key as keyof T] ?? '')}
-                  </td>
-                ))}
-              </tr>
-            ))
-          )}
+          ))}
         </tbody>
       </table>
     </div>
   );
 }
-
-export default DataTable;

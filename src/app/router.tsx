@@ -9,8 +9,16 @@ import SubjectHeadDashboardPage from '../pages/dashboard/SubjectHeadDashboardPag
 import AdminDashboardPage from '../pages/dashboard/AdminDashboardPage';
 import NotFoundPage from '../pages/not-found/NotFoundPage';
 import AccessDeniedPage from '../components/common/AccessDeniedPage';
-import EmptyState from '../components/common/EmptyState';
+import { EmptyState } from '../components/common/EmptyState';
 import ErrorState from '../components/common/ErrorState';
+import ClassesPage from '../pages/dashboard/ClassesPage';
+import ClassDetailPage from '../pages/dashboard/ClassDetailPage';
+import GradebookPage from '../pages/dashboard/GradebookPage';
+import MessagesPage from '../pages/dashboard/MessagesPage';
+import SchedulePage from '../pages/dashboard/SchedulePage';
+import SettingsPage from '../pages/dashboard/SettingsPage';
+import MySubmissionsPage from '../pages/dashboard/MySubmissionsPage';
+import SubmissionDetailPage from '../pages/dashboard/SubmissionDetailPage';
 import { useAuth } from './App';
 import { ROUTES } from '../config/routes';
 import type { Role } from '../types/role.type';
@@ -195,28 +203,30 @@ export const router = createBrowserRouter([
               />
             ),
           },
+          {
+            path: ROUTES.SETTINGS,
+            element: <SettingsPage />,
+          },
+          {
+            path: ROUTES.SCHEDULE,
+            element: <SchedulePage />,
+          },
+          {
+            path: ROUTES.MESSAGES,
+            element: <MessagesPage />,
+          },
 
           // Academic Structure Management
           {
-            element: <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']} />,
+            element: <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD', 'STUDENT']} />,
             children: [
               {
                 path: ROUTES.CLASSES,
-                element: (
-                  <EmptyState
-                    title="Academic Classes Listing"
-                    description="Overview of structural class sections and syllabi parameters assigned to you."
-                  />
-                ),
+                element: <ClassesPage />,
               },
               {
                 path: ROUTES.CLASS_DETAIL,
-                element: (
-                  <EmptyState
-                    title="Class Detail & Student Roster"
-                    description="Manage student groups, course checkpoints, and overall status."
-                  />
-                ),
+                element: <ClassDetailPage />,
               },
             ],
           },
@@ -255,12 +265,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: ROUTES.SUBMISSION_DETAIL,
-                element: (
-                  <EmptyState
-                    title="Submission Artifact View"
-                    description="Detailed view of submitted work files, verification logs, and code hashes."
-                  />
-                ),
+                element: <SubmissionDetailPage />,
               },
             ],
           },
@@ -269,12 +274,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: ROUTES.MY_SUBMISSIONS,
-                element: (
-                  <EmptyState
-                    title="My Coursework Submissions"
-                    description="Chronological record of files you uploaded for instructor audits."
-                  />
-                ),
+                element: <MySubmissionsPage />,
               },
             ],
           },
@@ -363,12 +363,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: ROUTES.MY_RESULTS,
-                element: (
-                  <EmptyState
-                    title="My Final Performance Report"
-                    description="Review official final grades, transcripts, and comments."
-                  />
-                ),
+                element: <GradebookPage />,
               },
             ],
           },

@@ -1,140 +1,151 @@
-import { NavLink, useLocation } from 'react-router-dom';
-import { X, ChevronRight, Brain } from 'lucide-react';
-import { navigationConfig } from '../../config/navigation';
-import { useAuth } from '../../app/App';
-import { cn } from '../../utils/cn';
-import type { NavItem } from '../../types/navigation.type';
-import type { Role } from '../../types/role.type';
+import { NavLink } from 'react-router-dom';
+import { BrainCircuit, Home, BookOpen, Calendar, FileCheck2, Award, MessageCircle, Settings } from 'lucide-react';
+import { ROUTES } from '../../config/routes';
 
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-function hasAccess(allowedRoles: NavItem['allowedRoles'], currentRole: Role): boolean {
-  if (allowedRoles === 'ALL') return true;
-  return allowedRoles.includes(currentRole);
-}
-
-function NavItemLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
-  const location = useLocation();
-  const isActive =
-    location.pathname === item.path ||
-    (item.path !== '/dashboard' &&
-      location.pathname.startsWith(item.path + '/') &&
-      (item.path !== '/classes' || location.pathname.split('/').length === 3));
-
+export const Sidebar = () => {
   return (
-    <NavLink
-      to={item.path}
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group cursor-pointer',
-        isActive
-          ? 'bg-indigo-600 text-white shadow-sm'
-          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-      )}
-    >
-      <item.icon
-        className={cn(
-          'w-4 h-4 flex-shrink-0 transition-colors',
-          isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600',
-        )}
-      />
-      <span className="truncate">{item.label}</span>
-      {isActive && <ChevronRight className="w-3.5 h-3.5 ml-auto flex-shrink-0 opacity-70" />}
-    </NavLink>
-  );
-}
-
-function SidebarContent({ onClose }: { onClose?: () => void }) {
-  const { user } = useAuth();
-
-  const roleLabels: Record<string, string> = {
-    STUDENT: 'Student',
-    ADMIN: 'Administrator',
-  };
-
-  if (!user) return null;
-
-  const visibleGroups = navigationConfig
-    .map((group) => ({
-      ...group,
-      // Map allowedRoles to match Role type (which includes Student, Lecturer, Subject Head, Admin)
-      items: group.items.filter((item) => hasAccess(item.allowedRoles, user.role)),
-    }))
-    .filter((group) => group.items.length > 0);
-
-  return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Brand Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-slate-200 flex-shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-          <Brain className="w-4 h-4 text-white" />
+    <aside className="w-[280px] bg-white fixed h-full z-20 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-gray-100">
+      {/* Logo */}
+      <div className="h-24 flex items-center px-8 cursor-pointer">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F26F21] to-[#F79C65] flex items-center justify-center text-white mr-3 shadow-lg shadow-orange-200">
+          <BrainCircuit className="w-6 h-6" />
         </div>
-        <div className="min-w-0">
-          <span className="font-bold text-slate-900 text-sm tracking-tight">ART-AI System</span>
-          <p className="text-[11px] font-semibold text-indigo-600 truncate">{roleLabels[user.role]}</p>
-        </div>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="ml-auto p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors lg:hidden cursor-pointer"
-            aria-label="Close sidebar"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+        <span className="text-2xl font-extrabold text-[#1B2559]">ART-AI</span>
       </div>
 
-      {/* Grouped Sidebar Items */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-        {visibleGroups.map((group) => (
-          <div key={group.groupLabel}>
-            <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-              {group.groupLabel}
-            </p>
-            <ul className="space-y-0.5">
-              {group.items.map((item) => (
-                <li key={item.path}>
-                  <NavItemLink item={item} onClick={onClose} />
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <NavLink
+          to={ROUTES.DASHBOARD}
+          className={({ isActive }) =>
+            `flex items-center px-4 py-3.5 font-medium rounded-xl transition-all relative ${
+              isActive
+                ? 'bg-[#F4F7FE] text-[#4318FF] font-bold'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {isActive && <div className="absolute left-0 top-2 bottom-2 w-1 bg-[#4318FF] rounded-r-lg"></div>}
+              <Home className="w-5 h-5 mr-4" /> Home Dashboard
+            </>
+          )}
+        </NavLink>
+
+        <NavLink
+          to={ROUTES.CLASSES}
+          className={({ isActive }) =>
+            `flex items-center px-4 py-3.5 font-medium rounded-xl transition-all relative ${
+              isActive
+                ? 'bg-[#F4F7FE] text-[#4318FF] font-bold'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {isActive && <div className="absolute left-0 top-2 bottom-2 w-1 bg-[#4318FF] rounded-r-lg"></div>}
+              <BookOpen className="w-5 h-5 mr-4" /> My Subjects
+            </>
+          )}
+        </NavLink>
+
+        <NavLink
+          to={ROUTES.SCHEDULE}
+          className={({ isActive }) =>
+            `flex items-center px-4 py-3.5 font-medium rounded-xl transition-all relative ${
+              isActive
+                ? 'bg-[#F4F7FE] text-[#4318FF] font-bold'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {isActive && <div className="absolute left-0 top-2 bottom-2 w-1 bg-[#4318FF] rounded-r-lg"></div>}
+              <Calendar className="w-5 h-5 mr-4" /> Schedule
+            </>
+          )}
+        </NavLink>
+
+        <NavLink
+          to={ROUTES.MY_SUBMISSIONS}
+          className={({ isActive }) =>
+            `flex items-center px-4 py-3.5 font-medium rounded-xl transition-all relative ${
+              isActive
+                ? 'bg-[#F4F7FE] text-[#4318FF] font-bold'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {isActive && <div className="absolute left-0 top-2 bottom-2 w-1 bg-[#4318FF] rounded-r-lg"></div>}
+              <FileCheck2 className="w-5 h-5 mr-4" /> Assignments
+            </>
+          )}
+        </NavLink>
+
+        <NavLink
+          to={ROUTES.MY_RESULTS} // or CLASS_GRADEBOOK depending on role context, using MY_RESULTS for student for now
+          className={({ isActive }) =>
+            `flex items-center px-4 py-3.5 font-medium rounded-xl transition-all relative ${
+              isActive
+                ? 'bg-[#F4F7FE] text-[#4318FF] font-bold'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {isActive && <div className="absolute left-0 top-2 bottom-2 w-1 bg-[#4318FF] rounded-r-lg"></div>}
+              <Award className="w-5 h-5 mr-4" /> Gradebook
+            </>
+          )}
+        </NavLink>
+
+        <div className="pt-8 pb-2">
+          <p className="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Account</p>
+        </div>
+
+        <NavLink
+          to={ROUTES.MESSAGES}
+          className={({ isActive }) =>
+            `flex items-center px-4 py-3.5 font-medium rounded-xl transition-all relative ${
+              isActive
+                ? 'bg-[#F4F7FE] text-[#4318FF] font-bold'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {isActive && <div className="absolute left-0 top-2 bottom-2 w-1 bg-[#4318FF] rounded-r-lg"></div>}
+              <MessageCircle className="w-5 h-5 mr-4" /> Messages
+            </>
+          )}
+        </NavLink>
+
+        <NavLink
+          to={ROUTES.SETTINGS}
+          className={({ isActive }) =>
+            `flex items-center px-4 py-3.5 font-medium rounded-xl transition-all relative ${
+              isActive
+                ? 'bg-[#F4F7FE] text-[#4318FF] font-bold'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {isActive && <div className="absolute left-0 top-2 bottom-2 w-1 bg-[#4318FF] rounded-r-lg"></div>}
+              <Settings className="w-5 h-5 mr-4" /> Settings
+            </>
+          )}
+        </NavLink>
       </nav>
-
-      {/* Navigation Footer */}
-      <div className="flex-shrink-0 px-4 py-3 border-t border-slate-200">
-        <p className="text-[10px] text-slate-400 text-center">© 2026 ART-AI System</p>
-      </div>
-    </div>
-  );
-}
-
-const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
-  return (
-    <>
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-[var(--sidebar-width)] bg-white border-r border-slate-200 flex-shrink-0 h-full">
-        <SidebarContent />
-      </aside>
-
-      {/* Mobile drawer layout */}
-      {isOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={onClose}
-            aria-hidden="true"
-          />
-          <aside className="relative flex flex-col w-[var(--sidebar-width)] max-w-[85vw] bg-white border-r border-slate-200 h-full z-10">
-            <SidebarContent onClose={onClose} />
-          </aside>
-        </div>
-      )}
-    </>
+    </aside>
   );
 };
 

@@ -13,8 +13,8 @@ export interface UserSession {
 // Hardcoded sample accounts for 4 roles
 export const MOCK_ADMIN_USER: UserSession = {
   id: 'admin-1',
-  name: 'Nguyễn Công Khoa',
-  email: 'khoanc@artai.edu.vn',
+  name: 'ADMIN ADMIN',
+  email: 'admin@artai.edu.vn',
   role: 'ADMIN',
   code: 'EMP-2026-001',
 };
@@ -37,8 +37,8 @@ export const MOCK_SUBJECT_HEAD_USER: UserSession = {
 
 export const MOCK_STUDENT_USER: UserSession = {
   id: 'student-1',
-  name: 'Trần Viết Tài',
-  email: 'tainv@artai.edu.vn',
+  name: 'Cong Khoa',
+  email: 'khoanc@artai.edu.vn',
   role: 'STUDENT',
   code: 'GCS210456',
 };
