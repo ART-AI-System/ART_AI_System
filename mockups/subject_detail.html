@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ART-AI Class Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F4F7FE; }
+        .fpt-orange-gradient { background: linear-gradient(135deg, #F26F21 0%, #F79C65 100%); }
+        .donut-chart {
+            background: conic-gradient(#4318FF 0% 77%, #E2E8F0 77% 100%);
+            border-radius: 50%;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Accordion transition */
+        .slot-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .slot-expanded .slot-content { max-height: 500px; transition: max-height 0.5s ease-in; }
+        .slot-expanded .slot-icon { transform: rotate(180deg); }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden text-gray-800">
+    
+    <!-- Sidebar -->
+    <aside class="w-[280px] bg-white fixed h-full z-20 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-gray-100">
+        <!-- Logo -->
+        <a href="home.html" class="h-24 flex items-center px-8 cursor-pointer">
+            <div class="w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white mr-3 shadow-lg shadow-orange-200">
+                <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+            </div>
+            <span class="text-2xl font-extrabold text-[#1B2559]">ART-AI</span>
+        </a>
+        
+        <!-- Navigation -->
+        <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto hide-scrollbar">
+            <a href="home.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="home" class="w-5 h-5 mr-4"></i> Home Dashboard
+            </a>
+            <a href="subjects.html" class="flex items-center px-4 py-3.5 bg-[#F4F7FE] text-[#4318FF] font-bold rounded-xl transition-all relative">
+                <div class="absolute left-0 top-2 bottom-2 w-1 bg-[#4318FF] rounded-r-lg"></div>
+                <i data-lucide="book-open" class="w-5 h-5 mr-4"></i> My Subjects
+            </a>
+            <a href="schedule.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="calendar" class="w-5 h-5 mr-4"></i> Schedule
+            </a>
+            <a href="assignments.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="file-check-2" class="w-5 h-5 mr-4"></i> Assignments
+            </a>
+            <a href="gradebook.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="award" class="w-5 h-5 mr-4"></i> Gradebook
+            </a>
+            
+            <div class="pt-8 pb-2">
+                <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Account</p>
+            </div>
+            <a href="chat.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="message-circle" class="w-5 h-5 mr-4"></i> Messages
+            </a>
+            <a href="settings.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="settings" class="w-5 h-5 mr-4"></i> Settings
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <main class="flex-1 ml-[280px] flex flex-col h-screen relative">
+        
+        <!-- Header with Global Semester Selector -->
+        <header class="h-24 bg-[#F4F7FE] flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
+            <!-- Search & Semester -->
+            <div class="flex items-center space-x-6 w-full max-w-2xl">
+                <!-- Search -->
+                <div class="flex items-center flex-1 bg-white rounded-full px-5 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+                    <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                    <input type="text" placeholder="Search slots, materials, assignments..." class="bg-transparent border-none outline-none ml-3 w-full text-sm font-medium text-gray-700 placeholder-gray-400">
+                </div>
+                
+                <!-- Global Semester Selector -->
+                <div class="flex items-center bg-white rounded-full px-5 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+                    <i data-lucide="calendar-days" class="w-5 h-5 text-[#4318FF] mr-3"></i>
+                    <select class="bg-transparent text-sm font-bold text-[#1B2559] outline-none cursor-pointer pr-4 appearance-none">
+                        <option selected>Summer 2026</option>
+                        <option>Spring 2026</option>
+                        <option>Fall 2025</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 pointer-events-none -ml-2"></i>
+                </div>
+            </div>
+            
+            <!-- Right Actions -->
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center text-sm font-bold text-gray-600 bg-white px-4 py-2 rounded-full shadow-sm hidden md:flex">
+                    <i data-lucide="phone" class="w-4 h-4 mr-2 text-[#4318FF]"></i> Support: 1900 6868
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button class="relative p-2 text-gray-400 hover:text-[#4318FF] transition-colors">
+                        <i data-lucide="message-square" class="w-6 h-6"></i>
+                    </button>
+                    <button class="relative p-2 text-gray-400 hover:text-orange-500 transition-colors">
+                        <i data-lucide="bell" class="w-6 h-6"></i>
+                        <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#F4F7FE]"></span>
+                    </button>
+                </div>
+                <div class="flex items-center pl-4 border-l border-gray-300 gap-3">
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-[#1B2559]">Viet Khoa</p>
+                        <p class="text-xs font-medium text-gray-500">Student</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Viet+Khoa&background=F26F21&color=fff" class="w-10 h-10 rounded-full shadow-md cursor-pointer">
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="p-8 overflow-y-auto flex-1 hide-scrollbar">
+            
+            <!-- Page Title -->
+            <div class="mb-8 flex justify-between items-center">
+                <div>
+                    <a href="subjects.html" class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-[#4318FF] mb-2 transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> Back to Subjects
+                    </a>
+                    <h1 class="text-3xl font-extrabold text-[#1B2559]">SWD392 - Software Architecture</h1>
+                    <p class="text-gray-500 font-medium mt-1">Class: SE18D01 • Semester: Summer 2026</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                
+                <!-- Left/Center Column: Slots Accordion & Chart (Spans 2 cols) -->
+                <div class="xl:col-span-2 flex flex-col space-y-8">
+                    
+                    <!-- EduNext-style Vertical Accordion for Slots -->
+                    <div class="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                            <h3 class="text-lg font-bold text-[#1B2559]">Course Sessions</h3>
+                            <button class="text-sm font-bold text-[#4318FF] hover:underline">Expand All</button>
+                        </div>
+                        
+                        <div class="divide-y divide-gray-100">
+                            
+                            <!-- Slot 1 (Completed, Collapsed) -->
+                            <div class="slot-item group">
+                                <div class="p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors" onclick="this.parentElement.classList.toggle('slot-expanded')">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center font-bold mr-4">
+                                            S1
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-[#1B2559] text-base group-hover:text-[#4318FF] transition-colors">Introduction to Design Thinking</h4>
+                                            <p class="text-xs font-medium text-gray-500 mt-0.5">10 Jun 2026</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-xs font-bold text-green-500 bg-green-50 px-3 py-1 rounded-full mr-4 hidden md:block">Completed</span>
+                                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 slot-icon transition-transform"></i>
+                                    </div>
+                                </div>
+                                <div class="slot-content bg-gray-50/50">
+                                    <div class="p-6 pt-2 border-t border-gray-100">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Materials</h5>
+                                                <ul class="space-y-2">
+                                                    <li>
+                                                        <a href="#" class="flex items-center text-sm font-medium text-gray-700 hover:text-[#4318FF] transition-colors">
+                                                            <i data-lucide="file-text" class="w-4 h-4 mr-2 text-red-500"></i> Design_Thinking_Guide.pdf
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Activities</h5>
+                                                <ul class="space-y-2">
+                                                    <li class="flex items-center text-sm font-medium text-gray-700">
+                                                        <i data-lucide="check-circle-2" class="w-4 h-4 mr-2 text-green-500"></i> Read chapter 1
+                                                    </li>
+                                                    <li class="flex items-center text-sm font-medium text-gray-700">
+                                                        <i data-lucide="check-circle-2" class="w-4 h-4 mr-2 text-green-500"></i> Proposal Draft Submitted
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slot 2 (Active, Expanded by default) -->
+                            <div class="slot-item slot-expanded group border-l-4 border-orange-500">
+                                <div class="p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors" onclick="this.parentElement.classList.toggle('slot-expanded')">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold mr-4 shadow-sm">
+                                            S2
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-[#1B2559] text-base group-hover:text-orange-500 transition-colors">Architectural Patterns (MVC vs MVVM)</h4>
+                                            <p class="text-xs font-medium text-gray-500 mt-0.5">12 Jun 2026</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-xs font-bold text-orange-500 bg-orange-50 px-3 py-1 rounded-full mr-4 hidden md:block border border-orange-100 animate-pulse">Due in 2 days</span>
+                                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 slot-icon transition-transform"></i>
+                                    </div>
+                                </div>
+                                <div class="slot-content bg-white">
+                                    <div class="p-6 pt-4 border-t border-gray-100">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                                            <div>
+                                                <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Materials</h5>
+                                                <ul class="space-y-3">
+                                                    <li>
+                                                        <a href="#" class="flex items-center text-sm font-medium text-gray-700 hover:text-[#4318FF] transition-colors p-2 -ml-2 rounded-lg hover:bg-blue-50">
+                                                            <i data-lucide="file-video" class="w-5 h-5 mr-3 text-blue-500"></i> 
+                                                            <div>
+                                                                <p>MVC Pattern Overview</p>
+                                                                <p class="text-xs text-gray-400">15 mins video</p>
+                                                            </div>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="flex items-center text-sm font-medium text-gray-700 hover:text-[#4318FF] transition-colors p-2 -ml-2 rounded-lg hover:bg-blue-50">
+                                                            <i data-lucide="file-text" class="w-5 h-5 mr-3 text-red-500"></i> 
+                                                            <div>
+                                                                <p>Microservices.pdf</p>
+                                                                <p class="text-xs text-gray-400">2.1 MB</p>
+                                                            </div>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Activities</h5>
+                                                <ul class="space-y-3">
+                                                    <li class="flex items-start text-sm font-medium text-gray-700">
+                                                        <i data-lucide="circle" class="w-4 h-4 mr-2 mt-0.5 text-gray-300"></i>
+                                                        <div>
+                                                            <p>Quiz 1 (On EduNext)</p>
+                                                            <p class="text-xs text-gray-400">Not started</p>
+                                                        </div>
+                                                    </li>
+                                                    <li class="flex items-start text-sm font-medium text-[#1B2559]">
+                                                        <i data-lucide="circle" class="w-4 h-4 mr-2 mt-0.5 text-orange-500"></i>
+                                                        <div>
+                                                            <p class="font-bold">Assignment: Architecture Diagram</p>
+                                                            <p class="text-xs text-red-500 font-bold">AI Declaration Required</p>
+                                                        </div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Action Area -->
+                                        <div class="bg-orange-50/50 rounded-xl p-4 border border-orange-100 flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm font-bold text-[#1B2559]">Software Architecture Diagram</p>
+                                                <p class="text-xs text-gray-500 font-medium">Pending submission</p>
+                                            </div>
+                                            <button onclick="window.location.href='submission.html'" class="px-6 py-2.5 fpt-orange-gradient text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 hover:opacity-90 transition-opacity flex items-center">
+                                                Start Assignment <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slot 3 (Locked, Collapsed) -->
+                            <div class="slot-item group">
+                                <div class="p-5 flex items-center justify-between cursor-not-allowed opacity-60">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center font-bold mr-4">
+                                            S3
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-500 text-base">UML & System Design</h4>
+                                            <p class="text-xs font-medium text-gray-400 mt-0.5">15 Jun 2026</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full mr-4 flex items-center"><i data-lucide="lock" class="w-3 h-3 mr-1"></i> Locked</span>
+                                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Bottom Chart Area (AI Analytics / Completion) -->
+                    <div class="bg-white rounded-[24px] p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-[#1B2559]">AI Transparency Usage (By Slot)</h3>
+                            <div class="flex space-x-4 text-xs font-bold">
+                                <span class="flex items-center text-gray-500"><span class="w-3 h-3 rounded-full bg-green-400 mr-2"></span> High Transparency</span>
+                                <span class="flex items-center text-gray-500"><span class="w-3 h-3 rounded-full bg-orange-400 mr-2"></span> Moderate</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Mockup Bar Chart -->
+                        <div class="h-64 flex items-end justify-between px-4 pb-2 relative border-b border-gray-100">
+                            <!-- Y Axis marks -->
+                            <div class="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs font-bold text-gray-400 pb-2">
+                                <span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0</span>
+                            </div>
+                            
+                            <!-- Bars -->
+                            <div class="ml-12 w-full flex justify-around items-end h-full pt-4">
+                                <!-- Slot 1 -->
+                                <div class="flex flex-col items-center group relative cursor-pointer">
+                                    <!-- Tooltip -->
+                                    <div class="absolute -top-16 bg-white p-3 rounded-xl shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-10 w-48 pointer-events-none">
+                                        <p class="text-xs font-bold text-gray-500 mb-1">SLOT 1</p>
+                                        <p class="text-sm font-bold text-[#1B2559]">Transparency: 85%</p>
+                                        <p class="text-xs text-green-500 font-medium">4 AI Interactions</p>
+                                    </div>
+                                    <div class="w-12 bg-green-400 rounded-t-lg h-[85%] hover:opacity-80 transition-opacity"></div>
+                                    <span class="text-xs font-bold text-gray-500 mt-3">Slot 1</span>
+                                </div>
+                                
+                                <!-- Slot 2 -->
+                                <div class="flex flex-col items-center group relative cursor-pointer">
+                                    <!-- Tooltip -->
+                                    <div class="absolute -top-16 bg-white p-3 rounded-xl shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-10 w-48 pointer-events-none">
+                                        <p class="text-xs font-bold text-gray-500 mb-1">SLOT 2</p>
+                                        <p class="text-sm font-bold text-[#1B2559]">Transparency: 40%</p>
+                                        <p class="text-xs text-orange-500 font-medium">High Dependency Risk</p>
+                                    </div>
+                                    <div class="w-12 bg-orange-400 rounded-t-lg h-[40%] hover:opacity-80 transition-opacity"></div>
+                                    <span class="text-xs font-bold text-gray-500 mt-3">Slot 2</span>
+                                </div>
+                                
+                                <!-- Slot 3 -->
+                                <div class="flex flex-col items-center">
+                                    <div class="w-12 bg-gray-200 rounded-t-lg h-[5%]"></div>
+                                    <span class="text-xs font-bold text-gray-500 mt-3">Slot 3</span>
+                                </div>
+                                
+                                <!-- Slot 4 -->
+                                <div class="flex flex-col items-center">
+                                    <div class="w-12 bg-gray-200 rounded-t-lg h-[5%]"></div>
+                                    <span class="text-xs font-bold text-gray-500 mt-3">Slot 4</span>
+                                </div>
+                                
+                                <!-- Slot 5 -->
+                                <div class="flex flex-col items-center">
+                                    <div class="w-12 bg-gray-200 rounded-t-lg h-[5%]"></div>
+                                    <span class="text-xs font-bold text-gray-500 mt-3">Slot 5</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Stats & Teachers -->
+                <div class="xl:col-span-1 flex flex-col space-y-6">
+                    
+                    <!-- Class Progression Statistics (Donut) -->
+                    <div class="bg-white rounded-[24px] p-6 shadow-sm border border-gray-100 flex flex-col items-center">
+                        <h3 class="text-lg font-bold text-[#1B2559] w-full text-left mb-6">Class Progression</h3>
+                        
+                        <div class="relative w-48 h-48 donut-chart flex items-center justify-center shadow-inner">
+                            <div class="w-36 h-36 bg-white rounded-full flex flex-col items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.05)]">
+                                <span class="text-3xl font-extrabold text-[#1B2559]">20</span>
+                                <span class="text-xs font-bold text-gray-400 uppercase">Slots Total</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between w-full mt-8">
+                            <div class="flex items-center text-sm font-bold text-gray-700">
+                                <span class="w-3 h-3 rounded-full bg-[#4318FF] mr-2"></span> 10% Completed
+                            </div>
+                            <div class="flex items-center text-sm font-bold text-gray-400">
+                                <span class="w-3 h-3 rounded-full bg-slate-200 mr-2"></span> 90% To Learn
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Course Teachers -->
+                    <div class="bg-white rounded-[24px] p-6 shadow-sm border border-gray-100">
+                        <h3 class="text-lg font-bold text-[#1B2559] mb-4">Course Teachers</h3>
+                        
+                        <div class="flex items-center p-3 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100 cursor-pointer">
+                            <img src="https://ui-avatars.com/api/?name=Dr.Smith&background=EBF4FF&color=0072BC" class="w-12 h-12 rounded-full shadow-sm">
+                            <div class="ml-4">
+                                <h4 class="text-sm font-bold text-[#1B2559]">Dr. Alan Smith</h4>
+                                <p class="text-xs font-medium text-gray-500">Software Architecture</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-3 mt-2 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100 cursor-pointer">
+                            <img src="https://ui-avatars.com/api/?name=Mrs.Anna&background=FCE7F3&color=BE185D" class="w-12 h-12 rounded-full shadow-sm">
+                            <div class="ml-4">
+                                <h4 class="text-sm font-bold text-[#1B2559]">Mrs. Anna Taylor</h4>
+                                <p class="text-xs font-medium text-gray-500">Subject Head</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
