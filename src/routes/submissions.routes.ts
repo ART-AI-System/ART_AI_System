@@ -5,7 +5,8 @@ import {
   getMySubmissionByGradeItemController,
   getMySubmissionsController,
   getSubmissionByIdController,
-  getSubmissionsByGradeItemController
+  getSubmissionsByGradeItemController,
+  finalizeSubmissionController
 } from '~/controllers/submissions.controller'
 import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import { parseSubmissionFile } from '~/middlewares/submissions.middleware'
@@ -38,6 +39,13 @@ submissionsRouter.get(
 submissionsRouter.get('/submissions/:id', requireAuth, wrapRequestHandler(getSubmissionByIdController))
 
 submissionsRouter.get('/submissions/:id/download', requireAuth, wrapRequestHandler(downloadSubmissionController))
+
+submissionsRouter.post(
+  '/submissions/:id/finalize',
+  requireAuth,
+  requireRole('STUDENT'),
+  wrapRequestHandler(finalizeSubmissionController)
+)
 
 submissionsRouter.get(
   '/students/me/submissions',

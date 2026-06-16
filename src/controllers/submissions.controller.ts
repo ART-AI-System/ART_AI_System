@@ -113,3 +113,18 @@ export const getMySubmissionsController = async (req: Request, res: Response, ne
     next(error)
   }
 }
+
+export const finalizeSubmissionController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params
+    const user = req.user as User
+    const result = await submissionsService.finalizeSubmission(id as string, user._id!.toString())
+
+    res.json({
+      message: 'Finalize submission successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}

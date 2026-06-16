@@ -11,6 +11,9 @@ import Submission from '~/models/schemas/submissions.schema'
 import SubmissionReview from '~/models/schemas/submissionReviews.schema'
 import ChatRoom from '~/models/schemas/chatRoom.schema'
 import ChatMessage from '~/models/schemas/chatMessage.schema'
+import AiInteraction from '~/models/schemas/aiInteractions.schema'
+import AiEvaluation from '~/models/schemas/aiEvaluations.schema'
+import SubmissionFlag from '~/models/schemas/submissionFlags.schema'
 dotenv.config()
 
 const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USERNAME as string)}:${encodeURIComponent(process.env.DB_PASSWORD as string)}@art-ai-system.rpdlfxc.mongodb.net/`
@@ -270,15 +273,15 @@ class DatabaseService {
     return this.db.collection(process.env.DB_SUBMISSIONS_COLLECTION || 'submissions')
   }
 
-  get aiInteractions(): Collection<any> {
+  get aiInteractions(): Collection<AiInteraction> {
     return this.db.collection(process.env.DB_AI_INTERACTIONS_COLLECTION || 'ai_interactions')
   }
 
-  get aiEvaluations(): Collection<any> {
+  get aiEvaluations(): Collection<AiEvaluation> {
     return this.db.collection(process.env.DB_AI_EVALUATIONS_COLLECTION || 'ai_evaluations')
   }
 
-  get submissionFlags(): Collection<any> {
+  get submissionFlags(): Collection<SubmissionFlag> {
     return this.db.collection(process.env.DB_SUBMISSION_FLAGS_COLLECTION || 'submission_flags')
   }
 

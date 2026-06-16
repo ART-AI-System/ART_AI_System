@@ -76,10 +76,10 @@ class GradesService {
 
     // Determine classification
     let classification: 'poor' | 'average' | 'good' | 'very_good' | 'excellent' = 'poor'
-    if (totalScore >= 9) classification = 'excellent'
-    else if (totalScore >= 8) classification = 'very_good'
-    else if (totalScore >= 7) classification = 'good'
-    else if (totalScore >= 5) classification = 'average'
+    if (totalScore >= 9.0) classification = 'excellent'
+    else if (totalScore >= 8.0) classification = 'very_good'
+    else if (totalScore >= 6.5) classification = 'good'
+    else if (totalScore >= 5.0) classification = 'average'
 
     // Save or update final result
     const finalResultPayload = {

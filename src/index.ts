@@ -15,6 +15,8 @@ import lecturerRouter from '~/routes/lecturer.routes'
 import subjectHeadRouter from '~/routes/subjectHead.routes'
 import adminRouter from '~/routes/admin.routes'
 import chatRouter from '~/routes/chat.routes'
+import aiDeclarationRouter from '~/routes/aiDeclaration.routes'
+import aiEvaluationRouter from '~/routes/aiEvaluation.routes'
 import databaseService from '~/services/database.service'
 import { defaultErrorHandler } from '~/middlewares/error.middleware'
 import { config } from 'dotenv'
@@ -45,8 +47,10 @@ app.use('/api/grade-items', gradeItemsRouter)
 app.use('/api/submissions/:id/grade', gradesRouter)
 app.use('/api', gradesStandaloneRouter)
 app.use('/api', submissionsRouter)
-app.use('/api/lecturer', submissionReviewsRouter)
+app.use('/api', submissionReviewsRouter)
 app.use('/api', finalResultRouter)
+app.use('/api', aiDeclarationRouter)
+app.use('/api', aiEvaluationRouter)
 
 app.use('/api/reports', reportRouter)
 
