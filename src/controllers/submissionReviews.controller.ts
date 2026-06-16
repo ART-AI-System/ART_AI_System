@@ -75,3 +75,19 @@ export const updateReviewStatusController = async (
     next(error)
   }
 }
+
+export const createSubmissionReviewController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params
+    const user = req.user as User
+    const lecturerId = (user._id as ObjectId).toString()
+    const result = await submissionReviewsService.createReview(id as string, lecturerId, req.body)
+
+    res.json({
+      message: 'Create submission review successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}

@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 
-export type SubmissionStatus = 'draft' | 'submitted' | 'evaluated' | 'reviewed' | 'graded' | 'flagged'
+export type SubmissionStatus = 'draft' | 'submitted' | 'evaluated' | 'reviewed' | 'graded' | 'flagged' | 'late' | 'withdrawn'
 
 export interface SubmissionType {
   _id?: ObjectId
@@ -52,7 +52,7 @@ export default class Submission {
     this.fileSize = submission.fileSize
     this.mimeType = submission.mimeType
     this.contentHash = submission.contentHash ?? null
-    this.status = submission.status ?? 'submitted'
+    this.status = submission.status ?? 'draft'
     this.submittedAt = submission.submittedAt || date
     this.isLatest = submission.isLatest ?? true
     this.createdAt = submission.createdAt || date

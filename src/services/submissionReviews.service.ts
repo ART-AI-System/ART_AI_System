@@ -139,7 +139,8 @@ class SubmissionReviewsService {
     const lecturerObjectId = toObjectId(lecturerId, 'Lecturer')
     await this.getLecturerSubmissionOrFail(submissionObjectId, lecturerObjectId)
 
-    const reviewStatus = payload.reviewStatus || payload.status
+    const reviewStatusRaw = payload.reviewStatus || payload.status
+    const reviewStatus = reviewStatusRaw?.toUpperCase() as ReviewStatus
     if (!reviewStatus || !VALID_REVIEW_STATUSES.includes(reviewStatus)) {
       throw new ErrorWithStatus({
         message: 'Review status must be PENDING, REVIEWED, NEEDS_REVISION, or FLAGGED',
@@ -179,6 +180,67 @@ class SubmissionReviewsService {
     const result = await databaseService.submissionReviews.insertOne(review)
     await this.syncSubmissionStatus(submissionObjectId, reviewStatus)
     return { ...review, _id: result.insertedId }
+  }
+
+  async createReview(submissionId: string, lecturerId: string, payload: { reviewStatus: string; comment?: string }) {
+    const submissionObjectId = toObjectId(submissionId, 'Submission')
+    const lecturerObjectId = toObjectId(lecturerId, 'Lecturer')
+    
+    // Check if submission is finalized and user has permission
+    const submission = await this.getLecturerSubmissionOrFail(submissionObjectId, lecturerObjectId)
+
+    if (submission.status === 'draft') {
+      throw new ErrorWithStatus({
+        message: 'Cannot review a draft submission',
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    const reviewStatusInput = payload.reviewStatus?.toUpperCase() as ReviewStatus
+    if (!reviewStatusInput || !VALID_REVIEW_STATUSES.includes(reviewStatusInput)) {
+      throw new ErrorWithStatus({
+        message: 'Review status must be PENDING, REVIEWED, NEEDS_REVISION, or FLAGGED',
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    const comment = payload.comment?.trim() ?? ''
+
+    const existingReview = await databaseService.submissionReviews.findOne({
+      submissionId: submissionObjectId,
+      lecturerId: lecturerObjectId
+    })
+
+    const updateData = {
+      reviewStatus: reviewStatusInput,
+      comment,
+      reviewedAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    let resultReview
+    if (existingReview) {
+      resultReview = await databaseService.submissionReviews.findOneAndUpdate(
+        { _id: existingReview._id },
+        {
+          $set: updateData
+        },
+        { returnDocument: 'after' }
+      )
+    } else {
+      const review = new SubmissionReview({
+        submissionId: submissionObjectId,
+        lecturerId: lecturerObjectId,
+        reviewStatus: reviewStatusInput,
+        comment,
+        reviewedAt: updateData.reviewedAt
+      })
+      const insertResult = await databaseService.submissionReviews.insertOne(review)
+      resultReview = { ...review, _id: insertResult.insertedId }
+    }
+
+    await this.syncSubmissionStatus(submissionObjectId, reviewStatusInput)
+    return resultReview
   }
 
   private async getLecturerClassOrFail(classId: ObjectId, lecturerId: ObjectId) {

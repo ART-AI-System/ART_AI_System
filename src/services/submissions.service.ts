@@ -160,7 +160,8 @@ class SubmissionsService {
     return await databaseService.submissions
       .find({
         gradeItemId: gradeItemObjectId,
-        isLatest: true
+        isLatest: true,
+        status: { $ne: 'draft' } // Exclude draft submissions from lecturer views
       })
       .sort({ submittedAt: -1 })
       .toArray()
@@ -194,8 +195,101 @@ class SubmissionsService {
     return path.join(process.cwd(), submission.fileStorageKey)
   }
 
+  async finalizeSubmission(id: string, studentId: string) {
+    const submissionObjectId = toObjectId(id, 'Submission')
+    const studentObjectId = toObjectId(studentId, 'Student')
+
+    const submission = await databaseService.submissions.findOne({
+      _id: submissionObjectId,
+      studentId: studentObjectId
+    })
+
+    if (!submission) {
+      throw new ErrorWithStatus({
+        message: 'Submission not found',
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+
+    if (submission.status !== 'draft') {
+      throw new ErrorWithStatus({
+        message: 'Submission is already finalized',
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    const filePath = this.getSubmissionFilePath(submission)
+    if (!fs.existsSync(filePath)) {
+      throw new ErrorWithStatus({
+        message: 'Submission file does not exist on disk',
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    const gradeItem = await databaseService.gradeItems.findOne({
+      _id: submission.gradeItemId
+    })
+
+    if (!gradeItem) {
+      throw new ErrorWithStatus({
+        message: 'Associated grade item not found',
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+
+    const interactionCount = await databaseService.aiInteractions.countDocuments({
+      submissionId: submissionObjectId
+    })
+
+    const declarationRequired = gradeItem.aiInteractionRequired ?? true
+    const minInteractions = gradeItem.minAiInteractions ?? 5
+    const maxInteractions = gradeItem.maxAiInteractions ?? 10
+
+    if (declarationRequired) {
+      if (interactionCount < minInteractions) {
+        throw new ErrorWithStatus({
+          message: `Minimum AI interaction requirement not met. Required: ${minInteractions}, Found: ${interactionCount}`,
+          status: HTTP_STATUS.BAD_REQUEST
+        })
+      }
+      if (interactionCount > maxInteractions) {
+        throw new ErrorWithStatus({
+          message: `Maximum AI interaction limit exceeded. Allowed: ${maxInteractions}, Found: ${interactionCount}`,
+          status: HTTP_STATUS.BAD_REQUEST
+        })
+      }
+    }
+
+    const now = new Date()
+    const deadline = new Date(gradeItem.deadline)
+    const status = now <= deadline ? 'submitted' : 'late'
+
+    const result = await databaseService.submissions.findOneAndUpdate(
+      { _id: submissionObjectId },
+      {
+        $set: {
+          status,
+          finalizedAt: now,
+          aiRequirementSatisfied: true,
+          aiInteractionCount: interactionCount,
+          updatedAt: now
+        }
+      },
+      { returnDocument: 'after' }
+    )
+
+    return result
+  }
+
   private async assertCanViewSubmission(submission: Submission, user: User) {
     const userId = user._id as ObjectId
+
+    if (submission.status === 'draft' && submission.studentId.toString() !== userId.toString()) {
+      throw new ErrorWithStatus({
+        message: 'Draft submissions are only visible to the owner student',
+        status: HTTP_STATUS.FORBIDDEN
+      })
+    }
 
     if (user.role === 'ADMIN' || user.role === 'SUBJECT_HEAD') {
       return
