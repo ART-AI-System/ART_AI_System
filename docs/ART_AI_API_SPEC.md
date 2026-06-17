@@ -489,16 +489,17 @@ GradeItem -> Assignment
 
 ## 4.1 Assignment Endpoints
 
-| Method | Endpoint                           | Role                            | Description                  |
-| ------ | ---------------------------------- | ------------------------------- | ---------------------------- |
-| GET    | `/classes/:classId/assignments`    | Student, Lecturer, Subject Head | List assignments in class    |
-| GET    | `/sessions/:sessionId/assignments` | Student, Lecturer, Subject Head | List assignments in session  |
-| POST   | `/sessions/:sessionId/assignments` | Lecturer                        | Create assignment in session |
-| GET    | `/assignments/:id`                 | Student, Lecturer, Subject Head | Get assignment detail        |
-| PUT    | `/assignments/:id`                 | Lecturer                        | Update assignment            |
-| DELETE | `/assignments/:id`                 | Lecturer                        | Delete assignment            |
-| PATCH  | `/assignments/:id/publish`         | Lecturer                        | Publish assignment           |
-| PATCH  | `/assignments/:id/close`           | Lecturer                        | Close assignment             |
+| Method | Endpoint                                  | Role                            | Description                                        |
+| ------ | ----------------------------------------- | ------------------------------- | -------------------------------------------------- |
+| GET    | `/classes/:classId/assignments`           | Student, Lecturer, Subject Head | List assignments in class                          |
+| GET    | `/sessions/:sessionId/assignments`        | Student, Lecturer, Subject Head | List assignments in session                        |
+| POST   | `/sessions/:sessionId/assignments`        | Lecturer                        | Create assignment in session                       |
+| POST   | `/subjects/:subjectId/global-assignments` | Lecturer                        | Create global assignment cloned for multiple classes |
+| GET    | `/assignments/:id`                        | Student, Lecturer, Subject Head | Get assignment detail                              |
+| PUT    | `/assignments/:id`                        | Lecturer                        | Update assignment                                  |
+| DELETE | `/assignments/:id`                        | Lecturer                        | Delete assignment                                  |
+| PATCH  | `/assignments/:id/publish`                | Lecturer                        | Publish assignment                                 |
+| PATCH  | `/assignments/:id/close`                  | Lecturer                        | Close assignment                                   |
 
 Create assignment request:
 
@@ -1396,3 +1397,16 @@ Final Score = Σ((Score / Max Score) × 10 × Weight)
 Implementation owner:
 
 - Member 129
+
+---
+
+# 14. News Endpoints
+
+| Method | Endpoint | Role | Description |
+| ------ | -------- | ---- | ----------- |
+| GET | `/news` | Student, Lecturer, Subject Head, Admin | List published news |
+| GET | `/news/:id` | Student, Lecturer, Subject Head, Admin | Get news details |
+| POST | `/news` | Admin, Subject Head | Create a news post |
+| PUT | `/news/:id` | Admin, Subject Head | Update a news post |
+| DELETE | `/news/:id` | Admin, Subject Head | Delete a news post |
+
