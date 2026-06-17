@@ -5,3 +5,7 @@ export interface UploadedSubmissionFile {
   size: number
   contentHash: string
 }
+
+export interface SubmissionUploadFields {
+  note?: string
+}

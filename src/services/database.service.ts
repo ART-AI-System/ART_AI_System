@@ -14,8 +14,7 @@ import ChatMessage from '~/models/schemas/chatMessage.schema'
 import AiInteraction from '~/models/schemas/aiInteractions.schema'
 import AiEvaluation from '~/models/schemas/aiEvaluations.schema'
 import SubmissionFlag from '~/models/schemas/submissionFlags.schema'
-import Notification from '~/models/schemas/notifications.schema'
-import EmailLog from '~/models/schemas/emailLogs.schema'
+import Assignment from '~/models/schemas/assignments.schema'
 dotenv.config()
 
 const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USERNAME as string)}:${encodeURIComponent(process.env.DB_PASSWORD as string)}@art-ai-system.rpdlfxc.mongodb.net/`
@@ -146,6 +145,8 @@ class DatabaseService {
         process.env.DB_SUBMISSION_REVIEWS_COLLECTION || 'submission_reviews',
         process.env.DB_NOTIFICATIONS_COLLECTION || 'notifications',
         process.env.DB_EMAIL_LOGS_COLLECTION || 'email_logs',
+        process.env.DB_ASSIGNMENTS_COLLECTION || 'assignments',
+        process.env.DB_ASSIGNMENT_MATERIALS_COLLECTION || 'assignment_materials',
         process.env.DB_CHAT_ROOMS_COLLECTION || 'chat_rooms',
         process.env.DB_CHAT_MESSAGES_COLLECTION || 'chat_messages'
       ]
@@ -263,6 +264,33 @@ class DatabaseService {
     }
   }
 
+  async indexAssignments() {
+    try {
+      const sessionIndexExists = await this.assignments.indexExists(['sessionId_1_status_1'])
+      if (!sessionIndexExists) {
+        await this.assignments.createIndex({ sessionId: 1, status: 1 })
+      }
+
+      const classIndexExists = await this.assignments.indexExists(['classId_1_status_1_deadline_1'])
+      if (!classIndexExists) {
+        await this.assignments.createIndex({ classId: 1, status: 1, deadline: 1 })
+      }
+
+      const materialIndexExists = await this.assignmentMaterials.indexExists(['assignmentId_1_createdAt_-1'])
+      if (!materialIndexExists) {
+        await this.assignmentMaterials.createIndex({ assignmentId: 1, createdAt: -1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.assignments.createIndex({ sessionId: 1, status: 1 })
+        await this.assignments.createIndex({ classId: 1, status: 1, deadline: 1 })
+        await this.assignmentMaterials.createIndex({ assignmentId: 1, createdAt: -1 })
+      } else {
+        console.error('Error indexing assignments:', error)
+      }
+    }
+  }
+
   async indexChatRooms() {
     try {
       const memberIdsIndexExists = await this.chatRooms.indexExists(['memberIds_1'])
@@ -346,11 +374,11 @@ class DatabaseService {
     return this.db.collection(process.env.DB_SUBMISSION_REVIEWS_COLLECTION || 'submission_reviews')
   }
 
-  get notifications(): Collection<Notification> {
+  get notifications(): Collection<any> {
     return this.db.collection(process.env.DB_NOTIFICATIONS_COLLECTION || 'notifications')
   }
 
-  get emailLogs(): Collection<EmailLog> {
+  get emailLogs(): Collection<any> {
     return this.db.collection(process.env.DB_EMAIL_LOGS_COLLECTION || 'email_logs')
   }
 
@@ -374,8 +402,12 @@ class DatabaseService {
     return this.db.collection(process.env.DB_SESSIONS_COLLECTION || 'sessions')
   }
 
-  get assignments(): Collection<any> {
+  get assignments(): Collection<Assignment> {
     return this.db.collection(process.env.DB_ASSIGNMENTS_COLLECTION || 'assignments')
+  }
+
+  get assignmentMaterials(): Collection<any> {
+    return this.db.collection(process.env.DB_ASSIGNMENT_MATERIALS_COLLECTION || 'assignment_materials')
   }
 
   get chatRooms(): Collection<ChatRoom> {

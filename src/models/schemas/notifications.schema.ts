@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb'
 
 export type NotificationType =
   | 'assignment_created'
+  | 'assignment_published'
   | 'assignment_updated'
   | 'deadline_reminder'
   | 'submission_success'
@@ -28,6 +29,7 @@ export interface NotificationSchemaType {
 }
 
 export default class Notification {
+  [key: string]: any
   _id?: ObjectId
   userId: ObjectId
   title: string

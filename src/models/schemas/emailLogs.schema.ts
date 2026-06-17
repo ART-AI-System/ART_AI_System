@@ -2,13 +2,14 @@ import { ObjectId } from 'mongodb'
 
 export type EmailLogType =
   | 'assignment_created'
+  | 'assignment_published'
   | 'deadline_reminder'
   | 'submission_success'
   | 'grade_published'
   | 'password_reset'
   | 'system'
 
-export type EmailLogStatus = 'pending' | 'sent' | 'failed'
+export type EmailLogStatus = 'pending' | 'queued' | 'sent' | 'failed'
 
 export interface EmailLogSchemaType {
   _id?: ObjectId
@@ -27,6 +28,7 @@ export interface EmailLogSchemaType {
 }
 
 export default class EmailLog {
+  [key: string]: any
   _id?: ObjectId
   to: string
   subject: string

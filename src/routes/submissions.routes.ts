@@ -2,11 +2,16 @@ import { Router } from 'express'
 import {
   createSubmissionController,
   downloadSubmissionController,
+  downloadSubmissionVersionController,
   getMySubmissionByGradeItemController,
   getMySubmissionsController,
   getSubmissionByIdController,
+  getSubmissionVersionByIdController,
+  getSubmissionVersionsController,
   getSubmissionsByGradeItemController,
-  finalizeSubmissionController
+  finalizeSubmissionController,
+  resubmitSubmissionVersionController,
+  withdrawSubmissionController
 } from '~/controllers/submissions.controller'
 import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import { parseSubmissionFile } from '~/middlewares/submissions.middleware'
@@ -22,6 +27,14 @@ submissionsRouter.post(
   wrapRequestHandler(createSubmissionController)
 )
 
+submissionsRouter.post(
+  '/assignments/:assignmentId/submissions',
+  requireAuth,
+  requireRole('STUDENT'),
+  parseSubmissionFile,
+  wrapRequestHandler(createSubmissionController)
+)
+
 submissionsRouter.get(
   '/grade-items/:gradeItemId/submissions/my',
   requireAuth,
@@ -30,15 +43,55 @@ submissionsRouter.get(
 )
 
 submissionsRouter.get(
+  '/assignments/:assignmentId/submissions/my',
+  requireAuth,
+  requireRole('STUDENT'),
+  wrapRequestHandler(getMySubmissionByGradeItemController)
+)
+
+submissionsRouter.get(
   '/grade-items/:gradeItemId/submissions',
   requireAuth,
-  requireRole('LECTURER'),
+  requireRole('LECTURER', 'SUBJECT_HEAD'),
+  wrapRequestHandler(getSubmissionsByGradeItemController)
+)
+
+submissionsRouter.get(
+  '/assignments/:assignmentId/submissions',
+  requireAuth,
+  requireRole('LECTURER', 'SUBJECT_HEAD'),
   wrapRequestHandler(getSubmissionsByGradeItemController)
 )
 
 submissionsRouter.get('/submissions/:id', requireAuth, wrapRequestHandler(getSubmissionByIdController))
 
 submissionsRouter.get('/submissions/:id/download', requireAuth, wrapRequestHandler(downloadSubmissionController))
+
+submissionsRouter.get(
+  '/submissions/:submissionId/versions',
+  requireAuth,
+  wrapRequestHandler(getSubmissionVersionsController)
+)
+
+submissionsRouter.post(
+  '/submissions/:submissionId/versions',
+  requireAuth,
+  requireRole('STUDENT'),
+  parseSubmissionFile,
+  wrapRequestHandler(resubmitSubmissionVersionController)
+)
+
+submissionsRouter.get(
+  '/submission-versions/:versionId',
+  requireAuth,
+  wrapRequestHandler(getSubmissionVersionByIdController)
+)
+
+submissionsRouter.get(
+  '/submission-versions/:versionId/download',
+  requireAuth,
+  wrapRequestHandler(downloadSubmissionVersionController)
+)
 
 submissionsRouter.post(
   '/submissions/:id/finalize',
@@ -52,6 +105,13 @@ submissionsRouter.get(
   requireAuth,
   requireRole('STUDENT'),
   wrapRequestHandler(getMySubmissionsController)
+)
+
+submissionsRouter.delete(
+  '/submissions/:id',
+  requireAuth,
+  requireRole('STUDENT', 'LECTURER'),
+  wrapRequestHandler(withdrawSubmissionController)
 )
 
 export default submissionsRouter

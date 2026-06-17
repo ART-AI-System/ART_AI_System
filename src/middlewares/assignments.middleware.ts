@@ -5,11 +5,11 @@ import { NextFunction, Request, Response } from 'express'
 import formidable, { Files } from 'formidable'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { ErrorWithStatus } from '~/models/Errors'
-import { SubmissionUploadFields, UploadedSubmissionFile } from '~/models/requests/submissions.request'
+import { UploadedAssignmentMaterialFile } from '~/models/requests/assignments.request'
 
-const MAX_SUBMISSION_FILE_SIZE = 10 * 1024 * 1024
-const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.xlsx', '.pptx', '.zip']
-const UPLOAD_TEMP_DIR = path.join(process.cwd(), 'uploads', 'submissions', 'temp')
+const MAX_MATERIAL_FILE_SIZE = 10 * 1024 * 1024
+const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.pptx', '.zip']
+const UPLOAD_TEMP_DIR = path.join(process.cwd(), 'uploads', 'assignment-materials', 'temp')
 
 function getFileHash(filePath: string) {
   const hash = createHash('sha256')
@@ -24,7 +24,7 @@ function removeFileIfExists(filePath: string) {
   }
 }
 
-export const parseSubmissionFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const parseAssignmentMaterialFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (!fs.existsSync(UPLOAD_TEMP_DIR)) {
     fs.mkdirSync(UPLOAD_TEMP_DIR, { recursive: true })
   }
@@ -32,7 +32,7 @@ export const parseSubmissionFile = async (req: Request, res: Response, next: Nex
   const form = formidable({
     uploadDir: UPLOAD_TEMP_DIR,
     keepExtensions: true,
-    maxFileSize: MAX_SUBMISSION_FILE_SIZE,
+    maxFileSize: MAX_MATERIAL_FILE_SIZE,
     multiples: false
   })
 
@@ -54,7 +54,7 @@ export const parseSubmissionFile = async (req: Request, res: Response, next: Nex
         if (!file) {
           return reject(
             new ErrorWithStatus({
-              message: 'Submission file is required',
+              message: 'Assignment material file is required',
               status: HTTP_STATUS.BAD_REQUEST
             })
           )
@@ -67,26 +67,24 @@ export const parseSubmissionFile = async (req: Request, res: Response, next: Nex
           removeFileIfExists(file.filepath)
           return reject(
             new ErrorWithStatus({
-              message: 'Submission file must be PDF, DOCX, XLSX, PPTX, or ZIP',
+              message: 'Assignment material file must be PDF, DOCX, PPTX, or ZIP',
               status: HTTP_STATUS.BAD_REQUEST
             })
           )
         }
 
-        req.submissionFile = {
+        req.assignmentMaterialFile = {
           originalFilename,
           filepath: file.filepath,
           mimetype: file.mimetype || 'application/octet-stream',
           size: file.size,
           contentHash: getFileHash(file.filepath)
-        } satisfies UploadedSubmissionFile
+        } satisfies UploadedAssignmentMaterialFile
 
-        const noteRaw = fields.note
-        const note = Array.isArray(noteRaw) ? noteRaw[0] : noteRaw
         req.body = {
-          ...req.body,
-          ...(typeof note === 'string' ? { note: note.trim() } : {})
-        } satisfies SubmissionUploadFields
+          title: Array.isArray(fields.title) ? fields.title[0] : fields.title,
+          description: Array.isArray(fields.description) ? fields.description[0] : fields.description
+        }
 
         resolve()
       })
