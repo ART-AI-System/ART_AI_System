@@ -17,6 +17,7 @@ import adminRouter from '~/routes/admin.routes'
 import chatRouter from '~/routes/chat.routes'
 import aiDeclarationRouter from '~/routes/aiDeclaration.routes'
 import aiEvaluationRouter from '~/routes/aiEvaluation.routes'
+import notificationsRouter from '~/routes/notifications.routes'
 import databaseService from '~/services/database.service'
 import { defaultErrorHandler } from '~/middlewares/error.middleware'
 import { config } from 'dotenv'
@@ -29,6 +30,8 @@ databaseService.connect().then(async () => {
   databaseService.indexPasswordResetTokens()
   databaseService.indexSubmissions()
   databaseService.indexSubmissionReviews()
+  databaseService.indexNotifications()
+  databaseService.indexEmailLogs()
   databaseService.indexChatRooms()
   databaseService.indexChatMessages()
 })
@@ -51,6 +54,7 @@ app.use('/api', submissionReviewsRouter)
 app.use('/api', finalResultRouter)
 app.use('/api', aiDeclarationRouter)
 app.use('/api', aiEvaluationRouter)
+app.use('/api', notificationsRouter)
 
 app.use('/api/reports', reportRouter)
 

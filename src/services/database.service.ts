@@ -14,6 +14,8 @@ import ChatMessage from '~/models/schemas/chatMessage.schema'
 import AiInteraction from '~/models/schemas/aiInteractions.schema'
 import AiEvaluation from '~/models/schemas/aiEvaluations.schema'
 import SubmissionFlag from '~/models/schemas/submissionFlags.schema'
+import Notification from '~/models/schemas/notifications.schema'
+import EmailLog from '~/models/schemas/emailLogs.schema'
 dotenv.config()
 
 const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USERNAME as string)}:${encodeURIComponent(process.env.DB_PASSWORD as string)}@art-ai-system.rpdlfxc.mongodb.net/`
@@ -143,6 +145,7 @@ class DatabaseService {
         process.env.DB_SUBMISSION_FLAGS_COLLECTION || 'submission_flags',
         process.env.DB_SUBMISSION_REVIEWS_COLLECTION || 'submission_reviews',
         process.env.DB_NOTIFICATIONS_COLLECTION || 'notifications',
+        process.env.DB_EMAIL_LOGS_COLLECTION || 'email_logs',
         process.env.DB_CHAT_ROOMS_COLLECTION || 'chat_rooms',
         process.env.DB_CHAT_MESSAGES_COLLECTION || 'chat_messages'
       ]
@@ -202,6 +205,60 @@ class DatabaseService {
         await this.submissionReviews.createIndex({ lecturerId: 1 })
       } else {
         console.error('Error indexing submission reviews:', error)
+      }
+    }
+  }
+
+  async indexNotifications() {
+    try {
+      const userReadIndexExists = await this.notifications.indexExists(['userId_1_isRead_1'])
+      if (!userReadIndexExists) {
+        await this.notifications.createIndex({ userId: 1, isRead: 1 })
+      }
+
+      const typeIndexExists = await this.notifications.indexExists(['type_1'])
+      if (!typeIndexExists) {
+        await this.notifications.createIndex({ type: 1 })
+      }
+
+      const relatedIndexExists = await this.notifications.indexExists(['relatedEntityType_1_relatedEntityId_1'])
+      if (!relatedIndexExists) {
+        await this.notifications.createIndex({ relatedEntityType: 1, relatedEntityId: 1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.notifications.createIndex({ userId: 1, isRead: 1 })
+        await this.notifications.createIndex({ type: 1 })
+        await this.notifications.createIndex({ relatedEntityType: 1, relatedEntityId: 1 })
+      } else {
+        console.error('Error indexing notifications:', error)
+      }
+    }
+  }
+
+  async indexEmailLogs() {
+    try {
+      const toIndexExists = await this.emailLogs.indexExists(['to_1'])
+      if (!toIndexExists) {
+        await this.emailLogs.createIndex({ to: 1 })
+      }
+
+      const typeIndexExists = await this.emailLogs.indexExists(['type_1'])
+      if (!typeIndexExists) {
+        await this.emailLogs.createIndex({ type: 1 })
+      }
+
+      const statusIndexExists = await this.emailLogs.indexExists(['status_1'])
+      if (!statusIndexExists) {
+        await this.emailLogs.createIndex({ status: 1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.emailLogs.createIndex({ to: 1 })
+        await this.emailLogs.createIndex({ type: 1 })
+        await this.emailLogs.createIndex({ status: 1 })
+      } else {
+        console.error('Error indexing email logs:', error)
       }
     }
   }
@@ -289,11 +346,11 @@ class DatabaseService {
     return this.db.collection(process.env.DB_SUBMISSION_REVIEWS_COLLECTION || 'submission_reviews')
   }
 
-  get notifications(): Collection<any> {
+  get notifications(): Collection<Notification> {
     return this.db.collection(process.env.DB_NOTIFICATIONS_COLLECTION || 'notifications')
   }
 
-  get emailLogs(): Collection<any> {
+  get emailLogs(): Collection<EmailLog> {
     return this.db.collection(process.env.DB_EMAIL_LOGS_COLLECTION || 'email_logs')
   }
 
