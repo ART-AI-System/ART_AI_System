@@ -100,7 +100,7 @@ const GradebookPage = () => {
       render: (row) => (
         <StatusBadge 
           label={row.statusText} 
-          variant={row.status as any} 
+          variant={row.status as 'success' | 'warning' | 'error' | 'info' | 'default'} 
         />
       )
     },

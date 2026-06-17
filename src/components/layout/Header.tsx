@@ -1,5 +1,5 @@
 import { Search, CalendarDays, ChevronDown, MessageSquare, Bell } from 'lucide-react';
-import { useAuth } from '../../app/App';
+import { useAuth } from '../../context/AuthContext';
 
 export const Header = () => {
   const { user } = useAuth();

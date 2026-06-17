@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { BrainCircuit, Home, BookOpen, Calendar, FileCheck2, Award, MessageCircle, Settings } from 'lucide-react';
 import { ROUTES } from '../../config/routes';
 
-export const Sidebar = () => {
+export const StudentSidebar = () => {
   return (
     <aside className="w-[280px] bg-white fixed h-full z-20 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-gray-100">
       {/* Logo */}
@@ -16,7 +16,7 @@ export const Sidebar = () => {
       {/* Navigation */}
       <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <NavLink
-          to={ROUTES.DASHBOARD}
+          to={ROUTES.DASHBOARD_STUDENT}
           className={({ isActive }) =>
             `flex items-center px-4 py-3.5 font-medium rounded-xl transition-all relative ${
               isActive
@@ -88,7 +88,7 @@ export const Sidebar = () => {
         </NavLink>
 
         <NavLink
-          to={ROUTES.MY_RESULTS} // or CLASS_GRADEBOOK depending on role context, using MY_RESULTS for student for now
+          to={ROUTES.MY_RESULTS}
           className={({ isActive }) =>
             `flex items-center px-4 py-3.5 font-medium rounded-xl transition-all relative ${
               isActive
@@ -149,4 +149,4 @@ export const Sidebar = () => {
   );
 };
 
-export default Sidebar;
+export default StudentSidebar;

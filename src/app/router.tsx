@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { createBrowserRouter } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
@@ -8,87 +8,27 @@ import LecturerDashboardPage from '../pages/dashboard/LecturerDashboardPage';
 import SubjectHeadDashboardPage from '../pages/dashboard/SubjectHeadDashboardPage';
 import AdminDashboardPage from '../pages/dashboard/AdminDashboardPage';
 import NotFoundPage from '../pages/not-found/NotFoundPage';
-import AccessDeniedPage from '../components/common/AccessDeniedPage';
 import { EmptyState } from '../components/common/EmptyState';
 import ErrorState from '../components/common/ErrorState';
-import ClassesPage from '../pages/dashboard/ClassesPage';
-import ClassDetailPage from '../pages/dashboard/ClassDetailPage';
 import GradebookPage from '../pages/dashboard/GradebookPage';
 import MessagesPage from '../pages/dashboard/MessagesPage';
 import SchedulePage from '../pages/dashboard/SchedulePage';
 import SettingsPage from '../pages/dashboard/SettingsPage';
 import MySubmissionsPage from '../pages/dashboard/MySubmissionsPage';
 import SubmissionDetailPage from '../pages/dashboard/SubmissionDetailPage';
-import { useAuth } from './App';
+
+// Lecturer Pages
+import LecturerSubjectDetailPage from '../pages/dashboard/LecturerSubjectDetailPage';
+import LecturerGradingListPage from '../pages/dashboard/LecturerGradingListPage';
+import LecturerGradingDetailPage from '../pages/dashboard/LecturerGradingDetailPage';
+import LecturerCreateAssignmentPage from '../pages/dashboard/LecturerCreateAssignmentPage';
+import LecturerCreateTestPage from '../pages/dashboard/LecturerCreateTestPage';
+import LecturerTestAnalyticsPage from '../pages/dashboard/LecturerTestAnalyticsPage';
+import LecturerEditSlotPage from '../pages/dashboard/LecturerEditSlotPage';
+import LecturerNewsPage from '../pages/dashboard/LecturerNewsPage';
 import { ROUTES } from '../config/routes';
-import type { Role } from '../types/role.type';
 
-// ─── AUTH GUARD ───
-const AuthGuard = () => {
-  const { isAuthenticated, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
-      </div>
-    );
-  }
-  
-  return isAuthenticated ? <Outlet /> : <Navigate to={ROUTES.LOGIN} replace />;
-};
-
-// ─── GUEST GUARD ───
-const GuestGuard = () => {
-  const { isAuthenticated, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
-      </div>
-    );
-  }
-  
-  return !isAuthenticated ? <Outlet /> : <Navigate to={ROUTES.DASHBOARD} replace />;
-};
-
-// ─── ROLE GUARD ───
-interface RoleGuardProps {
-  allowedRoles: Role[];
-}
-
-const RoleGuard = ({ allowedRoles }: RoleGuardProps) => {
-  const { user } = useAuth();
-
-  if (!user || !allowedRoles.includes(user.role)) {
-    return <AccessDeniedPage />;
-  }
-
-  return <Outlet />;
-};
-
-// ─── DASHBOARD REDIRECTOR ───
-const DashboardRedirector = () => {
-  const { user } = useAuth();
-
-  if (!user) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
-  }
-
-  switch (user.role) {
-    case 'ADMIN':
-      return <Navigate to={ROUTES.DASHBOARD_ADMIN} replace />;
-    case 'LECTURER':
-      return <Navigate to={ROUTES.DASHBOARD_LECTURER} replace />;
-    case 'SUBJECT_HEAD':
-      return <Navigate to={ROUTES.DASHBOARD_SUBJECT_HEAD} replace />;
-    case 'STUDENT':
-      return <Navigate to={ROUTES.DASHBOARD_STUDENT} replace />;
-    default:
-      return <AccessDeniedPage />;
-  }
-};
+import { AuthGuard, GuestGuard, RoleGuard, DashboardRedirector, ClassesRoute, ClassDetailRoute } from '../components/guards/Guards';
 
 // ─── ROUTER DEFINITION ───
 export const router = createBrowserRouter([
@@ -222,11 +162,15 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: ROUTES.CLASSES,
-                element: <ClassesPage />,
+                element: <ClassesRoute />,
+              },
+              {
+                path: ROUTES.SUBJECT_DETAIL,
+                element: <LecturerSubjectDetailPage />,
               },
               {
                 path: ROUTES.CLASS_DETAIL,
-                element: <ClassDetailPage />,
+                element: <ClassDetailRoute />,
               },
             ],
           },
@@ -285,21 +229,39 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: ROUTES.LECTURER_CLASS_SUBMISSIONS,
-                element: (
-                  <EmptyState
-                    title="Class Submission Audits"
-                    description="Instructor review hub containing overview statistics of class works."
-                  />
-                ),
+                element: <LecturerGradingListPage />,
               },
               {
                 path: ROUTES.LECTURER_SUBMISSION_REVIEW,
-                element: (
-                  <EmptyState
-                    title="Instructors Evaluation Dashboard"
-                    description="Review documents, run integrity checkers, and add comments."
-                  />
-                ),
+                element: <LecturerGradingDetailPage />,
+              },
+              {
+                path: ROUTES.CLASS_GRADING,
+                element: <LecturerGradingListPage />,
+              },
+              {
+                path: ROUTES.GRADING_DETAIL,
+                element: <LecturerGradingDetailPage />,
+              },
+              {
+                path: ROUTES.CREATE_ASSIGNMENT,
+                element: <LecturerCreateAssignmentPage />,
+              },
+              {
+                path: ROUTES.CREATE_TEST,
+                element: <LecturerCreateTestPage />,
+              },
+              {
+                path: ROUTES.TEST_ANALYTICS,
+                element: <LecturerTestAnalyticsPage />,
+              },
+              {
+                path: ROUTES.EDIT_SLOT,
+                element: <LecturerEditSlotPage />,
+              },
+              {
+                path: ROUTES.NEWS,
+                element: <LecturerNewsPage />,
               },
             ],
           },

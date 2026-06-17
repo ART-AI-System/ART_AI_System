@@ -17,6 +17,7 @@ export const ROUTES = {
 
   // Academic Structure
   CLASSES: '/classes',
+  SUBJECT_DETAIL: '/subjects/:id',
   CLASS_DETAIL: '/classes/:id',
   CLASS_GRADE_ITEMS: '/classes/:classId/grade-items',
 
@@ -45,4 +46,13 @@ export const ROUTES = {
   // General Features
   SCHEDULE: '/schedule',
   MESSAGES: '/messages',
+
+  // Lecturer specific
+  CLASS_GRADING: '/classes/:classId/grading',
+  GRADING_DETAIL: '/grading/:submissionId',
+  CREATE_ASSIGNMENT: '/assignments/create',
+  CREATE_TEST: '/tests/create',
+  TEST_ANALYTICS: '/tests/analytics',
+  EDIT_SLOT: '/schedule/:slotId/edit',
+  NEWS: '/news',
 } as const;

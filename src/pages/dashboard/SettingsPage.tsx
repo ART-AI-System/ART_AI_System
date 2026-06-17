@@ -1,6 +1,6 @@
 import { User, Shield, Bell, Cpu, LogOut, Camera, Mail, Badge } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../app/App';
+import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../config/routes';
 import { Card } from '../../components/common/Card';
 

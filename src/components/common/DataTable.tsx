@@ -32,7 +32,7 @@ export function DataTable<T>({ columns, data, keyExtractor }: DataTableProps<T>)
             <tr key={keyExtractor(row)} className={`border-b border-gray-50 hover:bg-blue-50/30 transition-colors ${i === data.length - 1 ? 'border-b-0' : ''}`}>
               {columns.map(col => (
                 <td key={col.key} className={`p-4 ${col.cellClassName || ''}`}>
-                  {col.render ? col.render(row) : (row as any)[col.key]}
+                  {col.render ? col.render(row) : (row as unknown as Record<string, ReactNode>)[col.key]}
                 </td>
               ))}
             </tr>

@@ -41,3 +41,29 @@ export const MOCK_CLASSES: ClassMock[] = [
     lecturerAvatarColor: { bg: 'DCFCE7', text: '15803D' }
   }
 ];
+
+export const MOCK_LECTURER_SUBJECTS = [
+  {
+    id: '1',
+    code: 'PRJ301',
+    name: 'Java Web Application',
+    imageUrl: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80',
+    classesCount: 2,
+    studentsCount: 65,
+    classes: [
+      { id: 'c1', name: 'SE20A09' },
+      { id: 'c2', name: 'SE20A10' }
+    ]
+  },
+  {
+    id: '2',
+    code: 'SWT301',
+    name: 'Software Testing',
+    imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80',
+    classesCount: 1,
+    studentsCount: 32,
+    classes: [
+      { id: 'c3', name: 'SE20A10' }
+    ]
+  }
+];

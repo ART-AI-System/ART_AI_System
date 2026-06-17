@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../../app/App';
+import { useAuth } from '../../context/AuthContext';
 // removed useNavigate
 import { MOCK_STUDENT_USER, MOCK_LECTURER_USER, MOCK_SUBJECT_HEAD_USER, MOCK_ADMIN_USER } from '../../config/roles';
 
@@ -34,7 +34,7 @@ const LoginPage = () => {
 
       login(userSession);
       // Let the DashboardRedirector handle the routing
-    } catch (err) {
+    } catch {
       setError('Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);

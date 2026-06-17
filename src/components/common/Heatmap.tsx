@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export const Heatmap = () => {
   const [weeks] = useState(40);
   const [days] = useState(7);
-  const [heatData, setHeatData] = useState<number[][]>([]);
-
-  useEffect(() => {
+  const [heatData] = useState<number[][]>(() => {
     const data: number[][] = [];
     for (let i = 0; i < weeks; i++) {
       const col: number[] = [];
@@ -20,8 +18,8 @@ export const Heatmap = () => {
       }
       data.push(col);
     }
-    setHeatData(data);
-  }, [weeks, days]);
+    return data;
+  });
 
   const heatColor = (level: number) => {
     switch(level) {
