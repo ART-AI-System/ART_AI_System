@@ -6,6 +6,7 @@ import authRouter from '~/routes/auth.routes'
 import classesRouter from '~/routes/classes.routes'
 import gradeItemsRouter from '~/routes/gradeItems.routes'
 import gradesRouter, { gradesStandaloneRouter } from '~/routes/grades.routes'
+import assignmentsRouter from '~/routes/assignments.routes'
 import submissionsRouter from '~/routes/submissions.routes'
 import submissionReviewsRouter from '~/routes/submissionReviews.routes'
 import reportRouter from '~/routes/report.routes'
@@ -29,6 +30,7 @@ databaseService.connect().then(async () => {
   databaseService.indexPasswordResetTokens()
   databaseService.indexSubmissions()
   databaseService.indexSubmissionReviews()
+  databaseService.indexAssignments()
   databaseService.indexChatRooms()
   databaseService.indexChatMessages()
 })
@@ -44,6 +46,7 @@ app.use('/api/users', usersRouter)
 app.use('/api/classes', classesRouter)
 app.use('/api/classes/:classId/grade-items', gradeItemsRouter)
 app.use('/api/grade-items', gradeItemsRouter)
+app.use('/api', assignmentsRouter)
 app.use('/api/submissions/:id/grade', gradesRouter)
 app.use('/api', gradesStandaloneRouter)
 app.use('/api', submissionsRouter)

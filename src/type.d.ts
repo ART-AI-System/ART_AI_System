@@ -3,6 +3,7 @@ import { ParamsDictionary } from 'express-serve-static-core'
 import User from '~/models/schemas/users.schema'
 import { TokenPayload } from '~/models/requests/users.request'
 import { UploadedSubmissionFile } from '~/models/requests/submissions.request'
+import { UploadedAssignmentMaterialFile } from '~/models/requests/assignments.request'
 
 export type ReqBody<T> = Request<ParamsDictionary, any, T>
 
@@ -16,5 +17,6 @@ declare module 'express' {
     decored_refresh_token?: TokenPayload  // typo giữ lại để backward compat
     decoded_forgot_password_token?: TokenPayload
     submissionFile?: UploadedSubmissionFile
+    assignmentMaterialFile?: UploadedAssignmentMaterialFile
   }
 }
