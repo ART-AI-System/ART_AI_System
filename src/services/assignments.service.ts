@@ -398,7 +398,7 @@ class AssignmentsService {
 
     const now = new Date()
     await databaseService.notifications.insertOne({
-      type,
+      type: type as any,
       title: 'New assignment published',
       message: assignment.title,
       classId: assignment.classId,
@@ -409,7 +409,7 @@ class AssignmentsService {
     })
 
     await databaseService.emailLogs.insertOne({
-      type,
+      type: type as any,
       subject: 'New assignment published',
       recipientIds: recipients,
       payload: {

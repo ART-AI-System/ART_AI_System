@@ -210,6 +210,60 @@ class DatabaseService {
     }
   }
 
+  async indexNotifications() {
+    try {
+      const userReadIndexExists = await this.notifications.indexExists(['userId_1_isRead_1'])
+      if (!userReadIndexExists) {
+        await this.notifications.createIndex({ userId: 1, isRead: 1 })
+      }
+
+      const typeIndexExists = await this.notifications.indexExists(['type_1'])
+      if (!typeIndexExists) {
+        await this.notifications.createIndex({ type: 1 })
+      }
+
+      const relatedIndexExists = await this.notifications.indexExists(['relatedEntityType_1_relatedEntityId_1'])
+      if (!relatedIndexExists) {
+        await this.notifications.createIndex({ relatedEntityType: 1, relatedEntityId: 1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.notifications.createIndex({ userId: 1, isRead: 1 })
+        await this.notifications.createIndex({ type: 1 })
+        await this.notifications.createIndex({ relatedEntityType: 1, relatedEntityId: 1 })
+      } else {
+        console.error('Error indexing notifications:', error)
+      }
+    }
+  }
+
+  async indexEmailLogs() {
+    try {
+      const toIndexExists = await this.emailLogs.indexExists(['to_1'])
+      if (!toIndexExists) {
+        await this.emailLogs.createIndex({ to: 1 })
+      }
+
+      const typeIndexExists = await this.emailLogs.indexExists(['type_1'])
+      if (!typeIndexExists) {
+        await this.emailLogs.createIndex({ type: 1 })
+      }
+
+      const statusIndexExists = await this.emailLogs.indexExists(['status_1'])
+      if (!statusIndexExists) {
+        await this.emailLogs.createIndex({ status: 1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.emailLogs.createIndex({ to: 1 })
+        await this.emailLogs.createIndex({ type: 1 })
+        await this.emailLogs.createIndex({ status: 1 })
+      } else {
+        console.error('Error indexing email logs:', error)
+      }
+    }
+  }
+
   async indexAssignments() {
     try {
       const sessionIndexExists = await this.assignments.indexExists(['sessionId_1_status_1'])
