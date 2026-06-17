@@ -5,7 +5,7 @@ import { NextFunction, Request, Response } from 'express'
 import formidable, { Files } from 'formidable'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { ErrorWithStatus } from '~/models/Errors'
-import { UploadedSubmissionFile } from '~/models/requests/submissions.request'
+import { SubmissionUploadFields, UploadedSubmissionFile } from '~/models/requests/submissions.request'
 
 const MAX_SUBMISSION_FILE_SIZE = 10 * 1024 * 1024
 const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.xlsx', '.pptx', '.zip']
@@ -38,7 +38,7 @@ export const parseSubmissionFile = async (req: Request, res: Response, next: Nex
 
   try {
     await new Promise<void>((resolve, reject) => {
-      form.parse(req, (err: Error | null, _fields: any, files: Files) => {
+      form.parse(req, (err: Error | null, fields: any, files: Files) => {
         if (err) {
           return reject(
             new ErrorWithStatus({
@@ -80,6 +80,13 @@ export const parseSubmissionFile = async (req: Request, res: Response, next: Nex
           size: file.size,
           contentHash: getFileHash(file.filepath)
         } satisfies UploadedSubmissionFile
+
+        const noteRaw = fields.note
+        const note = Array.isArray(noteRaw) ? noteRaw[0] : noteRaw
+        req.body = {
+          ...req.body,
+          ...(typeof note === 'string' ? { note: note.trim() } : {})
+        } satisfies SubmissionUploadFields
 
         resolve()
       })

@@ -14,8 +14,12 @@ export interface SubmissionType {
   fileSize: number
   mimeType: string
   contentHash?: string | null
+  note?: string
   status?: SubmissionStatus
   submittedAt?: Date
+  finalizedAt?: Date | null
+  aiRequirementSatisfied?: boolean
+  aiInteractionCount?: number
   isLatest?: boolean
   createdAt?: Date
   updatedAt?: Date
@@ -33,8 +37,12 @@ export default class Submission {
   fileSize: number
   mimeType: string
   contentHash: string | null
+  note: string
   status: SubmissionStatus
   submittedAt: Date
+  finalizedAt: Date | null
+  aiRequirementSatisfied: boolean
+  aiInteractionCount: number
   isLatest: boolean
   createdAt: Date
   updatedAt: Date
@@ -52,8 +60,12 @@ export default class Submission {
     this.fileSize = submission.fileSize
     this.mimeType = submission.mimeType
     this.contentHash = submission.contentHash ?? null
+    this.note = submission.note ?? ''
     this.status = submission.status ?? 'draft'
     this.submittedAt = submission.submittedAt || date
+    this.finalizedAt = submission.finalizedAt ?? null
+    this.aiRequirementSatisfied = submission.aiRequirementSatisfied ?? false
+    this.aiInteractionCount = submission.aiInteractionCount ?? 0
     this.isLatest = submission.isLatest ?? true
     this.createdAt = submission.createdAt || date
     this.updatedAt = submission.updatedAt || date

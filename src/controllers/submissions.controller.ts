@@ -8,7 +8,8 @@ import submissionsService from '~/services/submissions.service'
 
 export const createSubmissionController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { gradeItemId } = req.params
+    const { gradeItemId, assignmentId } = req.params
+    const targetGradeItemId = (gradeItemId || assignmentId) as string
     const user = req.user as User
     const submissionFile = req.submissionFile as UploadedSubmissionFile | undefined
 
@@ -19,7 +20,12 @@ export const createSubmissionController = async (req: Request, res: Response, ne
       })
     }
 
-    const result = await submissionsService.createSubmission(gradeItemId as string, user._id!.toString(), submissionFile)
+    const result = await submissionsService.createSubmission(
+      targetGradeItemId,
+      user._id!.toString(),
+      submissionFile,
+      req.body.note
+    )
 
     res.status(HTTP_STATUS.CREATED).json({
       message: 'Submit assignment successfully',
@@ -32,9 +38,10 @@ export const createSubmissionController = async (req: Request, res: Response, ne
 
 export const getMySubmissionByGradeItemController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { gradeItemId } = req.params
+    const { gradeItemId, assignmentId } = req.params
+    const targetGradeItemId = (gradeItemId || assignmentId) as string
     const user = req.user as User
-    const result = await submissionsService.getMySubmissionByGradeItem(gradeItemId as string, user._id!.toString())
+    const result = await submissionsService.getMySubmissionByGradeItem(targetGradeItemId, user._id!.toString())
 
     if (!result) {
       res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Submission not found' })
@@ -52,9 +59,10 @@ export const getMySubmissionByGradeItemController = async (req: Request, res: Re
 
 export const getSubmissionsByGradeItemController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { gradeItemId } = req.params
+    const { gradeItemId, assignmentId } = req.params
+    const targetGradeItemId = (gradeItemId || assignmentId) as string
     const user = req.user as User
-    const result = await submissionsService.getSubmissionsByGradeItem(gradeItemId as string, user._id!.toString())
+    const result = await submissionsService.getSubmissionsByGradeItem(targetGradeItemId, user)
 
     res.json({
       message: 'Get submissions successfully',
@@ -100,6 +108,85 @@ export const downloadSubmissionController = async (req: Request, res: Response, 
   }
 }
 
+export const getSubmissionVersionsController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { submissionId } = req.params
+    const user = req.user as User
+    const result = await submissionsService.getSubmissionVersions(submissionId as string, user)
+
+    res.json({
+      message: 'Get submission versions successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const resubmitSubmissionVersionController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { submissionId } = req.params
+    const user = req.user as User
+    const submissionFile = req.submissionFile as UploadedSubmissionFile | undefined
+
+    if (!submissionFile) {
+      throw new ErrorWithStatus({
+        message: 'Submission file is required',
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    const result = await submissionsService.resubmitSubmissionVersion(
+      submissionId as string,
+      user._id!.toString(),
+      submissionFile,
+      req.body.note
+    )
+
+    res.status(HTTP_STATUS.CREATED).json({
+      message: 'Create submission version successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getSubmissionVersionByIdController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { versionId } = req.params
+    const user = req.user as User
+    const result = await submissionsService.getSubmissionVersionById(versionId as string, user)
+
+    res.json({
+      message: 'Get submission version successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const downloadSubmissionVersionController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { versionId } = req.params
+    const user = req.user as User
+    const submission = await submissionsService.getSubmissionVersionById(versionId as string, user)
+    const filePath = submissionsService.getSubmissionFilePath(submission)
+
+    if (!fs.existsSync(filePath)) {
+      throw new ErrorWithStatus({
+        message: 'Submission file not found',
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+
+    res.download(filePath, submission.fileName)
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const getMySubmissionsController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user as User
@@ -122,6 +209,21 @@ export const finalizeSubmissionController = async (req: Request, res: Response, 
 
     res.json({
       message: 'Finalize submission successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const withdrawSubmissionController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params
+    const user = req.user as User
+    const result = await submissionsService.withdrawSubmission(id as string, user)
+
+    res.json({
+      message: 'Withdraw submission successfully',
       result
     })
   } catch (error) {
