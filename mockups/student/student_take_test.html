@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ART-AI Exam Mode</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F4F7FE; }
+        /* Anti-select to prevent copying */
+        .noselect {
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* Standard */
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden noselect">
+
+    <!-- EXAM HEADER -->
+    <header class="h-20 bg-[#1B2559] flex items-center justify-between px-8 shrink-0 shadow-md relative z-20">
+        <div class="flex items-center text-white">
+            <div class="w-10 h-10 rounded-xl bg-[#F26F21] flex items-center justify-center font-bold mr-4">
+                <i data-lucide="help-circle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight">Pop Quiz 1: Servlets</h1>
+                <p class="text-sm text-blue-200">PRJ301 - Java Web Application</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-6">
+            <!-- Timer -->
+            <div class="bg-white/10 border border-white/20 rounded-xl px-5 py-2 flex items-center">
+                <i data-lucide="clock" class="w-5 h-5 text-[#F26F21] mr-3"></i>
+                <span class="text-2xl font-extrabold text-white tracking-widest font-mono" id="timer">14:59</span>
+            </div>
+            
+            <button onclick="submitTest()" class="bg-[#F26F21] hover:bg-[#E86115] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-orange-500/30 transition-all">
+                Submit Test
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- QUESTION AREA -->
+        <main class="flex-1 overflow-y-auto scroll-smooth p-10">
+            <div class="max-w-3xl mx-auto space-y-8">
+                
+                <!-- Question 1 -->
+                <div class="bg-white rounded-[24px] p-8 shadow-sm border border-gray-100" id="q1">
+                    <div class="flex justify-between items-start mb-6">
+                        <h2 class="text-xl font-extrabold text-[#1B2559]">Question 1</h2>
+                        <span class="bg-gray-100 text-gray-500 text-xs font-bold px-3 py-1 rounded-full">10 Points</span>
+                    </div>
+                    
+                    <p class="text-lg text-gray-700 font-medium mb-6">What is the correct order of the Servlet lifecycle methods?</p>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-orange-50 hover:border-[#F26F21] transition-all group">
+                            <input type="radio" name="q1" class="w-5 h-5 text-[#F26F21] focus:ring-[#F26F21]">
+                            <span class="ml-4 font-medium text-gray-700 group-hover:text-[#1B2559]">start(), run(), stop()</span>
+                        </label>
+                        <label class="flex items-center p-4 border border-[#F26F21] bg-orange-50 rounded-xl cursor-pointer transition-all group">
+                            <input type="radio" name="q1" class="w-5 h-5 text-[#F26F21] focus:ring-[#F26F21]" checked>
+                            <span class="ml-4 font-bold text-[#1B2559]">init(), service(), destroy()</span>
+                        </label>
+                        <label class="flex items-center p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-orange-50 hover:border-[#F26F21] transition-all group">
+                            <input type="radio" name="q1" class="w-5 h-5 text-[#F26F21] focus:ring-[#F26F21]">
+                            <span class="ml-4 font-medium text-gray-700 group-hover:text-[#1B2559]">load(), execute(), unload()</span>
+                        </label>
+                        <label class="flex items-center p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-orange-50 hover:border-[#F26F21] transition-all group">
+                            <input type="radio" name="q1" class="w-5 h-5 text-[#F26F21] focus:ring-[#F26F21]">
+                            <span class="ml-4 font-medium text-gray-700 group-hover:text-[#1B2559]">onCreate(), onService(), onDestroy()</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="bg-white rounded-[24px] p-8 shadow-sm border border-gray-100" id="q2">
+                    <div class="flex justify-between items-start mb-6">
+                        <h2 class="text-xl font-extrabold text-[#1B2559]">Question 2</h2>
+                        <span class="bg-gray-100 text-gray-500 text-xs font-bold px-3 py-1 rounded-full">10 Points</span>
+                    </div>
+                    
+                    <p class="text-lg text-gray-700 font-medium mb-6">Which of the following are valid JSP implicit objects? (Select all that apply)</p>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center p-4 border border-[#F26F21] bg-orange-50 rounded-xl cursor-pointer transition-all group">
+                            <input type="checkbox" name="q2" class="w-5 h-5 text-[#F26F21] focus:ring-[#F26F21] rounded" checked>
+                            <span class="ml-4 font-bold text-[#1B2559]">request</span>
+                        </label>
+                        <label class="flex items-center p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-orange-50 hover:border-[#F26F21] transition-all group">
+                            <input type="checkbox" name="q2" class="w-5 h-5 text-[#F26F21] focus:ring-[#F26F21] rounded">
+                            <span class="ml-4 font-medium text-gray-700 group-hover:text-[#1B2559]">responseWriter</span>
+                        </label>
+                        <label class="flex items-center p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-orange-50 hover:border-[#F26F21] transition-all group">
+                            <input type="checkbox" name="q2" class="w-5 h-5 text-[#F26F21] focus:ring-[#F26F21] rounded">
+                            <span class="ml-4 font-medium text-gray-700 group-hover:text-[#1B2559]">session</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Pagination/Nav -->
+                <div class="flex justify-between items-center py-6">
+                    <button class="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-colors flex items-center opacity-50 cursor-not-allowed">
+                        <i data-lucide="chevron-left" class="w-5 h-5 mr-2"></i> Previous
+                    </button>
+                    <button class="px-6 py-3 border border-gray-200 rounded-xl font-bold text-[#1B2559] hover:border-[#F26F21] hover:text-[#F26F21] transition-colors flex items-center">
+                        Next <i data-lucide="chevron-right" class="w-5 h-5 ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- RIGHT SIDEBAR: QUESTION GRID -->
+        <aside class="w-[320px] bg-white border-l border-gray-200 shrink-0 p-6 flex flex-col">
+            <h3 class="font-bold text-[#1B2559] mb-4">Question Navigator</h3>
+            
+            <div class="grid grid-cols-5 gap-2 mb-8">
+                <a href="#q1" class="w-10 h-10 rounded-lg bg-[#1B2559] text-white flex items-center justify-center font-bold shadow-sm">1</a>
+                <a href="#q2" class="w-10 h-10 rounded-lg bg-[#F26F21] text-white flex items-center justify-center font-bold shadow-sm ring-2 ring-orange-200 ring-offset-2">2</a>
+                <a href="#" class="w-10 h-10 rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 flex items-center justify-center font-bold">3</a>
+                <a href="#" class="w-10 h-10 rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 flex items-center justify-center font-bold">4</a>
+                <a href="#" class="w-10 h-10 rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 flex items-center justify-center font-bold">5</a>
+                <a href="#" class="w-10 h-10 rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 flex items-center justify-center font-bold">6</a>
+                <a href="#" class="w-10 h-10 rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 flex items-center justify-center font-bold">7</a>
+                <a href="#" class="w-10 h-10 rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 flex items-center justify-center font-bold">8</a>
+                <a href="#" class="w-10 h-10 rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 flex items-center justify-center font-bold">9</a>
+                <a href="#" class="w-10 h-10 rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 flex items-center justify-center font-bold">10</a>
+            </div>
+
+            <div class="space-y-3 mt-auto">
+                <div class="flex items-center text-sm">
+                    <div class="w-4 h-4 rounded bg-[#1B2559] mr-3"></div>
+                    <span class="text-gray-600 font-medium">Answered (1)</span>
+                </div>
+                <div class="flex items-center text-sm">
+                    <div class="w-4 h-4 rounded border border-gray-200 mr-3"></div>
+                    <span class="text-gray-600 font-medium">Not Answered (8)</span>
+                </div>
+                <div class="flex items-center text-sm">
+                    <div class="w-4 h-4 rounded bg-[#F26F21] mr-3"></div>
+                    <span class="text-gray-600 font-medium">Current (1)</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Anti-Cheat Modal -->
+    <div id="antiCheatModal" class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative bg-white rounded-[24px] shadow-2xl p-8 max-w-md w-full text-center border-t-4 border-red-500">
+            <div class="w-20 h-20 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="alert-triangle" class="w-10 h-10"></i>
+            </div>
+            <h2 class="text-2xl font-extrabold text-[#1B2559] mb-2">Exam Mode Active</h2>
+            <p class="text-gray-500 mb-6">You are about to start a timed exam. Do not switch tabs, minimize the browser, or open other applications. Doing so will be recorded as a violation.</p>
+            <button onclick="document.getElementById('antiCheatModal').remove()" class="w-full bg-[#F26F21] hover:bg-[#E86115] text-white py-3.5 rounded-xl font-bold shadow-md shadow-orange-500/20 transition-all">
+                I Understand, Start Exam
+            </button>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Simulate anti-cheat tab switching detection
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && !document.getElementById('antiCheatModal')) {
+                alert("WARNING: You left the exam tab. This has been recorded.");
+            }
+        });
+
+        function submitTest() {
+            if(confirm("Are you sure you want to submit? You cannot change your answers after submitting.")) {
+                window.location.href = "student_test_result.html";
+            }
+        }
+    </script>
+</body>
+</html>
