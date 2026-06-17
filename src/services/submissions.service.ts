@@ -34,7 +34,7 @@ function removeFileIfExists(filePath: string) {
 }
 
 class SubmissionsService {
-  async createSubmission(gradeItemId: string, studentId: string, file: UploadedSubmissionFile) {
+  async createSubmission(gradeItemId: string, studentId: string, file: UploadedSubmissionFile, note = '') {
     const gradeItemObjectId = toObjectId(gradeItemId, 'Grade item')
     const studentObjectId = toObjectId(studentId, 'Student')
 
@@ -111,7 +111,8 @@ class SubmissionsService {
       fileStorageKey,
       fileSize: file.size,
       mimeType: file.mimetype,
-      contentHash: file.contentHash
+      contentHash: file.contentHash,
+      note
     })
 
     const result = await databaseService.submissions.insertOne(newSubmission)
@@ -133,9 +134,9 @@ class SubmissionsService {
     )
   }
 
-  async getSubmissionsByGradeItem(gradeItemId: string, lecturerId: string) {
+  async getSubmissionsByGradeItem(gradeItemId: string, user: User) {
     const gradeItemObjectId = toObjectId(gradeItemId, 'Grade item')
-    const lecturerObjectId = toObjectId(lecturerId, 'Lecturer')
+    const userObjectId = user._id as ObjectId
     const gradeItem = await databaseService.gradeItems.findOne({ _id: gradeItemObjectId })
 
     if (!gradeItem) {
@@ -145,10 +146,13 @@ class SubmissionsService {
       })
     }
 
-    const classData = await databaseService.classes.findOne({
-      _id: gradeItem.classId,
-      'lecturer.lecturerId': lecturerObjectId
-    })
+    const classData =
+      user.role === 'SUBJECT_HEAD' || user.role === 'ADMIN'
+        ? await databaseService.classes.findOne({ _id: gradeItem.classId })
+        : await databaseService.classes.findOne({
+            _id: gradeItem.classId,
+            'lecturer.lecturerId': userObjectId
+          })
 
     if (!classData) {
       throw new ErrorWithStatus({
@@ -189,6 +193,22 @@ class SubmissionsService {
       })
       .sort({ submittedAt: -1 })
       .toArray()
+  }
+
+  async getSubmissionVersions(submissionId: string, user: User) {
+    const submission = await this.getSubmissionById(submissionId, user)
+
+    return await databaseService.submissions
+      .find({
+        gradeItemId: submission.gradeItemId,
+        studentId: submission.studentId
+      })
+      .sort({ versionNumber: -1 })
+      .toArray()
+  }
+
+  async getSubmissionVersionById(versionId: string, user: User) {
+    return await this.getSubmissionById(versionId, user)
   }
 
   getSubmissionFilePath(submission: Pick<Submission, 'fileStorageKey'>) {
@@ -273,6 +293,101 @@ class SubmissionsService {
           aiRequirementSatisfied: true,
           aiInteractionCount: interactionCount,
           updatedAt: now
+        }
+      },
+      { returnDocument: 'after' }
+    )
+
+    return result
+  }
+
+  async resubmitSubmissionVersion(submissionId: string, studentId: string, file: UploadedSubmissionFile, note = '') {
+    const currentSubmission = await this.getSubmissionById(submissionId, {
+      _id: toObjectId(studentId, 'Student'),
+      role: 'STUDENT'
+    } as User)
+
+    if (currentSubmission.status === 'draft') {
+      removeFileIfExists(this.getSubmissionFilePath(currentSubmission))
+
+      const uuid = randomUUID()
+      const ext = path.extname(file.originalFilename).toLowerCase()
+      const storageFileName = `${uuid}${ext}`
+      const fileStorageKey = path.join('uploads', 'submissions', storageFileName)
+      const finalFilePath = path.join(process.cwd(), fileStorageKey)
+
+      ensureSubmissionUploadDir()
+      fs.renameSync(file.filepath, finalFilePath)
+
+      return await databaseService.submissions.findOneAndUpdate(
+        { _id: currentSubmission._id },
+        {
+          $set: {
+            uuid,
+            fileName: file.originalFilename,
+            fileStorageKey,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            contentHash: file.contentHash,
+            note,
+            submittedAt: new Date(),
+            updatedAt: new Date()
+          }
+        },
+        { returnDocument: 'after' }
+      )
+    }
+
+    return await this.createSubmission(currentSubmission.gradeItemId.toString(), studentId, file, note)
+  }
+
+  async withdrawSubmission(id: string, user: User) {
+    const submission = await this.getSubmissionById(id, user)
+    const userId = user._id as ObjectId
+
+    if (user.role === 'STUDENT') {
+      if (submission.studentId.toString() !== userId.toString()) {
+        throw new ErrorWithStatus({
+          message: 'You can only withdraw your own submissions',
+          status: HTTP_STATUS.FORBIDDEN
+        })
+      }
+
+      if (submission.status !== 'draft') {
+        throw new ErrorWithStatus({
+          message: 'Only draft submissions can be withdrawn by student',
+          status: HTTP_STATUS.BAD_REQUEST
+        })
+      }
+    }
+
+    if (user.role === 'LECTURER') {
+      const classData = await databaseService.classes.findOne({
+        _id: submission.classId,
+        'lecturer.lecturerId': userId
+      })
+
+      if (!classData) {
+        throw new ErrorWithStatus({
+          message: 'You do not have permission to withdraw this submission',
+          status: HTTP_STATUS.FORBIDDEN
+        })
+      }
+    }
+
+    if (user.role !== 'STUDENT' && user.role !== 'LECTURER' && user.role !== 'ADMIN') {
+      throw new ErrorWithStatus({
+        message: 'You do not have permission to withdraw this submission',
+        status: HTTP_STATUS.FORBIDDEN
+      })
+    }
+
+    const result = await databaseService.submissions.findOneAndUpdate(
+      { _id: submission._id },
+      {
+        $set: {
+          status: 'withdrawn',
+          updatedAt: new Date()
         }
       },
       { returnDocument: 'after' }
