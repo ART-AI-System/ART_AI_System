@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ART-AI Test Results</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F4F7FE; }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- EXAM HEADER -->
+    <header class="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 shrink-0 shadow-sm relative z-20">
+        <div class="flex items-center">
+            <a href="subject_detail.html" class="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 hover:bg-[#F26F21] hover:border-[#F26F21] text-gray-500 hover:text-white flex items-center justify-center transition-all mr-5 shadow-sm">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <h1 class="text-xl font-extrabold text-[#1B2559] tracking-tight">Pop Quiz 1: Servlets <span class="ml-2 text-sm font-bold bg-green-50 text-green-600 px-2 py-0.5 rounded-full">Completed</span></h1>
+                <p class="text-sm text-gray-500 font-medium">PRJ301 - Java Web Application • Submitted Today at 10:45 AM</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-6">
+            <div class="bg-gray-50 border border-gray-200 rounded-xl px-5 py-2 flex flex-col items-end">
+                <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Final Score</span>
+                <span class="text-2xl font-extrabold text-[#1B2559]">8.5 <span class="text-sm text-gray-400">/ 10</span></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- QUESTION AREA -->
+        <main class="flex-1 overflow-y-auto scroll-smooth p-10">
+            <div class="max-w-3xl mx-auto space-y-8">
+                
+                <!-- Question 1 (Correct) -->
+                <div class="bg-white rounded-[24px] p-8 shadow-sm border border-gray-100 relative overflow-hidden" id="q1">
+                    <div class="absolute top-0 left-0 w-1.5 h-full bg-green-500"></div>
+                    <div class="flex justify-between items-start mb-6 pl-4">
+                        <div>
+                            <h2 class="text-xl font-extrabold text-[#1B2559]">Question 1</h2>
+                            <p class="text-sm font-bold text-green-600 flex items-center mt-1"><i data-lucide="check-circle-2" class="w-4 h-4 mr-1"></i> Correct (+10 pts)</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-lg text-gray-700 font-medium mb-6 pl-4">What is the correct order of the Servlet lifecycle methods?</p>
+                    
+                    <div class="space-y-3 pl-4">
+                        <label class="flex items-center p-4 border border-gray-200 rounded-xl opacity-50">
+                            <input type="radio" disabled class="w-5 h-5 text-gray-400">
+                            <span class="ml-4 font-medium text-gray-700">start(), run(), stop()</span>
+                        </label>
+                        <!-- Correct Answer that student selected -->
+                        <label class="flex items-center p-4 border border-green-500 bg-green-50 rounded-xl relative">
+                            <i data-lucide="check" class="w-5 h-5 text-green-600 absolute right-4"></i>
+                            <input type="radio" checked disabled class="w-5 h-5 text-green-600">
+                            <span class="ml-4 font-bold text-green-800">init(), service(), destroy()</span>
+                        </label>
+                        <label class="flex items-center p-4 border border-gray-200 rounded-xl opacity-50">
+                            <input type="radio" disabled class="w-5 h-5 text-gray-400">
+                            <span class="ml-4 font-medium text-gray-700">load(), execute(), unload()</span>
+                        </label>
+                        <label class="flex items-center p-4 border border-gray-200 rounded-xl opacity-50">
+                            <input type="radio" disabled class="w-5 h-5 text-gray-400">
+                            <span class="ml-4 font-medium text-gray-700">onCreate(), onService(), onDestroy()</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Question 2 (Incorrect) -->
+                <div class="bg-white rounded-[24px] p-8 shadow-sm border border-gray-100 relative overflow-hidden" id="q2">
+                    <div class="absolute top-0 left-0 w-1.5 h-full bg-red-500"></div>
+                    <div class="flex justify-between items-start mb-6 pl-4">
+                        <div>
+                            <h2 class="text-xl font-extrabold text-[#1B2559]">Question 2</h2>
+                            <p class="text-sm font-bold text-red-500 flex items-center mt-1"><i data-lucide="x-circle" class="w-4 h-4 mr-1"></i> Incorrect (0 pts)</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-lg text-gray-700 font-medium mb-6 pl-4">Which of the following are valid JSP implicit objects? (Select all that apply)</p>
+                    
+                    <div class="space-y-3 pl-4">
+                        <!-- Correct answer, student missed it -->
+                        <label class="flex items-center p-4 border border-green-500 bg-green-50 rounded-xl relative">
+                            <span class="absolute right-4 text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">Correct Answer</span>
+                            <input type="checkbox" checked disabled class="w-5 h-5 text-green-600 rounded">
+                            <span class="ml-4 font-bold text-green-800">request</span>
+                        </label>
+                        <!-- Wrong answer, student selected it -->
+                        <label class="flex items-center p-4 border border-red-500 bg-red-50 rounded-xl relative">
+                            <i data-lucide="x" class="w-5 h-5 text-red-500 absolute right-4"></i>
+                            <input type="checkbox" checked disabled class="w-5 h-5 text-red-500 rounded">
+                            <span class="ml-4 font-bold text-red-800">responseWriter</span>
+                        </label>
+                        <!-- Correct answer, student got it right but failed the overall question -->
+                        <label class="flex items-center p-4 border border-gray-200 rounded-xl opacity-50">
+                            <input type="checkbox" checked disabled class="w-5 h-5 text-gray-400 rounded">
+                            <span class="ml-4 font-medium text-gray-700">session</span>
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- RIGHT SIDEBAR: QUESTION GRID -->
+        <aside class="w-[320px] bg-white border-l border-gray-200 shrink-0 p-6 flex flex-col">
+            <h3 class="font-bold text-[#1B2559] mb-4">Results Overview</h3>
+            
+            <div class="grid grid-cols-5 gap-2 mb-8">
+                <a href="#q1" class="w-10 h-10 rounded-lg bg-green-100 text-green-700 flex items-center justify-center font-bold">1</a>
+                <a href="#q2" class="w-10 h-10 rounded-lg bg-red-100 text-red-600 flex items-center justify-center font-bold">2</a>
+                <a href="#" class="w-10 h-10 rounded-lg bg-green-100 text-green-700 flex items-center justify-center font-bold">3</a>
+                <a href="#" class="w-10 h-10 rounded-lg bg-green-100 text-green-700 flex items-center justify-center font-bold">4</a>
+                <a href="#" class="w-10 h-10 rounded-lg bg-green-100 text-green-700 flex items-center justify-center font-bold">5</a>
+                <a href="#" class="w-10 h-10 rounded-lg bg-green-100 text-green-700 flex items-center justify-center font-bold">6</a>
+                <a href="#" class="w-10 h-10 rounded-lg bg-green-100 text-green-700 flex items-center justify-center font-bold">7</a>
+                <a href="#" class="w-10 h-10 rounded-lg bg-green-100 text-green-700 flex items-center justify-center font-bold">8</a>
+                <a href="#" class="w-10 h-10 rounded-lg bg-green-100 text-green-700 flex items-center justify-center font-bold">9</a>
+                <a href="#" class="w-10 h-10 rounded-lg bg-red-100 text-red-600 flex items-center justify-center font-bold">10</a>
+            </div>
+
+            <div class="space-y-3 mt-auto border-t border-gray-100 pt-6">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-500 font-medium">Correct</span>
+                    <span class="font-bold text-green-600">8</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-500 font-medium">Incorrect</span>
+                    <span class="font-bold text-red-500">2</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
