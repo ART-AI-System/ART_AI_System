@@ -32,7 +32,8 @@ Academic Research Transparency & AI Audit System
 
 ## System Objective
 
-ART-AI evaluates how students use Generative AI during academic work.
+ART-AI is a Comprehensive Academic Management & AI Transparency Portal. 
+By providing essential daily services (like FPT Academic Portal), it naturally funnels students into a structured environment where it evaluates how they use Generative AI during academic work.
 
 The system promotes:
 
@@ -113,7 +114,10 @@ src/
 │   ├── review.controllers.ts
 │   ├── grade.controllers.ts
 │   ├── finalResult.controllers.ts
-│   └── report.controllers.ts
+│   ├── report.controllers.ts
+│   ├── attendance.controllers.ts
+│   ├── curriculum.controllers.ts
+│   └── transaction.controllers.ts
 │
 ├── services/
 │   ├── database.service.ts
@@ -129,6 +133,9 @@ src/
 │   ├── grade.services.ts
 │   ├── finalResult.services.ts
 │   ├── report.services.ts
+│   ├── attendance.services.ts
+│   ├── curriculum.services.ts
+│   ├── transaction.services.ts
 │   └── storage.services.ts
 │
 ├── routes/
@@ -143,7 +150,10 @@ src/
 │   ├── review.routes.ts
 │   ├── grade.routes.ts
 │   ├── finalResult.routes.ts
-│   └── report.routes.ts
+│   ├── report.routes.ts
+│   ├── attendance.routes.ts
+│   ├── curriculum.routes.ts
+│   └── transaction.routes.ts
 │
 ├── utils/
 │   ├── handlers.ts
@@ -350,6 +360,7 @@ Files are NOT used for:
 * Final Results
 * Reporting
 * Dashboard
+* Academic Portal Services (Attendance, Curriculum, Transcript, Transactions)
 
 ---
 

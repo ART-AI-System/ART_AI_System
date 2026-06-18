@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ART-AI Academic Transcript</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F4F7FE; }
+        .fpt-orange-gradient { background: linear-gradient(135deg, #F26F21 0%, #F79C65 100%); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden text-gray-800">
+    
+    <!-- Sidebar -->
+    <aside class="w-[280px] bg-white fixed h-full z-20 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-gray-100">
+        <!-- Logo -->
+        <a href="home.html" class="h-24 flex items-center px-8 cursor-pointer">
+            <div class="w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white mr-3 shadow-lg shadow-orange-200">
+                <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+            </div>
+            <span class="text-2xl font-extrabold text-[#1B2559]">ART-AI</span>
+        </a>
+        
+        <!-- Navigation -->
+        <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto hide-scrollbar">
+            <a href="home.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="home" class="w-5 h-5 mr-4"></i> Home Dashboard
+            </a>
+            <a href="subjects.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="book-open" class="w-5 h-5 mr-4"></i> My Subjects
+            </a>
+            <a href="schedule.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="calendar" class="w-5 h-5 mr-4"></i> Schedule
+            </a>
+            <a href="assignments.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="file-check-2" class="w-5 h-5 mr-4"></i> Assignments
+            </a>
+            <!-- Reports Dropdown -->
+            <div class="relative">
+                <button class="w-full flex items-center justify-between px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50" onclick="this.nextElementSibling.classList.toggle('hidden'); const icon = this.querySelector('.chevron-icon'); if(icon) icon.classList.toggle('rotate-180');">
+                    <div class="flex items-center">
+                        <i data-lucide="bar-chart-2" class="w-5 h-5 mr-4"></i> Reports
+                    </div>
+                    <i data-lucide="chevron-down" class="w-4 h-4 chevron-icon transition-transform rotate-180"></i>
+                </button>
+                <div class="flex flex-col pl-12 pr-4 py-1 space-y-1 mt-1 border-l-2 border-gray-100 ml-6">
+                    <a href="student_attendance.html" class="block py-2 text-sm text-gray-500 hover:text-[#4318FF] font-medium transition-colors relative before:absolute before:-left-[18px] before:top-1/2 before:-translate-y-1/2 before:w-3 before:h-0.5 before:bg-gray-200 hover:before:bg-[#4318FF]">Attendance</a>
+                    <a href="gradebook.html" class="block py-2 text-sm text-gray-500 hover:text-[#4318FF] font-medium transition-colors relative before:absolute before:-left-[18px] before:top-1/2 before:-translate-y-1/2 before:w-3 before:h-0.5 before:bg-gray-200 hover:before:bg-[#4318FF]">Mark Report</a>
+                    <a href="student_transcript.html" class="block py-2 text-sm text-[#4318FF] font-bold transition-colors relative before:absolute before:-left-[18px] before:top-1/2 before:-translate-y-1/2 before:w-3 before:h-0.5 before:bg-[#4318FF]">Academic Transcript</a>
+                    <a href="student_curriculum.html" class="block py-2 text-sm text-gray-500 hover:text-[#4318FF] font-medium transition-colors relative before:absolute before:-left-[18px] before:top-1/2 before:-translate-y-1/2 before:w-3 before:h-0.5 before:bg-gray-200 hover:before:bg-[#4318FF]">Curriculum</a>
+                    <a href="student_transactions.html" class="block py-2 text-sm text-gray-500 hover:text-[#4318FF] font-medium transition-colors relative before:absolute before:-left-[18px] before:top-1/2 before:-translate-y-1/2 before:w-3 before:h-0.5 before:bg-gray-200 hover:before:bg-[#4318FF]">Transaction History</a>
+                </div>
+            </div>
+            <a href="news.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="newspaper" class="w-5 h-5 mr-4"></i> News
+            </a>
+            
+            <div class="pt-8 pb-2">
+                <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Account</p>
+            </div>
+            <a href="chat.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="message-circle" class="w-5 h-5 mr-4"></i> Messages
+            </a>
+            <a href="settings.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
+                <i data-lucide="settings" class="w-5 h-5 mr-4"></i> Settings
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <main class="flex-1 ml-[280px] flex flex-col h-screen relative">
+        
+        <!-- Header -->
+        <header class="h-24 bg-[#F4F7FE] flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
+            <div class="flex items-center space-x-6 w-full max-w-2xl">
+                <!-- No global semester selector needed for overall transcript -->
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <button class="relative p-2 text-gray-400 hover:text-[#4318FF] transition-colors">
+                    <i data-lucide="bell" class="w-6 h-6"></i>
+                </button>
+                <div class="flex items-center pl-4 border-l border-gray-300 gap-3">
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-[#1B2559]">Viet Khoa</p>
+                        <p class="text-xs font-medium text-gray-500">Student</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Viet+Khoa&background=F26F21&color=fff" class="w-10 h-10 rounded-full shadow-md cursor-pointer">
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="p-8 overflow-y-auto flex-1 hide-scrollbar">
+            
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-extrabold text-[#1B2559]">Academic Transcript</h1>
+                    <p class="text-gray-500 font-medium mt-1">Software Engineering (SE)</p>
+                </div>
+                <button class="bg-[#4318FF] text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 hover:bg-[#3311CC] transition-all flex items-center">
+                    <i data-lucide="download" class="w-4 h-4 mr-2"></i> Download Official Transcript
+                </button>
+            </div>
+
+            <!-- Stats Widgets -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1">Cumulative GPA</p>
+                        <h3 class="text-3xl font-extrabold text-[#1B2559]">8.2</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-blue-50 text-[#4318FF] flex items-center justify-center">
+                        <i data-lucide="trending-up" class="w-6 h-6"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1">Credits Earned</p>
+                        <h3 class="text-3xl font-extrabold text-[#1B2559]">68</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-green-50 text-green-500 flex items-center justify-center">
+                        <i data-lucide="award" class="w-6 h-6"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-1">Subjects Passed</p>
+                    <h3 class="text-3xl font-extrabold text-green-500">22</h3>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-1">Subjects Failed</p>
+                    <h3 class="text-3xl font-extrabold text-gray-400">0</h3>
+                </div>
+            </div>
+
+            <!-- GPA Chart Placeholder -->
+            <div class="bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 mb-8 relative overflow-hidden flex flex-col justify-center min-h-[250px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-[#1B2559]">GPA Progression</h3>
+                    <div class="flex items-center text-xs font-bold text-gray-500">
+                        <span class="w-3 h-3 rounded-full bg-[#4318FF] mr-2"></span> Semester GPA
+                    </div>
+                </div>
+                <!-- Mock SVG Chart -->
+                <svg viewBox="0 0 800 150" class="w-full h-32 mt-4 overflow-visible">
+                    <defs>
+                        <linearGradient id="gradientLine" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#4318FF" stop-opacity="0.2"/>
+                            <stop offset="100%" stop-color="#4318FF" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M 0 100 L 160 80 L 320 110 L 480 60 L 640 40 L 800 50 L 800 150 L 0 150 Z" fill="url(#gradientLine)" />
+                    <polyline points="0,100 160,80 320,110 480,60 640,40 800,50" fill="none" stroke="#4318FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                    <circle cx="160" cy="80" r="6" fill="#fff" stroke="#4318FF" stroke-width="3" />
+                    <circle cx="320" cy="110" r="6" fill="#fff" stroke="#4318FF" stroke-width="3" />
+                    <circle cx="480" cy="60" r="6" fill="#fff" stroke="#4318FF" stroke-width="3" />
+                    <circle cx="640" cy="40" r="6" fill="#fff" stroke="#4318FF" stroke-width="3" />
+                    <circle cx="800" cy="50" r="6" fill="#fff" stroke="#4318FF" stroke-width="3" />
+                    
+                    <text x="160" y="140" text-anchor="middle" class="text-xs fill-gray-400 font-bold">Fall 2024</text>
+                    <text x="320" y="140" text-anchor="middle" class="text-xs fill-gray-400 font-bold">Spring 2025</text>
+                    <text x="480" y="140" text-anchor="middle" class="text-xs fill-gray-400 font-bold">Summer 2025</text>
+                    <text x="640" y="140" text-anchor="middle" class="text-xs fill-gray-400 font-bold">Fall 2025</text>
+                    <text x="800" y="140" text-anchor="middle" class="text-xs fill-gray-400 font-bold">Spring 2026</text>
+                </svg>
+            </div>
+
+            <!-- Transcript Table -->
+            <div class="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-[#1B2559]">Academic Record</h3>
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="filter" class="w-4 h-4 text-gray-400"></i>
+                        <span class="text-sm font-bold text-gray-500">Group by: Semester</span>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white border-b border-gray-100 text-xs text-gray-400 uppercase tracking-wider">
+                                <th class="p-4 font-bold">Subject Code</th>
+                                <th class="p-4 font-bold">Subject Name</th>
+                                <th class="p-4 font-bold text-center">Credits</th>
+                                <th class="p-4 font-bold text-center">Grade</th>
+                                <th class="p-4 font-bold text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <!-- Semester Group Header -->
+                            <tr class="bg-blue-50/30 border-b border-blue-100">
+                                <td colspan="5" class="p-3 pl-4">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-[#4318FF]">Spring 2026 (Semester 5)</span>
+                                        <span class="text-xs font-bold text-blue-400">Term GPA: 8.5 • Credits Earned: 15</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                <td class="p-4 font-bold text-gray-600">SWD392</td>
+                                <td class="p-4 font-bold text-[#1B2559]">Software Architecture & Design</td>
+                                <td class="p-4 text-center text-gray-500 font-medium">3</td>
+                                <td class="p-4 text-center font-extrabold text-[#1B2559]">8.8</td>
+                                <td class="p-4 text-center">
+                                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                <td class="p-4 font-bold text-gray-600">PRJ301</td>
+                                <td class="p-4 font-bold text-[#1B2559]">Java Web Application Development</td>
+                                <td class="p-4 text-center text-gray-500 font-medium">3</td>
+                                <td class="p-4 text-center font-extrabold text-[#1B2559]">8.2</td>
+                                <td class="p-4 text-center">
+                                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
+                                </td>
+                            </tr>
+                            
+                            <!-- Semester Group Header -->
+                            <tr class="bg-blue-50/30 border-b border-blue-100 border-t-4 border-t-white">
+                                <td colspan="5" class="p-3 pl-4">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-[#4318FF]">Fall 2025 (Semester 4)</span>
+                                        <span class="text-xs font-bold text-blue-400">Term GPA: 7.8 • Credits Earned: 15</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                <td class="p-4 font-bold text-gray-600">DBI202</td>
+                                <td class="p-4 font-bold text-[#1B2559]">Database Systems</td>
+                                <td class="p-4 text-center text-gray-500 font-medium">3</td>
+                                <td class="p-4 text-center font-extrabold text-[#1B2559]">7.5</td>
+                                <td class="p-4 text-center">
+                                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                <td class="p-4 font-bold text-gray-600">PRO192</td>
+                                <td class="p-4 font-bold text-[#1B2559]">Object-Oriented Programming</td>
+                                <td class="p-4 text-center text-gray-500 font-medium">3</td>
+                                <td class="p-4 text-center font-extrabold text-[#1B2559]">8.0</td>
+                                <td class="p-4 text-center">
+                                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

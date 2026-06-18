@@ -78,6 +78,9 @@ erDiagram
     User ||--|| FinalResult : "has"
     Class ||--o{ FinalResult : "calculates for"
     User ||--o{ Notification : "receives"
+    User ||--o{ Transaction : "pays"
+    Class ||--o{ AttendanceRecord : "tracks"
+    User ||--o{ CurriculumSubject : "studies"
 ```
 
 ### 3.2. Đặc tả chi tiết các Collection
@@ -279,6 +282,45 @@ erDiagram
 | `isRead` | Boolean | Default: `false` | Trạng thái đã đọc |
 | `createdAt` | Date | System | Thời điểm gửi thông báo |
 
+#### 3.2.13. Collection: `attendance_records`
+*Quản lý trạng thái điểm danh từng slot học.*
+
+| Tên Trường | Kiểu Dữ Liệu | Ràng Buộc | Mô Tả |
+| :--- | :--- | :--- | :--- |
+| `_id` | ObjectId | Primary Key | Định danh duy nhất |
+| `classId` | ObjectId | Ref: 'Class', Required | Tham chiếu lớp học |
+| `studentId` | ObjectId | Ref: 'User', Required | Tham chiếu sinh viên |
+| `slotNumber` | Number | Required | Số thứ tự buổi học (1, 2, 3...) |
+| `date` | Date | Required | Ngày học |
+| `status` | String | Required | Enum: `present`, `absent`, `not_yet` |
+| `recordedBy` | ObjectId | Ref: 'User' | Người điểm danh (Lecturer) |
+
+#### 3.2.14. Collection: `transactions`
+*Lịch sử giao dịch học phí.*
+
+| Tên Trường | Kiểu Dữ Liệu | Ràng Buộc | Mô Tả |
+| :--- | :--- | :--- | :--- |
+| `_id` | ObjectId | Primary Key | Định danh giao dịch |
+| `studentId` | ObjectId | Ref: 'User', Required | Sinh viên thanh toán |
+| `transactionCode` | String | Required, Unique | Mã giao dịch |
+| `description` | String | Required | Mô tả (VD: Tuition Fee - Summer 2026) |
+| `amount` | Number | Required | Số tiền (VND) |
+| `status` | String | Required | Enum: `success`, `pending`, `failed` |
+| `paymentDate` | Date | Required | Ngày thanh toán |
+
+#### 3.2.15. Collection: `curriculum_subjects`
+*Khung chương trình đào tạo của sinh viên.*
+
+| Tên Trường | Kiểu Dữ Liệu | Ràng Buộc | Mô Tả |
+| :--- | :--- | :--- | :--- |
+| `_id` | ObjectId | Primary Key | Định danh |
+| `majorCode` | String | Required | Mã chuyên ngành (VD: SE) |
+| `semesterSequence` | Number | Required | Học kỳ thứ mấy trong khung (1, 2, 3...) |
+| `subjectCode` | String | Required | Mã môn học |
+| `subjectName` | String | Required | Tên môn học |
+| `credits` | Number | Required | Số tín chỉ |
+| `prerequisites` | Array | Default: `[]` | Danh sách mã môn tiên quyết |
+
 ---
 
 ## 4. Thiết kế các Thuật toán & Động cơ Cốt lõi (Core Engines)
@@ -425,6 +467,12 @@ Toàn bộ các endpoint sử dụng tiền tố `/api`. Các phản hồi lỗi
 * **`GET /submissions/:id/flags`**: Xem các cờ cảnh báo của bài nộp. (Quyền: Lecturer, Subject Head)
 * **`PATCH /flags/:id/resolve`**: Phê duyệt gỡ cờ cảnh báo. (Quyền: Lecturer, Subject Head)
   * Request Body: `{ isResolved: true }`
+
+### 5.10. Module 13: Academic Portal Services (`/portal`)
+* **`GET /portal/attendance/classes/:classId`**: Lấy lịch sử điểm danh của sinh viên trong một môn học, kèm tính toán Absence Rate. (Quyền: Student)
+* **`GET /portal/transactions/me`**: Lấy danh sách lịch sử giao dịch và dư nợ hiện tại. (Quyền: Student)
+* **`GET /portal/curriculum/me`**: Lấy khung chương trình của sinh viên, nhóm theo học kỳ và trạng thái môn học (đã học, đang học, chưa học). (Quyền: Student)
+* **`GET /portal/transcript/me`**: Lấy bảng điểm tổng hợp (Academic Transcript) toàn khóa học. (Quyền: Student)
 
 ---
 

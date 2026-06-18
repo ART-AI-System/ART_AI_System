@@ -9,7 +9,9 @@ Project: ART-AI (Academic Research Transparency & AI Audit System)
 
 ## 1.1 Purpose
 
-ART-AI is an academic learning and transparency platform designed to support assignment management, submission management, grading, communication, and responsible Generative AI usage in higher education.
+ART-AI is a Comprehensive Academic Management & AI Transparency Portal designed to act as the primary daily academic hub for students (similar to FAP - FPT Academic Portal), while seamlessly integrating assignment management, submission management, grading, communication, and responsible Generative AI usage auditing.
+
+By providing essential academic services (Attendance, Curriculum, Transcript, Tuition Transactions), ART-AI ensures high daily student engagement. This natural ecosystem integration allows the platform to organically enforce and evaluate AI transparency without feeling like an intrusive, standalone policing tool.
 
 The platform evaluates:
 
@@ -209,6 +211,63 @@ Flow:
 Business Rules:
 
 * Current semester selected by default.
+
+---
+
+## BR-PORTAL-001 Attendance Tracking
+
+Actor: Student
+
+Description:
+Students must be able to track their daily attendance records for enrolled subjects.
+
+Business Rules:
+* Attendance is recorded per slot.
+* The system shall highlight attendance status (Present, Absent).
+* The system shall calculate and display the Absence Rate percentage.
+* A warning must be issued if the Absence Rate exceeds 20%.
+
+---
+
+## BR-PORTAL-002 Curriculum Roadmap
+
+Actor: Student
+
+Description:
+Students must be able to view their major's curriculum roadmap.
+
+Business Rules:
+* The curriculum groups subjects by semester.
+* Subjects are visually coded by status: Passed, Studying, Upcoming.
+* Prerequisite rules are displayed when applicable.
+
+---
+
+## BR-PORTAL-003 Academic Transcript (GPA Tracking)
+
+Actor: Student
+
+Description:
+Students must be able to view their comprehensive academic transcript across all studied semesters.
+
+Business Rules:
+* Display Cumulative GPA and Total Credits Earned.
+* Group records by Semester to calculate Term GPA.
+* Provide a historical GPA progression line chart.
+* Allow exporting the transcript to PDF.
+
+---
+
+## BR-PORTAL-004 Transaction History
+
+Actor: Student
+
+Description:
+Students must be able to view their tuition fee and academic service fee transaction history.
+
+Business Rules:
+* Display Total Outstanding Balance.
+* List all transactions with Date, Description, Amount, and Status (Success/Pending/Failed).
 
 ---
 
@@ -790,3 +849,11 @@ The purpose of ART-AI is to promote:
 * Critical Thinking
 
 through structured declaration, reflection, evaluation and academic monitoring.
+
+### 17.1 Ecosystem Driven Adoption (The "FAP" Mindset)
+
+ART-AI rejects the paradigm of standalone "plagiarism checkers" or "AI detectors" that students actively avoid. Instead, ART-AI embraces the **Comprehensive Academic Portal** mindset. 
+
+By integrating daily essential academic utilities—such as Attendance Tracking, Curriculum Roadmaps, Academic Transcripts, and Tuition Transactions—ART-AI becomes an indispensable part of the student's daily life. 
+
+When a system provides immense value and convenience to the student, compliance with its academic integrity policies (like AI Interaction Declaration) becomes a natural, integrated habit rather than a forced, external friction point. The AI Audit log is no longer a policing tool, but a transparent extension of their daily academic workspace.
