@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
+import { authApi } from '../../api/authApi';
+import type { UserRole, UserSession } from '../../config/roles';
 import { useAuth } from '../../context/AuthContext';
-// removed useNavigate
-import { MOCK_STUDENT_USER, MOCK_LECTURER_USER, MOCK_SUBJECT_HEAD_USER, MOCK_ADMIN_USER } from '../../config/roles';
+
+// removed other imports for brevity since they are no longer needed
 
 const LoginPage = () => {
   const { login } = useAuth();
-  const [studentCode, setStudentCode] = useState('SE18D01');
-  const [password, setPassword] = useState('password123');
+  const [studentCode, setStudentCode] = useState('student');
+  const [password, setPassword] = useState('pass');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,18 +26,36 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      // Mock API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await authApi.login(studentCode, password);
+      // Support { data: { user } } (Spec), { result: { user } } (Actual BE) and { user } (Direct Format)
+      const payload = (response as any).data || (response as any).result || response;
       
-      let userSession = MOCK_STUDENT_USER;
-      if (studentCode === 'lecturer') userSession = MOCK_LECTURER_USER;
-      else if (studentCode === 'head') userSession = MOCK_SUBJECT_HEAD_USER;
-      else if (studentCode === 'admin') userSession = MOCK_ADMIN_USER;
+      // Support if the payload IS the user object itself, or if it's wrapped in a .user property
+      const userObj = payload.user || payload;
+      
+      // Save token for axios interceptor
+      const token = payload.accessToken || payload.access_token;
+      if (token) {
+        localStorage.setItem('accessToken', token);
+      }
+      
+      console.log('--- DEBUG LOGIN ---');
+      console.log('Full Response:', response);
+      console.log('Payload:', payload);
+      console.log('UserObj:', userObj);
+      
+      const userSession: UserSession = {
+        id: userObj.id || userObj._id || 'unknown-id',
+        name: userObj.fullName || userObj.username || 'User',
+        email: userObj.email || `${userObj.studentCode || userObj.username || 'user'}@artai.edu.vn`,
+        role: (userObj.role || 'STUDENT').toUpperCase() as UserRole,
+        code: userObj.studentCode || userObj.username || userObj._id || 'UNKNOWN'
+      };
 
       login(userSession);
       // Let the DashboardRedirector handle the routing
-    } catch {
-      setError('Invalid credentials. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }
