@@ -26,6 +26,21 @@ import LecturerCreateTestPage from '../pages/dashboard/LecturerCreateTestPage';
 import LecturerTestAnalyticsPage from '../pages/dashboard/LecturerTestAnalyticsPage';
 import LecturerEditSlotPage from '../pages/dashboard/LecturerEditSlotPage';
 import LecturerNewsPage from '../pages/dashboard/LecturerNewsPage';
+import LecturerReportsPage from '../pages/dashboard/LecturerReportsPage';
+import LecturerSettingsPage from '../pages/dashboard/LecturerSettingsPage';
+import LecturerMessagesPage from '../pages/dashboard/LecturerMessagesPage';
+
+// Student Pages
+import StudentSettingsPage from '../pages/dashboard/StudentSettingsPage';
+import StudentMessagesPage from '../pages/dashboard/StudentMessagesPage';
+import StudentNewsPage from '../pages/dashboard/StudentNewsPage';
+import StudentAttendancePage from '../pages/dashboard/StudentAttendancePage';
+import StudentTranscriptPage from '../pages/dashboard/StudentTranscriptPage';
+import StudentCurriculumPage from '../pages/dashboard/StudentCurriculumPage';
+import StudentTransactionsPage from '../pages/dashboard/StudentTransactionsPage';
+import StudentTakeTestPage from '../pages/dashboard/StudentTakeTestPage';
+import StudentTestResultPage from '../pages/dashboard/StudentTestResultPage';
+
 import { ROUTES } from '../config/routes';
 
 import { AuthGuard, GuestGuard, RoleGuard, DashboardRedirector, ClassesRoute, ClassDetailRoute } from '../components/guards/Guards';
@@ -263,6 +278,53 @@ export const router = createBrowserRouter([
                 path: ROUTES.NEWS,
                 element: <LecturerNewsPage />,
               },
+              {
+                path: ROUTES.LECTURER_REPORTS,
+                element: <LecturerReportsPage />,
+              },
+              {
+                path: ROUTES.LECTURER_SETTINGS,
+                element: <LecturerSettingsPage />,
+              },
+              {
+                path: ROUTES.LECTURER_MESSAGES,
+                element: <LecturerMessagesPage />,
+              },
+            ],
+          },
+          
+          // Student specific routes
+          {
+            element: <RoleGuard allowedRoles={['STUDENT']} />,
+            children: [
+              {
+                path: ROUTES.STUDENT_NEWS,
+                element: <StudentNewsPage />,
+              },
+              {
+                path: ROUTES.STUDENT_MESSAGES,
+                element: <StudentMessagesPage />,
+              },
+              {
+                path: ROUTES.STUDENT_SETTINGS,
+                element: <StudentSettingsPage />,
+              },
+              {
+                path: ROUTES.STUDENT_ATTENDANCE,
+                element: <StudentAttendancePage />,
+              },
+              {
+                path: ROUTES.STUDENT_TRANSCRIPT,
+                element: <StudentTranscriptPage />,
+              },
+              {
+                path: ROUTES.STUDENT_CURRICULUM,
+                element: <StudentCurriculumPage />,
+              },
+              {
+                path: ROUTES.STUDENT_TRANSACTIONS,
+                element: <StudentTransactionsPage />,
+              },
             ],
           },
 
@@ -364,6 +426,20 @@ export const router = createBrowserRouter([
           {
             path: '*',
             element: <NotFoundPage />,
+          },
+        ],
+      },
+      // Full-screen pages outside MainLayout but still auth-protected
+      {
+        element: <RoleGuard allowedRoles={['STUDENT']} />,
+        children: [
+          {
+            path: ROUTES.STUDENT_TAKE_TEST,
+            element: <StudentTakeTestPage />,
+          },
+          {
+            path: ROUTES.STUDENT_TEST_RESULT,
+            element: <StudentTestResultPage />,
           },
         ],
       },

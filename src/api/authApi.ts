@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axiosClient from './axiosClient';
 import type { User } from '../mocks/mockDatabase'; // We'll reuse the User interface for now
 

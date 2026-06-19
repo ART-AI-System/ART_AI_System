@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { authApi } from '../../api/authApi';
@@ -28,7 +29,7 @@ const LoginPage = () => {
     try {
       const response = await authApi.login(studentCode, password);
       // Support { data: { user } } (Spec), { result: { user } } (Actual BE) and { user } (Direct Format)
-      const payload = (response as any).data || (response as any).result || response;
+      const payload = (response as Record<string, any>).data || (response as Record<string, any>).result || response;
       
       // Support if the payload IS the user object itself, or if it's wrapped in a .user property
       const userObj = payload.user || payload;
@@ -54,8 +55,9 @@ const LoginPage = () => {
 
       login(userSession);
       // Let the DashboardRedirector handle the routing
-    } catch (err: any) {
-      setError(err.message || 'Invalid credentials. Please try again.');
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }

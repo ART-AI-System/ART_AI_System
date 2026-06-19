@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from 'react'
 import './App.css'
 import { login, getStudentHome, getClassSessions, getAssignmentDetail, getNews } from './mocks/cluster1'
 

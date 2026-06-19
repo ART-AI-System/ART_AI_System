@@ -77,7 +77,7 @@ export const LecturerSidebar = () => {
         </NavLink>
 
         <NavLink
-          to={ROUTES.CLASS_REPORTS.replace(':classId', 'all')} // Placeholder
+          to={ROUTES.LECTURER_REPORTS}
           className={({ isActive }) =>
             `flex items-center gap-4 px-5 py-4 font-medium rounded-xl transition-all relative ${
               isActive
@@ -119,7 +119,7 @@ export const LecturerSidebar = () => {
         </div>
 
         <NavLink
-          to={ROUTES.MESSAGES}
+          to={ROUTES.LECTURER_MESSAGES}
           className={({ isActive }) =>
             `flex items-center gap-4 px-5 py-4 font-medium rounded-xl transition-all relative ${
               isActive
@@ -138,7 +138,7 @@ export const LecturerSidebar = () => {
         </NavLink>
 
         <NavLink
-          to={ROUTES.SETTINGS}
+          to={ROUTES.LECTURER_SETTINGS}
           className={({ isActive }) =>
             `flex items-center gap-4 px-5 py-4 font-medium rounded-xl transition-all relative ${
               isActive

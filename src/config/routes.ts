@@ -45,9 +45,23 @@ export const ROUTES = {
 
   // General Features
   SCHEDULE: '/schedule',
-  MESSAGES: '/messages',
+  MESSAGES: '/messages', // Retain for other roles
+
+  // Student specific
+  STUDENT_NEWS: '/student/news',
+  STUDENT_MESSAGES: '/student/messages',
+  STUDENT_SETTINGS: '/student/settings',
+  STUDENT_ATTENDANCE: '/student/attendance',
+  STUDENT_TRANSCRIPT: '/student/transcript',
+  STUDENT_CURRICULUM: '/student/curriculum',
+  STUDENT_TRANSACTIONS: '/student/transactions',
+  STUDENT_TAKE_TEST: '/tests/:id/take',
+  STUDENT_TEST_RESULT: '/tests/:id/result',
 
   // Lecturer specific
+  LECTURER_REPORTS: '/lecturer/reports',
+  LECTURER_MESSAGES: '/lecturer/messages',
+  LECTURER_SETTINGS: '/lecturer/settings',
   CLASS_GRADING: '/classes/:classId/grading',
   GRADING_DETAIL: '/grading/:submissionId',
   CREATE_ASSIGNMENT: '/assignments/create',

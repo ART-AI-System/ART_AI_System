@@ -1,4 +1,5 @@
-import { mockDatabase, User, Semester, Class, Subject, Session, Assignment, News } from './mockDatabase';
+import { mockDatabase } from './mockDatabase';
+import type { User, Semester, Class, Session, Assignment, News } from './mockDatabase';
 
 // --- Types ---
 
