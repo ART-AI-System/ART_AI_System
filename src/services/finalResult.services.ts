@@ -72,8 +72,8 @@ class FinalResultService {
       fullName: studentSnapshot?.fullName || '',
       email: studentSnapshot?.email || '',
       classCode: classDoc?.classCode || '',
-      subjectName: classDoc?.subjectName || '',
-      semester: classDoc?.semester || ''
+      subjectName: classDoc?.subjectSnapshot?.name || '',
+      semester: classDoc?.semesterId?.toString() || ''
     }
   }
 
@@ -104,9 +104,8 @@ class FinalResultService {
             classification: 1,
             calculatedAt: 1,
             classCode: '$classInfo.classCode',
-            subjectName: '$classInfo.subjectName',
-            semester: '$classInfo.semester',
-            academicYear: '$classInfo.academicYear'
+            subjectName: '$classInfo.subjectSnapshot.name',
+            semester: '$classInfo.semesterId'
           }
         },
         { $sort: { calculatedAt: -1 } }
@@ -168,7 +167,7 @@ class FinalResultService {
             _id: 1,
             classId: 1,
             classCode: '$classInfo.classCode',
-            subjectName: '$classInfo.subjectName',
+            subjectName: '$classInfo.subjectSnapshot.name',
             finalScore: 1,
             classification: 1,
             calculatedAt: 1

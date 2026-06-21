@@ -14,6 +14,8 @@ import ChatMessage from '~/models/schemas/chatMessage.schema'
 import AiInteraction from '~/models/schemas/aiInteractions.schema'
 import AiEvaluation from '~/models/schemas/aiEvaluations.schema'
 import SubmissionFlag from '~/models/schemas/submissionFlags.schema'
+import Semester from '~/models/schemas/semesters.schema'
+import Subject from '~/models/schemas/subjects.schema'
 dotenv.config()
 
 const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USERNAME as string)}:${encodeURIComponent(process.env.DB_PASSWORD as string)}@art-ai-system.rpdlfxc.mongodb.net/`
@@ -301,11 +303,11 @@ class DatabaseService {
     return this.db.collection(process.env.DB_DEPARTMENTS_COLLECTION || 'departments')
   }
 
-  get semesters(): Collection<any> {
+  get semesters(): Collection<Semester> {
     return this.db.collection(process.env.DB_SEMESTERS_COLLECTION || 'semesters')
   }
 
-  get subjects(): Collection<any> {
+  get subjects(): Collection<Subject> {
     return this.db.collection(process.env.DB_SUBJECTS_COLLECTION || 'subjects')
   }
 

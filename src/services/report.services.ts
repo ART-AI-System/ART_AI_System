@@ -728,7 +728,7 @@ class ReportService {
     try {
       const classId = new ObjectId(scopeId).toString()
       const classDoc = await databaseService.classes.findOne({ _id: new ObjectId(classId) }, {
-        projection: { classCode: 1, subjectName: 1, semester: 1, academicYear: 1, 'lecturer.fullName': 1 }
+        projection: { classCode: 1, 'subjectSnapshot.name': 1, semesterId: 1, 'lecturer.fullName': 1 }
       })
       if (!classDoc) throw new Error() // fallback to stub
       
@@ -741,8 +741,8 @@ class ReportService {
       doc.fontSize(18).font('Helvetica-Bold').text('ART-AI — Final Results Report', { align: 'center' }).moveDown(0.4)
       doc.fontSize(10).font('Helvetica')
         .text(`Class Code   : ${classDoc?.classCode ?? classId}`, { align: 'left' })
-        .text(`Subject      : ${classDoc?.subjectName ?? '-'}`)
-        .text(`Semester     : ${classDoc?.semester ?? '-'}   |   Academic Year: ${classDoc?.academicYear ?? '-'}`)
+        .text(`Subject      : ${classDoc?.subjectSnapshot?.name ?? '-'}`)
+        .text(`Semester     : ${classDoc?.semesterId?.toString() ?? '-'}   |   Academic Year: -`)
         .text(`Lecturer     : ${classDoc?.lecturer?.fullName ?? '-'}`)
         .text(`Exported at  : ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Ho_Chi_Minh' })}`)
         .moveDown(1)
@@ -832,7 +832,7 @@ class ReportService {
   async getClassMeta(classId: string) {
     return databaseService.classes.findOne(
       { _id: new ObjectId(classId) },
-      { projection: { classCode: 1, subjectName: 1, semester: 1 } }
+      { projection: { classCode: 1, 'subjectSnapshot.name': 1, semesterId: 1 } }
     )
   }
 }
