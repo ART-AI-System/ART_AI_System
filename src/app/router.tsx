@@ -16,6 +16,8 @@ import SchedulePage from '../pages/dashboard/SchedulePage';
 import SettingsPage from '../pages/dashboard/SettingsPage';
 import MySubmissionsPage from '../pages/dashboard/MySubmissionsPage';
 import SubmissionDetailPage from '../pages/dashboard/SubmissionDetailPage';
+import UsersPage from '../pages/dashboard/UsersPage';
+import UserDetailPage from '../pages/dashboard/UserDetailPage';
 
 // Lecturer Pages
 import LecturerSubjectDetailPage from '../pages/dashboard/LecturerSubjectDetailPage';
@@ -129,21 +131,11 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: ROUTES.USERS,
-                element: (
-                  <EmptyState
-                    title="System User Directory"
-                    description="Perform CRUD user actions, configure database listings, or upload CSV rosters."
-                  />
-                ),
+                element: <UsersPage />,
               },
               {
                 path: ROUTES.USER_DETAIL,
-                element: (
-                  <EmptyState
-                    title="Account Identity File"
-                    description="View academic log archives, details and metadata for this account."
-                  />
-                ),
+                element: <UserDetailPage />,
               },
             ],
           },
