@@ -15,7 +15,8 @@ import {
   sendMessageController,
   markReadController,
   deleteMessageController,
-  searchMessagesController
+  searchMessagesController,
+  searchGlobalUsersController
 } from '~/controllers/chat.controllers'
 
 const chatRouter = Router()
@@ -23,6 +24,7 @@ const chatRouter = Router()
 chatRouter.use(requireAuth)
 
 chatRouter.get('/contacts', wrapRequestHandler(getContactsController))
+chatRouter.get('/search-users', wrapRequestHandler(searchGlobalUsersController))
 
 chatRouter.get('/rooms', wrapRequestHandler(getRoomsController))
 chatRouter.post('/rooms', createRoomValidator, wrapRequestHandler(createRoomController))

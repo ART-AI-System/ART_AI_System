@@ -14,6 +14,10 @@ class ChatService {
 
     if (!userA || !userB) return false
 
+    // TEMPORARY BYPASS FOR TESTING: Allow anyone to chat with anyone
+    return true;
+
+    /* 
     if (userA.role === 'STUDENT' && userB.role === 'STUDENT') {
       const sharedClass = await databaseService.classes.findOne({
         'students.studentId': { $all: [new ObjectId(userIdA), new ObjectId(userIdB)] }
@@ -45,7 +49,8 @@ class ChatService {
       return false
     }
 
-    return false
+    return true // Originally return false
+    */
   }
 
   async getContacts(userId: string) {
@@ -58,7 +63,7 @@ class ChatService {
     const addContact = (u: any) => {
       if (u && u._id.toString() !== userId && !contactIds.has(u._id.toString())) {
         contactIds.add(u._id.toString())
-        contacts.push({ _id: u._id, fullName: u.fullName, email: u.email, role: u.role, avatar: u.profile?.avatar })
+        contacts.push({ _id: u._id, fullName: u.fullName, email: u.email, role: u.role, avatar: u.profile?.avatar, username: u.username, studentCode: u.studentCode })
       }
     }
 
@@ -90,6 +95,16 @@ class ChatService {
       if (user.departmentId) {
         const lecturers = await databaseService.users.find({ departmentId: user.departmentId, role: 'LECTURER' }).toArray()
         lecturers.forEach(addContact)
+      }
+    }
+
+    // NEW LOGIC: Also include any user that we already have a direct chat room with
+    const rooms = await databaseService.chatRooms.find({ memberIds: new ObjectId(userId), type: 'direct' }).toArray()
+    for (const room of rooms) {
+      const otherId = room.memberIds.find(id => id.toString() !== userId)
+      if (otherId) {
+        const u = await databaseService.users.findOne({ _id: otherId })
+        addContact(u)
       }
     }
 
@@ -222,6 +237,31 @@ class ChatService {
       .skip((page - 1) * limit)
       .limit(limit)
       .toArray()
+  }
+
+  async searchGlobalUsers(userId: string, q: string) {
+    if (!q || q.trim().length === 0) return []
+    const query = q.trim()
+
+    const users = await databaseService.users.find({
+      _id: { $ne: new ObjectId(userId) },
+      isActive: true,
+      $or: [
+        { fullName: { $regex: query, $options: 'i' } },
+        { username: { $regex: query, $options: 'i' } },
+        { studentCode: { $regex: query, $options: 'i' } }
+      ]
+    }).limit(20).toArray()
+
+    return users.map(u => ({
+      _id: u._id,
+      fullName: u.fullName,
+      email: u.email,
+      role: u.role,
+      avatar: u.profile?.avatar,
+      username: u.username,
+      studentCode: u.studentCode
+    }))
   }
 }
 

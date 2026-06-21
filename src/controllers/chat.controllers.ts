@@ -73,3 +73,10 @@ export const searchMessagesController = async (req: Request, res: Response) => {
   const result = await chatService.searchMessages(userId, q, page, limit)
   return res.json({ message: 'Search messages successfully', result })
 }
+
+export const searchGlobalUsersController = async (req: Request, res: Response) => {
+  const userId = (req.user?._id as unknown as string).toString()
+  const q = req.query.q as string
+  const result = await chatService.searchGlobalUsers(userId, q)
+  return res.json({ message: 'Search global users successfully', result })
+}
