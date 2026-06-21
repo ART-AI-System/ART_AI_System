@@ -36,6 +36,9 @@ export const initChatSocket = (httpServer: HttpServer) => {
 
     console.log(`User connected to chat socket: ${userId}`)
 
+    // Join personal room so user can receive events across all their conversations
+    socket.join(userId)
+
     socket.on('chat:join_room', async ({ roomId }, callback) => {
       try {
         await chatService.getRoom(userId, roomId) // verify membership
@@ -48,11 +51,25 @@ export const initChatSocket = (httpServer: HttpServer) => {
 
     socket.on('chat:send_message', async ({ roomId, content, messageType, fileMetadata }, callback) => {
       try {
-        const msg = await chatService.sendMessage(userId, roomId, { content, messageType, fileMetadata })
-        // Emit to room
-        io.to(roomId).emit('chat:new_message', msg)
-        // Also emit room update so users can re-fetch or update their room list
-        io.to(roomId).emit('chat:room_updated', { roomId, lastMessage: content, lastMessageAt: msg.createdAt })
+        const rawMsg = await chatService.sendMessage(userId, roomId, { content, messageType, fileMetadata })
+        const room = await chatService.getRoom(userId, roomId)
+
+        // Force convert ObjectIds to strings to prevent Socket.io serialization issues on Frontend
+        const msg = {
+          ...rawMsg,
+          _id: rawMsg._id?.toString(),
+          roomId: rawMsg.roomId.toString(),
+          senderId: rawMsg.senderId.toString(),
+          readBy: rawMsg.readBy.map((id: any) => id.toString()),
+        }
+
+        // Emit to all members' personal rooms so everyone gets realtime updates
+        room.memberIds.forEach((memberId: any) => {
+          const mId = memberId.toString()
+          io.to(mId).emit('chat:new_message', msg)
+          io.to(mId).emit('chat:room_updated', { roomId, lastMessage: content, lastMessageAt: msg.createdAt })
+        })
+        
         if (callback) callback({ status: 'ok', data: msg })
       } catch (error: any) {
         if (callback) callback({ status: 'error', message: error.message })
