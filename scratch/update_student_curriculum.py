@@ -1,108 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ART-AI Curriculum</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #F4F7FE; }
-        .fpt-orange-gradient { background: linear-gradient(135deg, #F26F21 0%, #F79C65 100%); }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
-</head>
-<body class="h-screen flex overflow-hidden text-gray-800">
-    
-    <!-- Sidebar -->
-    <aside class="w-[280px] bg-white fixed h-full z-20 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-gray-100">
-        <!-- Logo -->
-        <a href="home.html" class="h-24 flex items-center px-8 cursor-pointer">
-            <div class="w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white mr-3 shadow-lg shadow-orange-200">
-                <i data-lucide="brain-circuit" class="w-6 h-6"></i>
-            </div>
-            <span class="text-2xl font-extrabold text-[#1B2559]">ART-AI</span>
-        </a>
-        
-        <!-- Navigation -->
-        <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto hide-scrollbar">
-            <a href="home.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="home" class="w-5 h-5 mr-4"></i> Home Dashboard
-            </a>
-            <a href="subjects.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="book-open" class="w-5 h-5 mr-4"></i> My Subjects
-            </a>
-            <a href="schedule.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="calendar" class="w-5 h-5 mr-4"></i> Schedule
-            </a>
-            <a href="assignments.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="file-check-2" class="w-5 h-5 mr-4"></i> Assignments
-            </a>
-            <!-- Reports Dropdown -->
-            <div class="relative">
-                <button class="w-full flex items-center justify-between px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50" onclick="this.nextElementSibling.classList.toggle('hidden'); const icon = this.querySelector('.chevron-icon'); if(icon) icon.classList.toggle('rotate-180');">
-                    <div class="flex items-center">
-                        <i data-lucide="bar-chart-2" class="w-5 h-5 mr-4"></i> Reports
-                    </div>
-                    <i data-lucide="chevron-down" class="w-4 h-4 chevron-icon transition-transform rotate-180"></i>
-                </button>
-                <div class="flex flex-col pl-12 pr-4 py-1 space-y-1 mt-1 border-l-2 border-gray-100 ml-6">
-                    <a href="student_attendance.html" class="block py-2 text-sm text-gray-500 hover:text-[#4318FF] font-medium transition-colors relative before:absolute before:-left-[18px] before:top-1/2 before:-translate-y-1/2 before:w-3 before:h-0.5 before:bg-gray-200 hover:before:bg-[#4318FF]">Attendance</a>
-                    <a href="gradebook.html" class="block py-2 text-sm text-gray-500 hover:text-[#4318FF] font-medium transition-colors relative before:absolute before:-left-[18px] before:top-1/2 before:-translate-y-1/2 before:w-3 before:h-0.5 before:bg-gray-200 hover:before:bg-[#4318FF]">Mark Report</a>
-                    <a href="student_transcript.html" class="block py-2 text-sm text-gray-500 hover:text-[#4318FF] font-medium transition-colors relative before:absolute before:-left-[18px] before:top-1/2 before:-translate-y-1/2 before:w-3 before:h-0.5 before:bg-gray-200 hover:before:bg-[#4318FF]">Academic Transcript</a>
-                    <a href="student_curriculum.html" class="block py-2 text-sm text-[#4318FF] font-bold transition-colors relative before:absolute before:-left-[18px] before:top-1/2 before:-translate-y-1/2 before:w-3 before:h-0.5 before:bg-[#4318FF]">Curriculum</a>
-                    
-                </div>
-            </div>
-            <a href="news.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="newspaper" class="w-5 h-5 mr-4"></i> News
-            </a>
-            
-            <div class="pt-8 pb-2">
-                <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Account</p>
-            </div>
-            <a href="chat.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="message-circle" class="w-5 h-5 mr-4"></i> Messages
-            </a>
-            <a href="settings.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="settings" class="w-5 h-5 mr-4"></i> Settings
-            </a>
-        </nav>
-    </aside>
+import re
 
-    <!-- Main Wrapper -->
-    <main class="flex-1 ml-[280px] flex flex-col h-screen relative">
-        
-        <!-- Header -->
-        <header class="h-24 bg-[#F4F7FE] flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
-            <div class="flex items-center space-x-6 w-full max-w-2xl">
-            </div>
-            
-            <div class="flex items-center space-x-6">
-                <button class="relative p-2 text-gray-400 hover:text-[#4318FF] transition-colors">
-                    <i data-lucide="bell" class="w-6 h-6"></i>
-                </button>
-                <div class="flex items-center pl-4 border-l border-gray-300 gap-3">
-                    <div class="text-right">
-                        <p class="text-sm font-bold text-[#1B2559]">Viet Khoa</p>
-                        <p class="text-xs font-medium text-gray-500">Student</p>
-                    </div>
-                    <img src="https://ui-avatars.com/api/?name=Viet+Khoa&background=F26F21&color=fff" class="w-10 h-10 rounded-full shadow-md cursor-pointer">
-                </div>
-            </div>
-        </header>
+def update_curriculum():
+    with open('mockups/student/student_curriculum.html', 'r', encoding='utf-8') as f:
+        html = f.read()
 
-        <!-- Main Content -->
-        <div class="p-8 overflow-y-auto flex-1 hide-scrollbar">
-            
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h1 class="text-3xl font-extrabold text-[#1B2559]">Curriculum Roadmap</h1>
-                    <p class="text-gray-500 font-medium mt-1">Software Engineering (SE) - Catalog 2024</p>
-                </div>
-                
+    # Update Legend
+    legend = '''
                 <div class="flex space-x-4">
                     <div class="flex items-center text-xs font-bold text-gray-500">
                         <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Passed
@@ -117,11 +20,11 @@
                         <span class="w-3 h-3 rounded-full bg-gray-300 mr-2"></span> Upcoming
                     </div>
                 </div>
-    
-            </div>
+    '''
+    html = re.sub(r'<div class="flex space-x-4">.*?</div>\s*</div>\s*</div>\s*<div class="max-w-5xl">', legend + '\n            </div>\n\n            <div class="max-w-5xl">', html, flags=re.DOTALL)
 
-            <div class="max-w-5xl">
-                
+    # New Semesters Data
+    semesters_html = '''
                 <!-- Semester Block: Completed -->
                 <div class="mb-12 relative pl-8 border-l-2 border-green-500">
                     <div class="absolute -left-3 top-0 w-6 h-6 rounded-full bg-green-100 border-2 border-green-500 flex items-center justify-center">
@@ -315,19 +218,12 @@
                         </div>
                     </div>
                 </div>
+    '''
     
-            </div>
+    html = re.sub(r'<!-- Semester Block: Completed -->.*<!-- Semester Block: Future -->.*?</div>\s*</div>\s*</div>\s*</div>', semesters_html + '\n            </div>\n\n        </div>', html, flags=re.DOTALL)
+    
+    with open('mockups/student/student_curriculum.html', 'w', encoding='utf-8') as f:
+        f.write(html)
 
-        </div>
-                </div>
-
-            </div>
-
-        </div>
-    </main>
-
-    <script>
-        lucide.createIcons();
-    </script>
-</body>
-</html>
+if __name__ == '__main__':
+    update_curriculum()

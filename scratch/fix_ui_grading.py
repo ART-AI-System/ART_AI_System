@@ -1,117 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ART-AI Grading List</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #F4F7FE; }
-        .fpt-orange-gradient { background: linear-gradient(135deg, #F26F21 0%, #F79C65 100%); }
-    </style>
-</head>
-<body class="flex h-screen overflow-hidden">
+import re
+import os
 
-    <!-- LECTURER SIDEBAR -->
-    <aside class="w-[280px] bg-[#1B2559] flex flex-col h-full shadow-2xl relative z-20">
-        <a href="lecturer_dashboard.html" class="h-24 flex items-center px-8 cursor-pointer border-b border-white/10">
-            <div class="w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white font-bold text-xl mr-3 shadow-lg shadow-orange-500/30">
-                <i data-lucide="brain-circuit" class="w-6 h-6"></i>
-            </div>
-            <span class="text-2xl font-extrabold text-white tracking-tight">ART-AI<span class="text-[#F26F21] text-xs align-top ml-1">LECTURER</span></span>
-        </a>
-
-        <nav class="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
-            <a href="lecturer_dashboard.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-4 opacity-70"></i> Dashboard
-            </a>
-            
-            <a href="lecturer_subjects.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="book-open" class="w-5 h-5 mr-4 opacity-70"></i> My Subjects
-            </a>
-
-            <a href="lecturer_grading_subjects.html" class="flex items-center px-4 py-3.5 bg-white/10 text-white font-bold rounded-xl transition-all relative">
-                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#F26F21] rounded-r-full"></div>
-                <i data-lucide="file-check-2" class="w-5 h-5 mr-4 text-[#F26F21]"></i> Grading
-                <span class="ml-auto bg-[#F26F21] text-white text-xs font-bold px-2 py-0.5 rounded-full">12</span>
-            </a>
-
-            <a href="lecturer_reports.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="bar-chart-2" class="w-5 h-5 mr-4 opacity-70"></i> Reports
-            </a>
-
-            <a href="lecturer_news.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="newspaper" class="w-5 h-5 mr-4 opacity-70"></i> News
-            </a>
-
-            <div class="pt-8 pb-2">
-                <p class="px-4 text-xs font-bold text-blue-400 uppercase tracking-wider">Account</p>
-            </div>
-            
-            <a href="lecturer_messages.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="message-circle" class="w-5 h-5 mr-4 opacity-70"></i> Messages
-            </a>
-
-            <a href="lecturer_settings.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="settings" class="w-5 h-5 mr-4 opacity-70"></i> Settings
-            </a>
-        </nav>
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-        <!-- TOP HEADER -->
-        <header class="h-24 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-10 sticky top-0 z-10">
-            <div>
-                <div class="flex items-center space-x-2 text-sm font-medium text-gray-500 mb-1">
-                    <span class="hover:text-[#F26F21] cursor-pointer">Grading</span>
-                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                    <span class="hover:text-[#F26F21] cursor-pointer">PRJ301 (SE20A09)</span>
-                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                    <span class="text-[#1B2559] font-bold">Practical Exam 1</span>
-                </div>
-                <h1 class="text-2xl font-extrabold text-[#1B2559]">Submissions: Practical Exam</h1>
-            </div>
-            
-            <div class="flex items-center space-x-3">
-                <button class="bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-gray-50 transition-all flex items-center">
-                    <i data-lucide="download" class="w-4 h-4 mr-2"></i> Download All
-                </button>
-                <button class="bg-[#1B2559] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-[#2A3673] transition-all flex items-center">
-                    <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2 text-green-400"></i> Export Scores
-                </button>
-            </div>
-        </header>
-
+def fix_ui_grading():
+    lecturer_dir = 'mockups/lecturer'
+    
+    # 1. Add Back Button to lecturer_grading_assignments.html
+    assignments_path = os.path.join(lecturer_dir, 'lecturer_grading_assignments.html')
+    with open(assignments_path, 'r', encoding='utf-8') as f:
+        html = f.read()
         
+    back_button_subjects = '''
+                <a href="lecturer_grading_subjects.html" class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-[#4318FF] mb-6 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Back to Subjects
+                </a>
+                <div class="mb-6 flex justify-between items-center">'''
+                
+    html = html.replace('<div class="mb-6 flex justify-between items-center">', back_button_subjects)
+    
+    with open(assignments_path, 'w', encoding='utf-8') as f:
+        f.write(html)
         
-        <!-- DASHBOARD CONTENT -->
-        <div class="flex-1 overflow-y-auto p-10 scroll-smooth bg-gray-50/50">
-            <div class="max-w-[1400px] mx-auto">
+    
+    # 2. Add Back Button and Convert Grid to List in lecturer_grading_list.html
+    list_path = os.path.join(lecturer_dir, 'lecturer_grading_list.html')
+    with open(list_path, 'r', encoding='utf-8') as f:
+        html = f.read()
+        
+    back_button_classes = '''
+                <a href="lecturer_grading_assignments.html" class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-[#4318FF] mb-6 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Back to Classes
+                </a>
+                <div class="flex justify-between items-center mb-6">'''
                 
-                
-                
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 class="text-2xl font-extrabold text-[#1B2559]">Practical Exam 1</h2>
-                        <p class="text-sm font-medium text-gray-500 mt-1">Class SE18D01 • 30 Students</p>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <div class="bg-white border border-gray-200 rounded-xl flex items-center px-4 py-2 shadow-sm w-64">
-                            <i data-lucide="search" class="w-4 h-4 text-gray-400 mr-2"></i>
-                            <input type="text" placeholder="Search student..." class="w-full text-sm outline-none text-gray-700 bg-transparent">
-                        </div>
-                        <select class="bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none shadow-sm cursor-pointer">
-                            <option>All Status</option>
-                            <option>Pending (15)</option>
-                            <option>Graded (15)</option>
-                        </select>
-                    </div>
-                </div>
-                
-                
+    html = html.replace('<div class="flex justify-between items-center mb-6">', back_button_classes)
+    
+    # Now convert the grid to a list. We need to replace the entire <div class="grid...">...</div>
+    # Find the <!-- Cards Grid --> marker
+    
+    list_view_html = '''
                 <!-- List View -->
                 <div class="bg-white border border-gray-200 rounded-[24px] shadow-sm overflow-hidden">
                     <table class="w-full text-left text-sm text-gray-600">
@@ -258,13 +184,13 @@
                         </tbody>
                     </table>
                 </div>
+    '''
     
-            </div>
-        </div>
-    </main>
+    # Use re.sub to replace everything after <!-- Cards Grid --> until the end of the container
+    html = re.sub(r'<!-- Cards Grid -->.*</div>\s*</div>\s*</div>\s*</main>', list_view_html + '\n            </div>\n        </div>\n    </main>', html, flags=re.DOTALL)
+    
+    with open(list_path, 'w', encoding='utf-8') as f:
+        f.write(html)
 
-    <script>
-        lucide.createIcons();
-    </script>
-</body>
-</html>
+if __name__ == '__main__':
+    fix_ui_grading()

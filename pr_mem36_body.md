@@ -1,26 +1,26 @@
-## Overview
-This Pull Request completes the Quizzes/Tests backend APIs and Admin/Login UI modifications assigned to **Mem 36**. 
+## Tổng quan
+Pull Request này hoàn thiện toàn bộ các API Backend cho module Quizzes/Tests và các thay đổi về Giao diện (UI) cho Admin/Login thuộc nhiệm vụ của **Mem 36**. 
 
-### 💡 What's New & Different from Original Specs
+### 💡 Có gì mới & Điểm khác biệt so với Tài liệu gốc (Specs)
 
-After reviewing the original UI mockups vs API specifications, several additions were made to the backend to fully support the Frontend without dropping any UI features:
+Sau khi đối chiếu kỹ lưỡng giữa UI Mockups và API Specs ban đầu, đội ngũ đã chủ động bổ sung thêm một số logic ở tầng Backend để hỗ trợ hoàn toàn các chức năng trên Frontend mà không cần phải cắt giảm bất kỳ giao diện nào:
 
-**1. Tests & Quizzes APIs (Backend):**
-- **Test Schema & Test Attempts Schema**: Added robust schemas handling multiple choice/checkbox questions, hidden correct answers for students, scoring, and cheat tracking.
-- **Auto-grading mechanism**: API `/submit` now automatically computes scores based on Lecturer's correct answers.
-- **Manual Score Override (`PATCH /api/test-attempts/:attemptId/override-score`)**: Added per user request to allow lecturers to override auto-graded scores.
-- **Export to Gradebook (`POST /api/tests/:testId/export-grades`)**: Added per user request. This API allows pushing a batch of graded tests directly to the system's core Gradebook.
-- **Anti-Cheat Endpoint (`POST /api/tests/:testId/cheat`)**: Added per user request. The backend now exposes an endpoint to track tab-switching or focus loss during tests. (Frontend needs to integrate `visibilitychange` or `Fullscreen API` to call this).
+**1. API Bài thi & Trắc nghiệm (Tests & Quizzes - Backend):**
+- **Test Schema & Test Attempts Schema**: Bổ sung schema hoàn chỉnh để xử lý các câu hỏi trắc nghiệm (1 đáp án / nhiều đáp án), giấu đáp án đúng để sinh viên không thể xem trộm qua trình duyệt, tính điểm và lưu vết gian lận.
+- **Cơ chế Chấm điểm Tự động (Auto-grading)**: API `/submit` nay đã tự động tính toán và trả về điểm số dựa trên bộ đáp án gốc do Giảng viên cài đặt.
+- **Giáo viên Ghi đè Điểm thủ công (`PATCH /api/test-attempts/:attemptId/override-score`)**: Bổ sung theo yêu cầu thực tế, cho phép Giảng viên được quyền chỉnh sửa (override) điểm số tự động của hệ thống nếu cần.
+- **Đồng bộ Sổ Điểm (`POST /api/tests/:testId/export-grades`)**: Bổ sung theo yêu cầu thực tế. API này cho phép đẩy trực tiếp toàn bộ điểm số của một bài thi sang hệ thống Gradebook (Sổ điểm cốt lõi).
+- **Cơ chế chống thi hộ/gian lận (`POST /api/tests/:testId/cheat`)**: Bổ sung theo yêu cầu thực tế. Backend hiện cung cấp endpoint để đếm số lần sinh viên vi phạm (chuyển tab, thu nhỏ màn hình). *Lưu ý: Đội Frontend cần viết thêm sự kiện `visibilitychange` hoặc dùng `Fullscreen API` để gọi API này.*
 
-**2. UI Mockup Revisions (Frontend):**
-- **Login Flow (`login.html`)**: Transformed into a 2-step flow (Campus Selection -> Role Selection) with **4 distinct Roles** (Student, Lecturer, Head Subject, Admin). Added a "Backdoor" Admin login trigger by clicking the FPT logo.
-- **Admin Dashboard (`admin_dashboard.html`)**: Completely redesigned to match the new analytical requirements, featuring statistics cards, a bar chart, a donut chart, and student/notice lists.
-- **Admin Sidebar**: Removed duplicate menus, standardized the green theme (`#16A34A`), transformed `Teachers` into an `Employees` dropdown, and added proper Settings/Messages/Feedback/Logout items.
-- **Admin Communication Pages (`admin_messages.html`, `admin_feedback.html`)**: Created entirely new HTML mockups to support internal system messaging and user feedback reports.
+**2. Nâng cấp Giao diện Mockup (Frontend):**
+- **Luồng Đăng nhập (`login.html`)**: Chuyển đổi thành luồng 2 bước (Chọn Campus -> Chọn Role). Chia làm **4 luồng Role riêng biệt** (Student, Lecturer, Head Subject, Admin). Bổ sung tính năng "Cửa hậu" (Backdoor): Bấm trực tiếp vào Logo FPT Education để gọi form đăng nhập của Admin.
+- **Admin Dashboard (`admin_dashboard.html`)**: Thiết kế lại hoàn toàn dựa trên mẫu thiết kế mới với bố cục mang tính phân tích cao: bao gồm 4 Thẻ chỉ số (Top Cards), Biểu đồ Cột (Bar Chart), Biểu đồ Tròn (Donut Chart), và danh sách sinh viên/thông báo.
+- **Admin Sidebar**: Xóa bỏ các thanh menu bị trùng lặp, chuẩn hóa sang tông màu xanh lá chủ đạo (`#16A34A`), đổi `Teachers` thành menu dạng Dropdown `Employees`, và hoàn thiện các mục Settings/Messages/Feedback/Logout.
+- **Giao tiếp & Phản hồi (`admin_messages.html`, `admin_feedback.html`)**: Tạo mới hoàn toàn 2 file HTML mockup để hỗ trợ hệ thống nhắn tin nội bộ và tiếp nhận báo cáo lỗi/góp ý từ người dùng.
 
-### Code Changes
-- Updated `database.service.ts` to index new collections.
-- Created `tests.schema.ts`, `testAttempts.schema.ts`.
-- Created `tests.service.ts`, `tests.controllers.ts`, `tests.routes.ts` & injected to `index.ts`.
-- Modified `generate_admin_mockups.py` and regenerated all admin HTML files.
-- Modified `login.html` logic.
+### Chi tiết các thay đổi trong Code
+- Cập nhật `database.service.ts` để Index tự động các Collection mới.
+- Tạo mới các schema: `tests.schema.ts`, `testAttempts.schema.ts`.
+- Tạo mới logic API: `tests.service.ts`, `tests.controllers.ts`, `tests.routes.ts` & tích hợp router vào `index.ts`.
+- Cập nhật script `generate_admin_mockups.py` và render lại toàn bộ file giao diện Admin.
+- Viết lại logic tương tác trong `login.html`.
