@@ -16,6 +16,8 @@ import AiEvaluation from '~/models/schemas/aiEvaluations.schema'
 import SubmissionFlag from '~/models/schemas/submissionFlags.schema'
 import Semester from '~/models/schemas/semesters.schema'
 import Subject from '~/models/schemas/subjects.schema'
+import { Test } from '~/models/schemas/tests.schema'
+import { TestAttempt } from '~/models/schemas/testAttempts.schema'
 dotenv.config()
 
 const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USERNAME as string)}:${encodeURIComponent(process.env.DB_PASSWORD as string)}@art-ai-system.rpdlfxc.mongodb.net/`
@@ -208,6 +210,56 @@ class DatabaseService {
     }
   }
 
+  async indexSubjects() {
+    try {
+      const codeIndexExists = await this.subjects.indexExists(['code_1'])
+      if (!codeIndexExists) {
+        await this.subjects.createIndex({ code: 1 }, { unique: true })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.subjects.createIndex({ code: 1 }, { unique: true })
+      } else {
+        console.error('Error indexing subjects:', error)
+      }
+    }
+  }
+
+  async indexTests() {
+    try {
+      const classIdIndexExists = await this.tests.indexExists(['classId_1'])
+      if (!classIdIndexExists) {
+        await this.tests.createIndex({ classId: 1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.tests.createIndex({ classId: 1 })
+      } else {
+        console.error('Error indexing tests:', error)
+      }
+    }
+  }
+
+  async indexTestAttempts() {
+    try {
+      const testIdIndexExists = await this.testAttempts.indexExists(['testId_1'])
+      if (!testIdIndexExists) {
+        await this.testAttempts.createIndex({ testId: 1 })
+      }
+      const studentIdIndexExists = await this.testAttempts.indexExists(['studentId_1'])
+      if (!studentIdIndexExists) {
+        await this.testAttempts.createIndex({ studentId: 1 })
+      }
+    } catch (error: any) {
+      if (error.code === 26 || error.codeName === 'NamespaceNotFound') {
+        await this.testAttempts.createIndex({ testId: 1 })
+        await this.testAttempts.createIndex({ studentId: 1 })
+      } else {
+        console.error('Error indexing test attempts:', error)
+      }
+    }
+  }
+
   async indexChatRooms() {
     try {
       const memberIdsIndexExists = await this.chatRooms.indexExists(['memberIds_1'])
@@ -329,6 +381,14 @@ class DatabaseService {
 
   get chatMessages(): Collection<ChatMessage> {
     return this.db.collection(process.env.DB_CHAT_MESSAGES_COLLECTION || 'chat_messages')
+  }
+
+  get tests(): Collection<Test> {
+    return this.db.collection(process.env.DB_TESTS_COLLECTION || 'tests')
+  }
+
+  get testAttempts(): Collection<TestAttempt> {
+    return this.db.collection(process.env.DB_TEST_ATTEMPTS_COLLECTION || 'test_attempts')
   }
 }
 

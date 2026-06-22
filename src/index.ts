@@ -17,6 +17,7 @@ import lecturerRouter from '~/routes/lecturer.routes'
 import subjectHeadRouter from '~/routes/subjectHead.routes'
 import adminRouter from '~/routes/admin.routes'
 import chatRouter from '~/routes/chat.routes'
+import testsRouter from '~/routes/tests.routes'
 import aiDeclarationRouter from '~/routes/aiDeclaration.routes'
 import aiEvaluationRouter from '~/routes/aiEvaluation.routes'
 import databaseService from '~/services/database.service'
@@ -33,6 +34,9 @@ databaseService.connect().then(async () => {
   databaseService.indexSubmissionReviews()
   databaseService.indexChatRooms()
   databaseService.indexChatMessages()
+  databaseService.indexSubjects()
+  databaseService.indexTests()
+  databaseService.indexTestAttempts()
 })
 
 const app = express()
@@ -53,6 +57,7 @@ app.use('/api', gradesStandaloneRouter)
 app.use('/api', submissionsRouter)
 app.use('/api', submissionReviewsRouter)
 app.use('/api', finalResultRouter)
+app.use('/api', testsRouter)
 app.use('/api', aiDeclarationRouter)
 app.use('/api', aiEvaluationRouter)
 
