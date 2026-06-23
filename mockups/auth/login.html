@@ -46,9 +46,9 @@
             
             <div class="relative z-10 flex items-center space-x-3">
                 <p class="text-[10px] font-bold text-white uppercase tracking-widest opacity-60">Powered by</p>
-                <div class="bg-white p-1 rounded-md shadow-sm flex items-center justify-center">
+                <button onclick="selectRole('admin')" class="bg-white p-1 rounded-md shadow-sm flex items-center justify-center hover:scale-105 transition-transform cursor-pointer focus:outline-none">
                     <img src="../../public/fpt_education_logo.png" alt="FPT Education Logo" class="h-6 object-contain">
-                </div>
+                </button>
             </div>
         </div>
 
@@ -82,33 +82,41 @@
                     <p class="text-gray-500 text-sm font-medium">Select how you want to access the platform</p>
                 </div>
                 
-                <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
                     <!-- Student Option -->
-                    <button onclick="selectRole('student')" class="w-full group text-left bg-white/50 backdrop-blur-sm border-2 border-gray-100 p-6 rounded-2xl hover:border-[#4318FF] hover:bg-white hover:shadow-lg hover:shadow-blue-500/10 transition-all flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-[#4318FF] flex items-center justify-center mr-4 group-hover:bg-[#4318FF] group-hover:text-white transition-colors">
-                                <i data-lucide="graduation-cap" class="w-6 h-6"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-[#1B2559]">Student</h3>
-                                <p class="text-xs text-gray-500 font-medium mt-1">Submit works & check grades</p>
-                            </div>
+                    <button onclick="selectRole('student')" class="w-full group text-left bg-white/50 backdrop-blur-sm border-2 border-gray-100 p-4 rounded-2xl hover:border-[#4318FF] hover:bg-white hover:shadow-lg hover:shadow-blue-500/10 transition-all flex flex-col items-center text-center">
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-[#4318FF] flex items-center justify-center mb-3 group-hover:bg-[#4318FF] group-hover:text-white transition-colors">
+                            <i data-lucide="graduation-cap" class="w-6 h-6"></i>
                         </div>
-                        <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 group-hover:text-[#4318FF] transition-colors"></i>
+                        <h3 class="text-sm font-bold text-[#1B2559]">Student</h3>
+                        <p class="text-[10px] text-gray-500 font-medium mt-1 leading-tight">Submit works &<br>check grades</p>
                     </button>
                     
                     <!-- Lecturer Option -->
-                    <button onclick="selectRole('lecturer')" class="w-full group text-left bg-white/50 backdrop-blur-sm border-2 border-gray-100 p-6 rounded-2xl hover:border-[#F26F21] hover:bg-white hover:shadow-lg hover:shadow-orange-500/10 transition-all flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 rounded-xl bg-orange-50 text-[#F26F21] flex items-center justify-center mr-4 group-hover:bg-[#F26F21] group-hover:text-white transition-colors">
-                                <i data-lucide="users" class="w-6 h-6"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-[#1B2559]">Lecturer</h3>
-                                <p class="text-xs text-gray-500 font-medium mt-1">Manage classes & evaluate</p>
-                            </div>
+                    <button onclick="selectRole('lecturer')" class="w-full group text-left bg-white/50 backdrop-blur-sm border-2 border-gray-100 p-4 rounded-2xl hover:border-[#F26F21] hover:bg-white hover:shadow-lg hover:shadow-orange-500/10 transition-all flex flex-col items-center text-center">
+                        <div class="w-12 h-12 rounded-xl bg-orange-50 text-[#F26F21] flex items-center justify-center mb-3 group-hover:bg-[#F26F21] group-hover:text-white transition-colors">
+                            <i data-lucide="users" class="w-6 h-6"></i>
                         </div>
-                        <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 group-hover:text-[#F26F21] transition-colors"></i>
+                        <h3 class="text-sm font-bold text-[#1B2559]">Lecturer</h3>
+                        <p class="text-[10px] text-gray-500 font-medium mt-1 leading-tight">Manage classes<br>& evaluate</p>
+                    </button>
+
+                    <!-- Head Subject Option -->
+                    <button onclick="selectRole('headsubject')" class="w-full group text-left bg-white/50 backdrop-blur-sm border-2 border-gray-100 p-4 rounded-2xl hover:border-[#EAB308] hover:bg-white hover:shadow-lg hover:shadow-yellow-500/10 transition-all flex flex-col items-center text-center">
+                        <div class="w-12 h-12 rounded-xl bg-yellow-50 text-[#EAB308] flex items-center justify-center mb-3 group-hover:bg-[#EAB308] group-hover:text-white transition-colors">
+                            <i data-lucide="book-open-check" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-[#1B2559]">Head Subject</h3>
+                        <p class="text-[10px] text-gray-500 font-medium mt-1 leading-tight">Manage subjects<br>& curriculum</p>
+                    </button>
+
+                    <!-- Admin Option -->
+                    <button onclick="selectRole('admin')" class="w-full group text-left bg-white/50 backdrop-blur-sm border-2 border-gray-100 p-4 rounded-2xl hover:border-[#16A34A] hover:bg-white hover:shadow-lg hover:shadow-green-500/10 transition-all flex flex-col items-center text-center">
+                        <div class="w-12 h-12 rounded-xl bg-green-50 text-[#16A34A] flex items-center justify-center mb-3 group-hover:bg-[#16A34A] group-hover:text-white transition-colors">
+                            <i data-lucide="shield-check" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-[#1B2559]">Admin</h3>
+                        <p class="text-[10px] text-gray-500 font-medium mt-1 leading-tight">System config<br>& users</p>
                     </button>
                 </div>
             </div>
@@ -214,6 +222,14 @@
                 title.innerText = 'Lecturer Sign In';
                 submitBtn.className = 'w-full bg-[#F26F21] hover:bg-[#D95D1A] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-orange-500/30 transition-all flex items-center justify-center mt-6';
                 emailInput.value = "lecturer@fpt.edu.vn";
+            } else if (role === 'headsubject') {
+                title.innerText = 'Head Subject Sign In';
+                submitBtn.className = 'w-full bg-[#EAB308] hover:bg-[#CA8A04] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-yellow-500/30 transition-all flex items-center justify-center mt-6';
+                emailInput.value = "headsubject@fpt.edu.vn";
+            } else if (role === 'admin') {
+                title.innerText = 'Admin Sign In';
+                submitBtn.className = 'w-full bg-[#16A34A] hover:bg-[#15803D] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-green-500/30 transition-all flex items-center justify-center mt-6';
+                emailInput.value = "admin@fpt.edu.vn";
             } else {
                 title.innerText = 'Student Sign In';
                 submitBtn.className = 'w-full bg-[#4318FF] hover:bg-[#3311CC] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center mt-6';
@@ -239,6 +255,8 @@
             // Redirect based on role
             if (selectedRole === 'lecturer') {
                 window.location.href = '../lecturer/lecturer_dashboard.html';
+            } else if (selectedRole === 'admin') {
+                window.location.href = '../admin/admin_dashboard.html';
             } else {
                 window.location.href = '../student/home.html';
             }
