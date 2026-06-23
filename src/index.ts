@@ -8,6 +8,7 @@ import subjectsRouter from '~/routes/subjects.routes'
 import classesRouter from '~/routes/classes.routes'
 import gradeItemsRouter from '~/routes/gradeItems.routes'
 import gradesRouter, { gradesStandaloneRouter } from '~/routes/grades.routes'
+import assignmentsRouter from '~/routes/assignments.routes'
 import submissionsRouter from '~/routes/submissions.routes'
 import submissionReviewsRouter from '~/routes/submissionReviews.routes'
 import reportRouter from '~/routes/report.routes'
@@ -20,6 +21,7 @@ import chatRouter from '~/routes/chat.routes'
 import testsRouter from '~/routes/tests.routes'
 import aiDeclarationRouter from '~/routes/aiDeclaration.routes'
 import aiEvaluationRouter from '~/routes/aiEvaluation.routes'
+import notificationsRouter from '~/routes/notifications.routes'
 import databaseService from '~/services/database.service'
 import { defaultErrorHandler } from '~/middlewares/error.middleware'
 import { config } from 'dotenv'
@@ -32,6 +34,9 @@ databaseService.connect().then(async () => {
   databaseService.indexPasswordResetTokens()
   databaseService.indexSubmissions()
   databaseService.indexSubmissionReviews()
+  databaseService.indexNotifications()
+  databaseService.indexEmailLogs()
+  databaseService.indexAssignments()
   databaseService.indexChatRooms()
   databaseService.indexChatMessages()
   databaseService.indexSubjects()
@@ -52,6 +57,7 @@ app.use('/api/subjects', subjectsRouter)
 app.use('/api/classes', classesRouter)
 app.use('/api/classes/:classId/grade-items', gradeItemsRouter)
 app.use('/api/grade-items', gradeItemsRouter)
+app.use('/api', assignmentsRouter)
 app.use('/api/submissions/:id/grade', gradesRouter)
 app.use('/api', gradesStandaloneRouter)
 app.use('/api', submissionsRouter)
@@ -60,6 +66,7 @@ app.use('/api', finalResultRouter)
 app.use('/api', testsRouter)
 app.use('/api', aiDeclarationRouter)
 app.use('/api', aiEvaluationRouter)
+app.use('/api', notificationsRouter)
 
 app.use('/api/reports', reportRouter)
 
