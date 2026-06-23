@@ -260,6 +260,10 @@ class DatabaseService {
         await this.testAttempts.createIndex({ studentId: 1 })
       } else {
         console.error('Error indexing test attempts:', error)
+      }
+    }
+  }
+
   async indexNotifications() {
     try {
       const userReadIndexExists = await this.notifications.indexExists(['userId_1_isRead_1'])
