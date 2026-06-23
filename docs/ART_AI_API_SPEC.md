@@ -471,6 +471,17 @@ Business rules:
 - A session belongs to exactly one class.
 - A session can contain zero or many assignments.
 
+## 4.2 Schedule APIs
+
+| Method | Endpoint | Role | Description |
+| --- | --- | --- | --- |
+| GET | /students/me/schedule | Student | Get weekly schedule |
+
+Query:
+`http
+GET /students/me/schedule?startDate=2026-06-01&endDate=2026-06-07
+`
+
 ---
 
 ---
@@ -1277,6 +1288,7 @@ Recommended implementation order:
 12. Module 12 Reporting & Analytics APIs.
 13. Module 13 Flag Management APIs.
 14. Module 14 System Monitoring APIs.
+15. Module 15 Test & Quiz Management APIs.
 
 ---
 
@@ -1322,8 +1334,10 @@ This section maps BUSINESS REQUIREMENT SPECIFICATION (BRS) modules to implementa
 | Module 10  | BR-NOTIFY-\*            | Notification & Email APIs           | Member 45             |
 | Module 11  | BR-CHAT-\*              | Realtime Chat APIs                  | Member 129            |
 | Module 12  | BR-REPORT-\*            | Reporting & Analytics APIs          | Member 129            |
-| Module 13  | BR-FLAG-\*              | Flag Management APIs                | TBD                   |
-| Module 14  | Monitoring / System Ops | System Monitoring APIs              | TBD                   |
+| Module 13  | BR-PORTAL-\*            | Academic Portal APIs                | Member 129            |
+| Module 14  | BR-FLAG-\*              | Flag Management APIs                | TBD                   |
+| Module 15  | BR-TEST-\*              | Test & Quiz APIs                    | TBD                   |
+| Module 16  | Monitoring / System Ops | System Monitoring APIs              | TBD                   |
 
 ---
 
@@ -1410,3 +1424,31 @@ Implementation owner:
 | PUT | `/news/:id` | Admin, Subject Head | Update a news post |
 | DELETE | `/news/:id` | Admin, Subject Head | Delete a news post |
 
+
+---
+
+# 13. Academic Portal APIs
+
+## 13.1 Portal Endpoints
+
+| Method | Endpoint | Role | Description |
+| --- | --- | --- | --- |
+| GET | /portal/attendance/classes/:classId | Student | View attendance for a specific class |
+| GET | /portal/transactions/me | Student | View tuition and transaction history |
+| GET | /portal/curriculum/me | Student | View academic curriculum roadmap |
+| GET | /portal/transcript/me | Student | View cumulative academic transcript |
+
+---
+
+# 15. Test & Quiz Management APIs
+
+## 15.1 Test Endpoints
+
+| Method | Endpoint | Role | Description |
+| --- | --- | --- | --- |
+| GET | /classes/:classId/tests | Student, Lecturer | List tests in a class |
+| POST | /classes/:classId/tests | Lecturer | Create a new test |
+| GET | /tests/:id | Student, Lecturer | Get test details |
+| POST | /tests/:id/questions | Lecturer | Add questions to a test |
+| POST | /tests/:id/submit | Student | Submit test answers |
+| GET | /tests/:id/analytics | Lecturer | View test score analytics and question statistics |

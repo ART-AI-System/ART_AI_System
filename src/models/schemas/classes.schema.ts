@@ -1,5 +1,4 @@
 import { ObjectId } from 'mongodb'
-import { UserRole } from './users.schema'
 
 export interface LecturerSnapshot {
   lecturerId: ObjectId
@@ -14,13 +13,18 @@ export interface StudentSnapshot {
   email: string
 }
 
+export interface SubjectSnapshot {
+  subjectId: ObjectId
+  code: string
+  name: string
+}
+
 export interface ClassType {
   _id?: ObjectId
   classCode: string
-  subjectName: string
-  semester: string
-  academicYear: string
-  department?: any
+  semesterId: ObjectId
+  subjectId: ObjectId
+  subjectSnapshot: SubjectSnapshot
   lecturer: LecturerSnapshot
   students?: StudentSnapshot[]
   isActive?: boolean
@@ -31,10 +35,9 @@ export interface ClassType {
 export default class Class {
   _id?: ObjectId
   classCode: string
-  subjectName: string
-  semester: string
-  academicYear: string
-  department: any
+  semesterId: ObjectId
+  subjectId: ObjectId
+  subjectSnapshot: SubjectSnapshot
   lecturer: LecturerSnapshot
   students: StudentSnapshot[]
   isActive: boolean
@@ -45,10 +48,9 @@ export default class Class {
     const date = new Date()
     this._id = classData._id
     this.classCode = classData.classCode
-    this.subjectName = classData.subjectName
-    this.semester = classData.semester
-    this.academicYear = classData.academicYear
-    this.department = classData.department || {}
+    this.semesterId = classData.semesterId
+    this.subjectId = classData.subjectId
+    this.subjectSnapshot = classData.subjectSnapshot
     this.lecturer = classData.lecturer
     this.students = classData.students || []
     this.isActive = classData.isActive ?? true

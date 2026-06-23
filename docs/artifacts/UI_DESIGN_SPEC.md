@@ -66,3 +66,15 @@ Thư mục `mockups/lecturer/`. Khác với Student, Lecturer sử dụng Sideba
 > [!IMPORTANT]
 > Toàn bộ các file HTML đã được chuẩn hóa cấu trúc thẻ `<aside>` (Sidebar), `<header>` (Topbar), `<main>` (Content). Các Topbar được thiết kế đồng nhất hiển thị Search, Semester Global (nếu có), Bell Notification và User Profile dạng Avatar (Clickable).
 > Team React vui lòng tách các thành phần này ra Component dùng chung.
+
+---
+
+## 4. Bản đồ HTML Prototype (Luồng Quản Trị Viên - Admin Flow)
+
+Thư mục `mockups/admin/`. Dành riêng cho người quản trị cao nhất hệ thống. Sử dụng Background tối `emerald-900` (`#064E3B`) kết hợp cùng các dải màu Xanh lá (Green) để phân biệt rạch ròi với Giảng viên (Xanh Navy) và Sinh viên (Cam).
+
+### Các màn hình lõi:
+1. **[admin_dashboard.html](file:///e:/FPT/7_SU26/WDP/ART-AI/mockups/admin/admin_dashboard.html):** Màn hình Overview tổng quan với thống kê số lượng User, Lớp học đang chạy, và Tải hệ thống (System Load).
+2. **[admin_users.html](file:///e:/FPT/7_SU26/WDP/ART-AI/mockups/admin/admin_users.html):** Màn hình quản lý User. Admin có thể xem danh sách, đổi Role (Phân quyền Giảng viên / Sinh viên / Subject Head), Khóa tài khoản.
+3. **[admin_semesters.html](file:///e:/FPT/7_SU26/WDP/ART-AI/mockups/admin/admin_semesters.html):** Quản lý cấu trúc thời gian (Học kỳ). Cho phép set cờ (flag) cho học kỳ nào đang là `isCurrent` (Học kỳ hiện tại).
+4. **[admin_classes.html](file:///e:/FPT/7_SU26/WDP/ART-AI/mockups/admin/admin_classes.html):** Quản lý Danh sách lớp học và nút tính năng quan trọng `Import Excel` danh sách sinh viên. Nút bấm mang tông màu `#16A34A` đặc trưng của Admin.

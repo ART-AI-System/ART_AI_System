@@ -75,3 +75,21 @@ export const deleteClassController = async (req: Request, res: Response, next: N
     next(error)
   }
 }
+
+export const importStudentsController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params
+    const rows = (req as any).importRows as Record<string, string>[]
+    if (!rows || rows.length === 0) {
+      res.status(400).json({ message: 'No rows found to import' })
+      return
+    }
+    const result = await classesService.importStudents(id as string, rows)
+    res.json({
+      message: 'Import students successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}

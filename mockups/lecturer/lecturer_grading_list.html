@@ -32,7 +32,7 @@
                 <i data-lucide="book-open" class="w-5 h-5 mr-4 opacity-70"></i> My Subjects
             </a>
 
-            <a href="lecturer_grading_list.html" class="flex items-center px-4 py-3.5 bg-white/10 text-white font-bold rounded-xl transition-all relative">
+            <a href="lecturer_grading_subjects.html" class="flex items-center px-4 py-3.5 bg-white/10 text-white font-bold rounded-xl transition-all relative">
                 <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#F26F21] rounded-r-full"></div>
                 <i data-lucide="file-check-2" class="w-5 h-5 mr-4 text-[#F26F21]"></i> Grading
                 <span class="ml-auto bg-[#F26F21] text-white text-xs font-bold px-2 py-0.5 rounded-full">12</span>
@@ -85,174 +85,182 @@
             </div>
         </header>
 
+        
+        
         <!-- DASHBOARD CONTENT -->
         <div class="flex-1 overflow-y-auto p-10 scroll-smooth bg-gray-50/50">
             <div class="max-w-[1400px] mx-auto">
                 
-                <!-- Filters & Stats -->
+                
+                
                 <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center space-x-4">
-                        <div class="bg-white border border-gray-200 rounded-xl flex items-center px-4 py-2 shadow-sm w-72">
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-[#1B2559]">Practical Exam 1</h2>
+                        <p class="text-sm font-medium text-gray-500 mt-1">Class SE18D01 • 30 Students</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-white border border-gray-200 rounded-xl flex items-center px-4 py-2 shadow-sm w-64">
                             <i data-lucide="search" class="w-4 h-4 text-gray-400 mr-2"></i>
-                            <input type="text" placeholder="Search student name or ID..." class="w-full text-sm outline-none text-gray-700 bg-transparent">
+                            <input type="text" placeholder="Search student..." class="w-full text-sm outline-none text-gray-700 bg-transparent">
                         </div>
                         <select class="bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2.5 outline-none shadow-sm cursor-pointer">
                             <option>All Status</option>
-                            <option>Pending (12)</option>
+                            <option>Pending (15)</option>
                             <option>Graded (15)</option>
-                            <option>Late (0)</option>
                         </select>
                     </div>
-                    
-                    <div class="flex space-x-6 text-sm">
-                        <div class="text-center">
-                            <span class="block text-gray-400 font-bold">Total</span>
-                            <span class="text-xl font-extrabold text-[#1B2559]">27/35</span>
-                        </div>
-                        <div class="text-center">
-                            <span class="block text-gray-400 font-bold">Pending</span>
-                            <span class="text-xl font-extrabold text-[#F26F21]">12</span>
-                        </div>
-                    </div>
                 </div>
-
-                <!-- Submissions Table -->
+                
+                
+                <!-- List View -->
                 <div class="bg-white border border-gray-200 rounded-[24px] shadow-sm overflow-hidden">
                     <table class="w-full text-left text-sm text-gray-600">
-                        <thead class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <thead class="bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
                             <tr>
-                                <th class="px-6 py-4">No</th>
                                 <th class="px-6 py-4">Student</th>
-                                <th class="px-6 py-4">Status & Time</th>
-                                <th class="px-6 py-4">File / Link</th>
-                                <th class="px-6 py-4">AI Transparency Score</th>
+                                <th class="px-6 py-4">Submission</th>
+                                <th class="px-6 py-4 w-64 text-center">AI Audit</th>
                                 <th class="px-6 py-4">Score</th>
-                                <th class="px-6 py-4 text-center">Action</th>
+                                <th class="px-6 py-4 text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             
-                            <!-- Row 1: High Discrepancy Alert -->
-                            <tr class="hover:bg-orange-50/30 transition-colors bg-red-50/10">
-                                <td class="px-6 py-4 font-medium">1</td>
+                            <!-- Student 1: High Discrepancy -->
+                            <tr class="hover:bg-gray-50 transition-colors group">
                                 <td class="px-6 py-4">
-                                    <p class="font-bold text-[#1B2559]">Nguyen Van Duc</p>
-                                    <p class="text-xs text-gray-500">270505nguyenvanduc@fpt.edu.vn</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 mb-1">
-                                        Submitted
-                                    </span>
-                                    <p class="text-xs text-gray-500">2026-03-20 10:58:29</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <a href="#" class="text-[#4318FF] font-bold hover:underline flex items-center">
-                                        <i data-lucide="file-archive" class="w-4 h-4 mr-1"></i> PE_DucNV.zip
-                                    </a>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-col">
-                                        <div class="flex items-center justify-between mb-1">
-                                            <span class="text-xs font-bold text-red-600">Declared: 10% | Detected: 95%</span>
-                                        </div>
-                                        <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                            <div class="bg-red-500 h-1.5 rounded-full" style="width: 95%"></div>
-                                        </div>
-                                        <span class="text-[10px] font-bold text-red-500 uppercase mt-1 flex items-center">
-                                            <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i> High Discrepancy
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-gray-400">-</td>
-                                <td class="px-6 py-4 text-center">
-                                    <a href="lecturer_grading_detail.html" class="inline-flex items-center px-4 py-2 bg-[#F26F21] text-white text-xs font-bold rounded-lg hover:bg-[#D95D1A] transition-colors shadow-sm shadow-orange-500/20">
-                                        Evaluate
-                                    </a>
-                                </td>
-                            </tr>
-
-                            <!-- Row 2: Good AI Usage -->
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 font-medium">2</td>
-                                <td class="px-6 py-4">
-                                    <p class="font-bold text-[#1B2559]">Pham Tuan Viet</p>
-                                    <p class="text-xs text-gray-500">tuanviet1520@fpt.edu.vn</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 mb-1">
-                                        Submitted
-                                    </span>
-                                    <p class="text-xs text-gray-500">2026-03-20 10:58:54</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <a href="#" class="text-[#4318FF] font-bold hover:underline flex items-center">
-                                        <i data-lucide="github" class="w-4 h-4 mr-1"></i> Github Repo Link
-                                    </a>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-col">
-                                        <div class="flex items-center justify-between mb-1">
-                                            <span class="text-xs font-bold text-green-600">Declared: 40% | Detected: 42%</span>
-                                        </div>
-                                        <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 42%"></div>
-                                        </div>
-                                        <span class="text-[10px] font-bold text-green-600 uppercase mt-1 flex items-center">
-                                            <i data-lucide="check-circle-2" class="w-3 h-3 mr-1"></i> Transparent
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-gray-400">-</td>
-                                <td class="px-6 py-4 text-center">
-                                    <a href="lecturer_grading_detail.html" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 text-[#1B2559] text-xs font-bold rounded-lg hover:border-[#4318FF] hover:text-[#4318FF] transition-colors shadow-sm">
-                                        Evaluate
-                                    </a>
-                                </td>
-                            </tr>
-
-                            <!-- Row 3: Graded -->
-                            <tr class="hover:bg-gray-50 transition-colors bg-gray-50/50 opacity-80">
-                                <td class="px-6 py-4 font-medium">3</td>
-                                <td class="px-6 py-4">
-                                    <p class="font-bold text-[#1B2559]">Pham Chau Vinh</p>
-                                    <p class="text-xs text-gray-500">vinh0905@fpt.edu.vn</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 mb-1">
-                                        Graded
-                                    </span>
-                                    <p class="text-xs text-gray-500">2026-03-20 10:59:46</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <a href="#" class="text-gray-500 font-bold hover:underline flex items-center">
-                                        <i data-lucide="file-archive" class="w-4 h-4 mr-1"></i> PE_VinhPC.zip
-                                    </a>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-col">
-                                        <div class="flex items-center justify-between mb-1">
-                                            <span class="text-xs font-bold text-green-600">Declared: 0% | Detected: 0%</span>
-                                        </div>
-                                        <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                    <div class="flex items-center">
+                                        <img src="https://ui-avatars.com/api/?name=Viet+Khoa&background=F26F21&color=fff" class="w-10 h-10 rounded-full mr-3 border border-gray-200">
+                                        <div>
+                                            <div class="font-extrabold text-[#1B2559]">Nguyen Van Duc</div>
+                                            <div class="text-xs font-medium text-gray-400">HE150001</div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 font-extrabold text-[#1B2559] text-lg">8.5</td>
-                                <td class="px-6 py-4 text-center">
-                                    <a href="lecturer_grading_detail.html" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors">
-                                        View
-                                    </a>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded w-fit mb-1">Submitted</span>
+                                        <a href="#" class="text-sm font-bold text-[#4318FF] hover:underline flex items-center"><i data-lucide="file-archive" class="w-4 h-4 mr-1"></i> PE_DucNV.zip</a>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="bg-red-50 border border-red-100 rounded-xl p-2 relative overflow-hidden">
+                                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-[10px] font-bold text-red-600 flex items-center uppercase"><i data-lucide="shield-alert" class="w-3 h-3 mr-1"></i> High Discrepancy</span>
+                                        </div>
+                                        <div class="flex justify-between text-xs mt-1">
+                                            <div class="text-center w-1/2 border-r border-red-200/50">
+                                                <div class="font-medium text-gray-500 text-[10px]">Declared</div>
+                                                <div class="font-extrabold text-[#1B2559]">10%</div>
+                                            </div>
+                                            <div class="text-center w-1/2">
+                                                <div class="font-medium text-gray-500 text-[10px]">Detected</div>
+                                                <div class="font-extrabold text-red-600">95%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-gray-400 font-bold">-</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="lecturer_grading_detail.html" class="inline-flex px-4 py-2 bg-[#F26F21] text-white text-xs font-bold rounded-lg hover:bg-[#D95D1A] transition-all shadow-md shadow-orange-500/20">Evaluate Now</a>
                                 </td>
                             </tr>
 
+                            <!-- Student 2: Transparent -->
+                            <tr class="hover:bg-gray-50 transition-colors group">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <img src="https://ui-avatars.com/api/?name=User&background=4318FF&color=fff" class="w-10 h-10 rounded-full mr-3 border border-gray-200">
+                                        <div>
+                                            <div class="font-extrabold text-[#1B2559]">Pham Tuan Viet</div>
+                                            <div class="text-xs font-medium text-gray-400">HE150002</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded w-fit mb-1">Submitted</span>
+                                        <a href="#" class="text-sm font-bold text-[#4318FF] hover:underline flex items-center"><i data-lucide="github" class="w-4 h-4 mr-1"></i> Github Repo Link</a>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="bg-green-50 border border-green-100 rounded-xl p-2 relative overflow-hidden">
+                                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-[10px] font-bold text-green-600 flex items-center uppercase"><i data-lucide="shield-check" class="w-3 h-3 mr-1"></i> Transparent</span>
+                                        </div>
+                                        <div class="flex justify-between text-xs mt-1">
+                                            <div class="text-center w-1/2 border-r border-green-200/50">
+                                                <div class="font-medium text-gray-500 text-[10px]">Declared</div>
+                                                <div class="font-extrabold text-[#1B2559]">40%</div>
+                                            </div>
+                                            <div class="text-center w-1/2">
+                                                <div class="font-medium text-gray-500 text-[10px]">Detected</div>
+                                                <div class="font-extrabold text-green-600">42%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-gray-400 font-bold">-</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="lecturer_grading_detail.html" class="inline-flex px-4 py-2 border-2 border-[#4318FF] text-[#4318FF] text-xs font-bold rounded-lg hover:bg-[#4318FF] hover:text-white transition-all">Evaluate Now</a>
+                                </td>
+                            </tr>
+
+                            <!-- Student 3: Graded -->
+                            <tr class="hover:bg-gray-50 transition-colors group opacity-70">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <img src="https://ui-avatars.com/api/?name=User&background=4318FF&color=fff" class="w-10 h-10 rounded-full mr-3 border border-gray-200 grayscale">
+                                        <div>
+                                            <div class="font-extrabold text-[#1B2559]">Pham Chau Vinh</div>
+                                            <div class="text-xs font-medium text-gray-400">HE150003</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded w-fit mb-1">Graded</span>
+                                        <a href="#" class="text-sm font-bold text-gray-500 flex items-center"><i data-lucide="file-archive" class="w-4 h-4 mr-1"></i> PE_VinhPC.zip</a>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-2 relative overflow-hidden">
+                                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-300"></div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-[10px] font-bold text-gray-500 flex items-center uppercase"><i data-lucide="shield" class="w-3 h-3 mr-1"></i> No AI Used</span>
+                                        </div>
+                                        <div class="flex justify-between text-xs mt-1">
+                                            <div class="text-center w-1/2 border-r border-gray-200/50">
+                                                <div class="font-medium text-gray-400 text-[10px]">Declared</div>
+                                                <div class="font-extrabold text-gray-500">0%</div>
+                                            </div>
+                                            <div class="text-center w-1/2">
+                                                <div class="font-medium text-gray-400 text-[10px]">Detected</div>
+                                                <div class="font-extrabold text-gray-500">0%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-lg font-extrabold text-[#1B2559]">8.5</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="lecturer_grading_detail.html" class="inline-flex px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200 transition-all">View Details</a>
+                                </td>
+                            </tr>
+                            
                         </tbody>
                     </table>
                 </div>
-
+    
             </div>
         </div>
-
     </main>
 
     <script>
