@@ -2,9 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Plus, Upload, Shield, Power, Trash2 } from 'lucide-react';
-import { Card } from '../../components/common/Card';
-import { DataTable } from '../../components/common/DataTable';
-import { StatusBadge } from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
 import { userService } from '../../services/user.service';
 import type { User, UserListParams } from '../../types/user';
@@ -76,109 +73,22 @@ export default function UsersPage() {
     }
   };
 
-  const columns = [
-    {
-      key: 'user',
-      label: 'User',
-      render: (user: User) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#4318FF] font-bold">
-            {user.fullName.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <Link to={ROUTES.USER_DETAIL.replace(':id', user._id)} className="font-bold text-[#1B2559] hover:text-[#4318FF]">
-              {user.fullName}
-            </Link>
-            <div className="text-xs text-gray-500">{user.email}</div>
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'studentCode',
-      label: 'Code',
-      render: (user: User) => <span className="font-medium text-gray-700">{user.studentCode || '-'}</span>
-    },
-    {
-      key: 'role',
-      label: 'Role',
-      render: (user: User) => (
-        <span className="flex items-center gap-1.5 text-sm font-medium text-gray-600">
-          <Shield className="w-4 h-4 text-purple-500" />
-          {user.role}
-        </span>
-      )
-    },
-    {
-      key: 'isActive',
-      label: 'Status',
-      render: (user: User) => (
-        <StatusBadge 
-          label={user.isActive ? 'Active' : 'Inactive'} 
-          variant={user.isActive ? 'success' : 'error'} 
-        />
-      )
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (user: User) => (
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => toggleStatus(user)}
-            title={user.isActive ? "Deactivate" : "Activate"}
-            className={`p-2 rounded-lg transition-colors ${user.isActive ? 'text-orange-500 hover:bg-orange-50' : 'text-green-500 hover:bg-green-50'}`}
-          >
-            <Power className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={() => deleteUser(user._id)}
-            title="Delete User"
-            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      )
-    }
-  ];
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1B2559]">User Directory</h1>
-          <p className="text-sm text-gray-500">Manage system accounts and access</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
-            <Upload className="w-4 h-4 mr-2" />
-            Import CSV
-          </Button>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add User
-          </Button>
-        </div>
-      </div>
-
-      <Card>
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <form onSubmit={handleSearch} className="flex-1 relative">
-            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="flex justify-between items-center mb-6">
+          <form onSubmit={handleSearch} className="flex gap-4">
             <input 
               type="text" 
-              placeholder="Search by name, email or code..."
+              placeholder="Search users..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4318FF] focus:border-transparent"
+              className="border border-gray-200 rounded-xl px-4 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
             />
-          </form>
-          <div className="flex gap-3">
             <select 
               value={roleFilter}
               onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
-              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4318FF] bg-white"
+              className="px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#16A34A] bg-white"
             >
               <option value="">All Roles</option>
               <option value="ADMIN">Admin</option>
@@ -186,15 +96,21 @@ export default function UsersPage() {
               <option value="LECTURER">Lecturer</option>
               <option value="STUDENT">Student</option>
             </select>
-            <select 
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4318FF] bg-white"
+          </form>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setIsImportModalOpen(true)}
+              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition-colors flex items-center"
             >
-              <option value="">All Statuses</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
+            </button>
+            <button 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="bg-[#16A34A] text-white px-4 py-2 rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center"
+            >
+              + Add User
+            </button>
           </div>
         </div>
 
@@ -206,15 +122,76 @@ export default function UsersPage() {
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-4 border-[#4318FF] border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-[#16A34A] border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
-          <>
-            <DataTable 
-              data={users} 
-              columns={columns} 
-              keyExtractor={(row) => row._id} 
-            />
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-gray-500 border-b border-gray-100">
+                  <th className="py-4 font-semibold">Name</th>
+                  <th className="py-4 font-semibold">Email</th>
+                  <th className="py-4 font-semibold">Code</th>
+                  <th className="py-4 font-semibold">Role</th>
+                  <th className="py-4 font-semibold">Status</th>
+                  <th className="py-4 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(user => (
+                  <tr key={user._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4">
+                      <Link to={ROUTES.USER_DETAIL.replace(':id', user._id)} className="font-bold text-[#064E3B] hover:text-[#16A34A] transition-colors flex items-center">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-[#16A34A] font-bold mr-3">
+                          {user.fullName.charAt(0).toUpperCase()}
+                        </div>
+                        {user.fullName}
+                      </Link>
+                    </td>
+                    <td className="py-4 text-gray-600">{user.email}</td>
+                    <td className="py-4 text-gray-600 font-medium">{user.studentCode || '-'}</td>
+                    <td className="py-4">
+                      <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                        user.role === 'ADMIN' ? 'bg-red-100 text-red-600' :
+                        user.role === 'SUBJECT_HEAD' ? 'bg-purple-100 text-purple-600' :
+                        user.role === 'LECTURER' ? 'bg-blue-100 text-blue-600' :
+                        'bg-orange-100 text-orange-600'
+                      }`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="py-4">
+                      <span className={`font-medium ${user.isActive ? 'text-green-600' : 'text-gray-400'}`}>
+                        {user.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="py-4 flex gap-2">
+                      <button 
+                        onClick={() => toggleStatus(user)}
+                        title={user.isActive ? "Deactivate" : "Activate"}
+                        className={`p-2 rounded-lg transition-colors ${user.isActive ? 'text-orange-500 hover:bg-orange-50' : 'text-green-500 hover:bg-green-50'}`}
+                      >
+                        <Power className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => deleteUser(user._id)}
+                        title="Delete User"
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {users.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-gray-500">
+                      No users found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
             
             {/* Pagination */}
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
@@ -222,27 +199,25 @@ export default function UsersPage() {
                 Showing <span className="font-medium">{(page - 1) * limit + 1}</span> to <span className="font-medium">{Math.min(page * limit, total)}</span> of <span className="font-medium">{total}</span> results
               </div>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <button 
                   disabled={page === 1}
                   onClick={() => setPage(p => p - 1)}
+                  className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
+                </button>
+                <button 
                   disabled={page * limit >= total}
                   onClick={() => setPage(p => p + 1)}
+                  className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
-                </Button>
+                </button>
               </div>
             </div>
-          </>
+          </div>
         )}
-      </Card>
+      </div>
 
       {/* Create Modal */}
       {isCreateModalOpen && (
@@ -294,10 +269,10 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void, onSucces
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <h2 className="text-xl font-bold text-[#1B2559]">Create New User</h2>
+          <h2 className="text-xl font-bold text-[#064E3B]">Create New User</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">&times;</button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -305,16 +280,16 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void, onSucces
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-            <input required type="text" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4318FF] focus:outline-none" />
+            <input required type="text" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#16A34A] focus:outline-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-            <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4318FF] focus:outline-none" />
+            <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#16A34A] focus:outline-none" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
-              <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4318FF] focus:outline-none bg-white">
+              <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#16A34A] focus:outline-none bg-white">
                 <option value="STUDENT">Student</option>
                 <option value="LECTURER">Lecturer</option>
                 <option value="SUBJECT_HEAD">Subject Head</option>
@@ -323,17 +298,19 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void, onSucces
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
-              <input type="text" value={formData.studentCode} onChange={e => setFormData({...formData, studentCode: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4318FF] focus:outline-none" placeholder="e.g. SE18D01" />
+              <input type="text" value={formData.studentCode} onChange={e => setFormData({...formData, studentCode: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#16A34A] focus:outline-none" placeholder="e.g. SE18D01" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Initial Password</label>
-            <input type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4318FF] focus:outline-none" placeholder="Leave blank to auto-generate" />
+            <input type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#16A34A] focus:outline-none" placeholder="Leave blank to auto-generate" />
           </div>
 
           <div className="pt-4 flex gap-3 justify-end">
-            <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button type="submit" isLoading={loading}>Create User</Button>
+            <button type="button" onClick={onClose} className="px-4 py-2 font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
+            <button type="submit" disabled={loading} className="px-4 py-2 font-bold bg-[#16A34A] text-white hover:bg-green-700 rounded-xl transition-colors disabled:opacity-50">
+              {loading ? 'Creating...' : 'Create User'}
+            </button>
           </div>
         </form>
       </div>
@@ -370,32 +347,34 @@ function ImportUserModal({ onClose, onSuccess }: { onClose: () => void, onSucces
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <h2 className="text-xl font-bold text-[#1B2559]">Import Users</h2>
+          <h2 className="text-xl font-bold text-[#064E3B]">Import Users</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">&times;</button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
           
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-gray-50 transition-colors cursor-pointer relative">
+          <div className="border-2 border-dashed border-green-200 bg-green-50/30 rounded-2xl p-8 text-center hover:bg-green-50 transition-colors cursor-pointer relative">
             <input 
               type="file" 
               accept=".csv,.xlsx,.xls" 
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
-            <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-            <p className="text-sm font-medium text-[#1B2559]">
+            <Upload className="w-10 h-10 text-green-500 mx-auto mb-3" />
+            <p className="text-sm font-medium text-[#064E3B]">
               {file ? file.name : 'Click or drag file to upload'}
             </p>
             <p className="text-xs text-gray-500 mt-1">CSV or Excel files only</p>
           </div>
 
           <div className="pt-4 flex gap-3 justify-end">
-            <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button type="submit" isLoading={loading} disabled={!file}>Upload & Import</Button>
+            <button type="button" onClick={onClose} className="px-4 py-2 font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
+            <button type="submit" disabled={!file || loading} className="px-4 py-2 font-bold bg-[#16A34A] text-white hover:bg-green-700 rounded-xl transition-colors disabled:opacity-50">
+              {loading ? 'Uploading...' : 'Upload & Import'}
+            </button>
           </div>
         </form>
       </div>

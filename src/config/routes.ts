@@ -1,6 +1,7 @@
 export const ROUTES = {
   // Auth
   LOGIN: '/login',
+  REGISTER: '/register',
 
   // Dashboards
   DASHBOARD: '/dashboard',
@@ -14,6 +15,17 @@ export const ROUTES = {
   USER_DETAIL: '/users/:id',
   PROFILE: '/profile',
   SETTINGS: '/settings',
+
+  // Admin Module
+  ADMIN_STUDENTS: '/dashboard/admin/students',
+  ADMIN_TEACHERS: '/dashboard/admin/teachers',
+  ADMIN_HEAD_SUBJECTS: '/dashboard/admin/head-subjects',
+  ADMIN_SEMESTERS: '/dashboard/admin/semesters',
+  ADMIN_SUBJECTS: '/dashboard/admin/subjects',
+  ADMIN_CLASSES: '/dashboard/admin/classes',
+  ADMIN_MESSAGES: '/dashboard/admin/messages',
+  ADMIN_FEEDBACK: '/dashboard/admin/feedback',
+  ADMIN_SETTINGS: '/dashboard/admin/settings',
 
   // Academic Structure
   CLASSES: '/classes',

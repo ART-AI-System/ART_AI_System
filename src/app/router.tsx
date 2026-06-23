@@ -3,10 +3,19 @@ import { createBrowserRouter } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
 import LoginPage from '../pages/auth/LoginPage';
+import RegisterPage from '../pages/auth/RegisterPage';
 import StudentDashboardPage from '../pages/dashboard/StudentDashboardPage';
 import LecturerDashboardPage from '../pages/dashboard/LecturerDashboardPage';
 import SubjectHeadDashboardPage from '../pages/dashboard/SubjectHeadDashboardPage';
 import AdminDashboardPage from '../pages/dashboard/AdminDashboardPage';
+import AdminClassesPage from '../pages/dashboard/AdminClassesPage';
+import AdminStudentsPage from '../pages/dashboard/AdminStudentsPage';
+import AdminTeachersPage from '../pages/dashboard/AdminTeachersPage';
+import AdminSemestersPage from '../pages/dashboard/AdminSemestersPage';
+import AdminSubjectsPage from '../pages/dashboard/AdminSubjectsPage';
+import AdminMessagesPage from '../pages/dashboard/AdminMessagesPage';
+import AdminFeedbackPage from '../pages/dashboard/AdminFeedbackPage';
+import AdminSettingsPage from '../pages/dashboard/AdminSettingsPage';
 import NotFoundPage from '../pages/not-found/NotFoundPage';
 import { EmptyState } from '../components/common/EmptyState';
 import ErrorState from '../components/common/ErrorState';
@@ -16,6 +25,7 @@ import SchedulePage from '../pages/dashboard/SchedulePage';
 import SettingsPage from '../pages/dashboard/SettingsPage';
 import MySubmissionsPage from '../pages/dashboard/MySubmissionsPage';
 import SubmissionDetailPage from '../pages/dashboard/SubmissionDetailPage';
+import SubmissionGradePage from '../pages/dashboard/SubmissionGradePage';
 import UsersPage from '../pages/dashboard/UsersPage';
 import UserDetailPage from '../pages/dashboard/UserDetailPage';
 
@@ -60,6 +70,10 @@ export const router = createBrowserRouter([
           {
             path: ROUTES.LOGIN,
             element: <LoginPage />,
+          },
+          {
+            path: ROUTES.REGISTER,
+            element: <RegisterPage />,
           },
         ],
       },
@@ -137,6 +151,42 @@ export const router = createBrowserRouter([
                 path: ROUTES.USER_DETAIL,
                 element: <UserDetailPage />,
               },
+              {
+                path: ROUTES.ADMIN_STUDENTS,
+                element: <AdminStudentsPage />,
+              },
+              {
+                path: ROUTES.ADMIN_TEACHERS,
+                element: <AdminTeachersPage />,
+              },
+              {
+                path: ROUTES.ADMIN_HEAD_SUBJECTS,
+                element: <AdminTeachersPage />, // Fallback for Head Subjects right now
+              },
+              {
+                path: ROUTES.ADMIN_SEMESTERS,
+                element: <AdminSemestersPage />,
+              },
+              {
+                path: ROUTES.ADMIN_SUBJECTS,
+                element: <AdminSubjectsPage />,
+              },
+              {
+                path: ROUTES.ADMIN_CLASSES,
+                element: <AdminClassesPage />,
+              },
+              {
+                path: ROUTES.ADMIN_MESSAGES,
+                element: <AdminMessagesPage />,
+              },
+              {
+                path: ROUTES.ADMIN_FEEDBACK,
+                element: <AdminFeedbackPage />,
+              },
+              {
+                path: ROUTES.ADMIN_SETTINGS,
+                element: <AdminSettingsPage />,
+              },
             ],
           },
 
@@ -165,7 +215,7 @@ export const router = createBrowserRouter([
 
           // Academic Structure Management
           {
-            element: <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD', 'STUDENT']} />,
+            element: <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD', 'STUDENT', 'ADMIN']} />,
             children: [
               {
                 path: ROUTES.CLASSES,
@@ -182,7 +232,7 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            element: <RoleGuard allowedRoles={['STUDENT', 'LECTURER']} />,
+            element: <RoleGuard allowedRoles={['STUDENT', 'LECTURER', 'SUBJECT_HEAD']} />,
             children: [
               {
                 path: ROUTES.CLASS_GRADE_ITEMS,
@@ -198,7 +248,7 @@ export const router = createBrowserRouter([
 
           // Assignment Submission Management
           {
-            element: <RoleGuard allowedRoles={['STUDENT', 'LECTURER']} />,
+            element: <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']} />,
             children: [
               {
                 path: ROUTES.GRADE_ITEM_SUBMISSIONS,
@@ -232,7 +282,7 @@ export const router = createBrowserRouter([
 
           // Lecturer Review Section
           {
-            element: <RoleGuard allowedRoles={['LECTURER']} />,
+            element: <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']} />,
             children: [
               {
                 path: ROUTES.LECTURER_CLASS_SUBMISSIONS,
@@ -250,6 +300,11 @@ export const router = createBrowserRouter([
                 path: ROUTES.GRADING_DETAIL,
                 element: <LecturerGradingDetailPage />,
               },
+            ],
+          },
+          {
+            element: <RoleGuard allowedRoles={['LECTURER']} />,
+            children: [
               {
                 path: ROUTES.CREATE_ASSIGNMENT,
                 element: <LecturerCreateAssignmentPage />,
@@ -322,21 +377,16 @@ export const router = createBrowserRouter([
 
           // Score & Grading Management
           {
-            element: <RoleGuard allowedRoles={['STUDENT', 'LECTURER']} />,
+            element: <RoleGuard allowedRoles={['STUDENT', 'LECTURER', 'SUBJECT_HEAD']} />,
             children: [
               {
                 path: ROUTES.SUBMISSION_GRADE,
-                element: (
-                  <EmptyState
-                    title="Submission Grades & Evaluator Feedback"
-                    description="Check specific performance feedback, final scores, and grades."
-                  />
-                ),
+                element: <SubmissionGradePage />,
               },
             ],
           },
           {
-            element: <RoleGuard allowedRoles={['LECTURER']} />,
+            element: <RoleGuard allowedRoles={['LECTURER', 'SUBJECT_HEAD']} />,
             children: [
               {
                 path: ROUTES.CLASS_GRADEBOOK,
