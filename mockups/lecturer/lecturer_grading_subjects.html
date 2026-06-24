@@ -12,6 +12,16 @@
         .fpt-orange-gradient { background: linear-gradient(135deg, #F26F21 0%, #F79C65 100%); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+        /* Collapsed Sidebar styles */
+        #sidebar.w-\[88px\] nav a {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        #sidebar.w-\[88px\] nav a i {
+            margin-right: 0;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -49,10 +59,9 @@
             </span>
                 </a>
             
-            <a href="lecturer_subjects.html" class="flex items-center px-4 py-3.5 bg-white/10 text-white font-bold rounded-xl transition-all relative">
-                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#F26F21] rounded-r-full"></div>
-                <i data-lucide="book-open" class="w-5 h-5 mr-4 text-[#F26F21]"></i>
-                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">Grading
+            <a href="lecturer_subjects.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
+                <i data-lucide="book-open" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">My Subjects
             </span>
                 </a>
 
