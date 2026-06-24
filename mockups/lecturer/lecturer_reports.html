@@ -40,66 +40,126 @@
             visibility: visible;
             opacity: 1;
         }
+    
+        
+        /* Collapsed Sidebar styles */
+        #sidebar.w-\[88px\] nav a {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        #sidebar.w-\[88px\] nav a svg {
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+        }
+        #sidebar.w-\[88px\] nav a .sidebar-text {
+            display: none !important;
+        }
     </style>
+
+    <script>
+        (function() {
+            const isLecturer = window.location.pathname.includes('lecturer_') || window.location.pathname.includes('lecturer/');
+            const storageKey = isLecturer ? 'lecturerSidebarCollapsed' : 'sidebarCollapsed';
+            if (localStorage.getItem(storageKey) === 'true' && window.innerWidth >= 1024) {
+                document.write('<style id="fouc-fix">#sidebar { width: 88px !important; } #mainContent { margin-left: 88px !important; } .sidebar-text { display: none !important; } #collapseIcon { display: none !important; } #expandIcon { display: block !important; }</style>');
+            }
+        })();
+    </script>
 </head>
 <body class="flex h-screen overflow-hidden">
 
     <!-- LECTURER SIDEBAR (DARK THEME) -->
-    <aside class="w-[280px] bg-[#1B2559] flex flex-col h-full shadow-2xl relative z-20">
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden lg:hidden transition-opacity duration-300 opacity-0"></div>
+
+    <!-- LECTURER SIDEBAR (DARK THEME) -->
+    <aside id="sidebar" class="sidebar-expanded w-[280px] bg-[#1B2559] fixed h-full shadow-[4px_0_24px_rgba(0,0,0,0.2)] border-r border-white/5 z-30 flex flex-col transition-all duration-300 -translate-x-full lg:translate-x-0">
         <!-- Logo -->
-        <a href="lecturer_dashboard.html" class="h-24 flex items-center px-8 cursor-pointer border-b border-white/10 shrink-0">
-            <div class="w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white font-bold text-xl mr-3 shadow-lg shadow-orange-500/30">
-                <i data-lucide="brain-circuit" class="w-6 h-6"></i>
-            </div>
-            <span class="text-2xl font-extrabold text-white tracking-tight">ART-AI<span class="text-[#F26F21] text-xs align-top ml-1">LECTURER</span></span>
-        </a>
+        <div class="h-24 flex items-center px-4 lg:px-6 relative overflow-hidden shrink-0 border-b border-white/10">
+            <button id="desktopSidebarToggle" class="group relative w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white mr-3 shrink-0 shadow-lg shadow-orange-500/30 overflow-hidden z-20 outline-none cursor-pointer border-none">
+                <div class="absolute inset-0 flex items-center justify-center transition-all duration-500 group-hover:rotate-180 group-hover:opacity-0">
+                    <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center transition-all duration-500 -rotate-180 opacity-0 group-hover:rotate-0 group-hover:opacity-100">
+                    <i data-lucide="chevron-left" id="collapseIcon" class="w-6 h-6"></i>
+                    <i data-lucide="chevron-right" id="expandIcon" class="w-6 h-6 hidden"></i>
+                </div>
+            </button>
+            <a href="lecturer_dashboard.html" class="sidebar-text transition-opacity duration-300 text-2xl font-extrabold text-white tracking-tight whitespace-nowrap z-10 cursor-pointer hover:text-gray-200">ART-AI<span class="text-[#F26F21] text-xs align-top ml-1">LECTURER</span></a>
+            
+            <!-- Mobile Close Button -->
+            <button id="mobileCloseSidebar" class="lg:hidden absolute right-4 text-white/50 hover:text-white z-20">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
 
         <!-- Navigation Links -->
         <nav class="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
             <a href="lecturer_dashboard.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-4 opacity-70"></i> Dashboard
-            </a>
+                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">Dashboard
+            </span>
+                </a>
             
             <a href="lecturer_subjects.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="book-open" class="w-5 h-5 mr-4 opacity-70"></i> My Subjects
-            </a>
+                <i data-lucide="book-open" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">My Subjects
+            </span>
+                </a>
 
             <a href="lecturer_grading_subjects.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="file-check-2" class="w-5 h-5 mr-4 opacity-70"></i> Grading
-                <span class="ml-auto bg-[#F26F21] text-white text-xs font-bold px-2 py-0.5 rounded-full">12</span>
+                <i data-lucide="file-check-2" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">Grading
+                </span>
+                <span class="sidebar-text transition-opacity duration-300 ml-auto bg-[#F26F21] text-white text-xs font-bold px-2 py-0.5 rounded-full">12</span>
             </a>
 
             <a href="lecturer_reports.html" class="flex items-center px-4 py-3.5 bg-white/10 text-white font-bold rounded-xl transition-all relative">
                 <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#F26F21] rounded-r-full"></div>
-                <i data-lucide="bar-chart-2" class="w-5 h-5 mr-4 text-[#F26F21]"></i> Reports
-            </a>
+                <i data-lucide="bar-chart-2" class="w-5 h-5 mr-4 text-[#F26F21]"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">Reports
+            </span>
+                </a>
 
             <a href="lecturer_news.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="newspaper" class="w-5 h-5 mr-4 opacity-70"></i> News
-            </a>
+                <i data-lucide="newspaper" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">News
+            </span>
+                </a>
 
-            <div class="pt-8 pb-2">
-                <p class="px-4 text-xs font-bold text-blue-400 uppercase tracking-wider">Account</p>
+            <div class="pt-8 pb-2 relative flex items-center px-4">
+                <p class="text-xs font-bold text-blue-400 uppercase tracking-wider sidebar-text transition-opacity duration-300 w-full">Account</p>
+                <div class="absolute left-4 w-5 h-[2px] bg-white/20 rounded-full transition-opacity duration-300 opacity-0 hidden collapsed-line"></div>
             </div>
             
             <a href="lecturer_messages.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="message-circle" class="w-5 h-5 mr-4 opacity-70"></i> Messages
-            </a>
+                <i data-lucide="message-circle" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">Messages
+            </span>
+                </a>
 
             <a href="lecturer_settings.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="settings" class="w-5 h-5 mr-4 opacity-70"></i> Settings
-            </a>
+                <i data-lucide="settings" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">Settings
+            </span>
+                </a>
         </nav>
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+    <main id="mainContent" class="flex-1 ml-0 lg:ml-[280px] flex flex-col h-screen overflow-hidden relative transition-all duration-300">
         
         <!-- TOP HEADER -->
-        <header class="h-24 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-10 sticky top-0 z-10 shrink-0">
-            <div>
-                <h1 class="text-2xl font-extrabold text-[#1B2559]">Grading Reports</h1>
-                <p class="text-sm font-medium text-gray-500 mt-1">Aggregate, edit, and send final grade reports</p>
+        <header class="h-24 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-4 lg:px-10 sticky top-0 z-10 shrink-0">
+            <div class="flex items-center">
+                <button id="sidebarToggle" class="mr-4 p-2 text-gray-500 hover:text-[#F26F21] transition-colors rounded-lg hover:bg-orange-50 lg:hidden">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <div>
+                    <h1 class="text-2xl font-extrabold text-[#1B2559]">Grading Reports</h1>
+                    <p class="text-sm font-medium text-gray-500 mt-1">Aggregate, edit, and send final grade reports</p>
+                </div>
             </div>
             
             <div class="flex items-center space-x-6">
@@ -183,7 +243,7 @@
                 </div>
 
                 <!-- Gradebook Table -->
-                <div class="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-visible">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
@@ -400,6 +460,114 @@
                 noteWarning.classList.remove('hidden');
             }
         }
+    </script>
+
+    <script>
+        // Sidebar Toggle Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const mobileCloseSidebar = document.getElementById('mobileCloseSidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const desktopSidebarToggle = document.getElementById('desktopSidebarToggle');
+            const sidebarTexts = document.querySelectorAll('.sidebar-text');
+
+            // Mobile Sidebar
+            const openMobileSidebar = () => {
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+            };
+
+            const closeMobileSidebar = () => {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+            };
+
+            if (sidebarToggle) sidebarToggle.addEventListener('click', openMobileSidebar);
+            if (mobileCloseSidebar) mobileCloseSidebar.addEventListener('click', closeMobileSidebar);
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar);
+
+            // Desktop Sidebar Collapse
+            const toggleDesktopSidebar = () => {
+                const isCollapsed = sidebar.classList.contains('w-[88px]');
+                if (isCollapsed) {
+                    // Expand
+                    sidebar.classList.remove('w-[88px]');
+                    document.getElementById('collapseIcon').classList.remove('hidden');
+                    document.getElementById('expandIcon').classList.add('hidden');
+                    sidebar.classList.add('w-[280px]');
+                    mainContent.classList.remove('lg:ml-[88px]');
+                    mainContent.classList.add('lg:ml-[280px]');
+                    sidebarTexts.forEach(el => {
+                        el.classList.remove('hidden');
+                        setTimeout(() => el.classList.remove('opacity-0'), 50);
+                    });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.add('opacity-0');
+                        setTimeout(() => el.classList.add('hidden'), 300);
+                    });
+                    localStorage.setItem('lecturerSidebarCollapsed', 'false');
+                } else {
+                    // Collapse
+                    sidebar.classList.remove('w-[280px]');
+                    document.getElementById('collapseIcon').classList.add('hidden');
+                    document.getElementById('expandIcon').classList.remove('hidden');
+                    sidebar.classList.add('w-[88px]');
+                    mainContent.classList.remove('lg:ml-[280px]');
+                    mainContent.classList.add('lg:ml-[88px]');
+                    sidebarTexts.forEach(el => {
+                        el.classList.add('opacity-0');
+                        setTimeout(() => el.classList.add('hidden'), 300);
+                    });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.remove('hidden');
+                        setTimeout(() => el.classList.remove('opacity-0'), 50);
+                    });
+                    localStorage.setItem('lecturerSidebarCollapsed', 'true');
+                }
+            };
+
+            if (desktopSidebarToggle) desktopSidebarToggle.addEventListener('click', toggleDesktopSidebar);
+
+            // Init state
+            const storageKey = 'lecturerSidebarCollapsed';
+            if (localStorage.getItem(storageKey) === 'true' && window.innerWidth >= 1024) {
+                // Synchronously collapse without animations
+                sidebar.classList.remove('w-[280px]', 'transition-all', 'duration-300');
+                sidebar.classList.add('w-[88px]');
+                
+                mainContent.classList.remove('lg:ml-[280px]', 'transition-all', 'duration-300');
+                mainContent.classList.add('lg:ml-[88px]');
+                
+                const collapseIcon = document.getElementById('collapseIcon');
+                const expandIcon = document.getElementById('expandIcon');
+                if (collapseIcon) collapseIcon.classList.add('hidden');
+                if (expandIcon) expandIcon.classList.remove('hidden');
+                
+                sidebarTexts.forEach(el => {
+                    el.classList.remove('transition-opacity', 'duration-300');
+                    el.classList.add('opacity-0', 'hidden');
+                });
+                
+                document.querySelectorAll('.collapsed-line').forEach(el => {
+                    el.classList.remove('transition-opacity', 'duration-300', 'hidden');
+                    el.classList.remove('opacity-0');
+                });
+                
+                // Re-enable transitions after a tiny delay
+                setTimeout(() => {
+                    sidebar.classList.add('transition-all', 'duration-300');
+                    mainContent.classList.add('transition-all', 'duration-300');
+                    sidebarTexts.forEach(el => el.classList.add('transition-opacity', 'duration-300'));
+                    document.querySelectorAll('.collapsed-line').forEach(el => el.classList.add('transition-opacity', 'duration-300'));
+                    const foucFix = document.getElementById('fouc-fix');
+                    if (foucFix) foucFix.remove();
+                }, 50);
+            }
+        });
     </script>
 </body>
 </html>

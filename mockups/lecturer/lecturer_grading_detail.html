@@ -18,7 +18,32 @@
         .syntax-string { color: #032f62; }
         .syntax-function { color: #6f42c1; }
         .syntax-comment { color: #6a737d; }
+    
+        
+        /* Collapsed Sidebar styles */
+        #sidebar.w-\[88px\] nav a {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        #sidebar.w-\[88px\] nav a svg {
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+        }
+        #sidebar.w-\[88px\] nav a .sidebar-text {
+            display: none !important;
+        }
     </style>
+
+    <script>
+        (function() {
+            const isLecturer = window.location.pathname.includes('lecturer_') || window.location.pathname.includes('lecturer/');
+            const storageKey = isLecturer ? 'lecturerSidebarCollapsed' : 'sidebarCollapsed';
+            if (localStorage.getItem(storageKey) === 'true' && window.innerWidth >= 1024) {
+                document.write('<style id="fouc-fix">#sidebar { width: 88px !important; } #mainContent { margin-left: 88px !important; } .sidebar-text { display: none !important; } #collapseIcon { display: none !important; } #expandIcon { display: block !important; }</style>');
+            }
+        })();
+    </script>
 </head>
 <body class="flex flex-col h-screen overflow-hidden bg-gray-50">
 
@@ -396,6 +421,114 @@
                 contentAi.classList.add('hidden');
             }
         }
+    </script>
+
+    <script>
+        // Sidebar Toggle Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const mobileCloseSidebar = document.getElementById('mobileCloseSidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const desktopSidebarToggle = document.getElementById('desktopSidebarToggle');
+            const sidebarTexts = document.querySelectorAll('.sidebar-text');
+
+            // Mobile Sidebar
+            const openMobileSidebar = () => {
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+            };
+
+            const closeMobileSidebar = () => {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+            };
+
+            if (sidebarToggle) sidebarToggle.addEventListener('click', openMobileSidebar);
+            if (mobileCloseSidebar) mobileCloseSidebar.addEventListener('click', closeMobileSidebar);
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar);
+
+            // Desktop Sidebar Collapse
+            const toggleDesktopSidebar = () => {
+                const isCollapsed = sidebar.classList.contains('w-[88px]');
+                if (isCollapsed) {
+                    // Expand
+                    sidebar.classList.remove('w-[88px]');
+                    document.getElementById('collapseIcon').classList.remove('hidden');
+                    document.getElementById('expandIcon').classList.add('hidden');
+                    sidebar.classList.add('w-[280px]');
+                    mainContent.classList.remove('lg:ml-[88px]');
+                    mainContent.classList.add('lg:ml-[280px]');
+                    sidebarTexts.forEach(el => {
+                        el.classList.remove('hidden');
+                        setTimeout(() => el.classList.remove('opacity-0'), 50);
+                    });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.add('opacity-0');
+                        setTimeout(() => el.classList.add('hidden'), 300);
+                    });
+                    localStorage.setItem('lecturerSidebarCollapsed', 'false');
+                } else {
+                    // Collapse
+                    sidebar.classList.remove('w-[280px]');
+                    document.getElementById('collapseIcon').classList.add('hidden');
+                    document.getElementById('expandIcon').classList.remove('hidden');
+                    sidebar.classList.add('w-[88px]');
+                    mainContent.classList.remove('lg:ml-[280px]');
+                    mainContent.classList.add('lg:ml-[88px]');
+                    sidebarTexts.forEach(el => {
+                        el.classList.add('opacity-0');
+                        setTimeout(() => el.classList.add('hidden'), 300);
+                    });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.remove('hidden');
+                        setTimeout(() => el.classList.remove('opacity-0'), 50);
+                    });
+                    localStorage.setItem('lecturerSidebarCollapsed', 'true');
+                }
+            };
+
+            if (desktopSidebarToggle) desktopSidebarToggle.addEventListener('click', toggleDesktopSidebar);
+
+            // Init state
+            const storageKey = 'lecturerSidebarCollapsed';
+            if (localStorage.getItem(storageKey) === 'true' && window.innerWidth >= 1024) {
+                // Synchronously collapse without animations
+                sidebar.classList.remove('w-[280px]', 'transition-all', 'duration-300');
+                sidebar.classList.add('w-[88px]');
+                
+                mainContent.classList.remove('lg:ml-[280px]', 'transition-all', 'duration-300');
+                mainContent.classList.add('lg:ml-[88px]');
+                
+                const collapseIcon = document.getElementById('collapseIcon');
+                const expandIcon = document.getElementById('expandIcon');
+                if (collapseIcon) collapseIcon.classList.add('hidden');
+                if (expandIcon) expandIcon.classList.remove('hidden');
+                
+                sidebarTexts.forEach(el => {
+                    el.classList.remove('transition-opacity', 'duration-300');
+                    el.classList.add('opacity-0', 'hidden');
+                });
+                
+                document.querySelectorAll('.collapsed-line').forEach(el => {
+                    el.classList.remove('transition-opacity', 'duration-300', 'hidden');
+                    el.classList.remove('opacity-0');
+                });
+                
+                // Re-enable transitions after a tiny delay
+                setTimeout(() => {
+                    sidebar.classList.add('transition-all', 'duration-300');
+                    mainContent.classList.add('transition-all', 'duration-300');
+                    sidebarTexts.forEach(el => el.classList.add('transition-opacity', 'duration-300'));
+                    document.querySelectorAll('.collapsed-line').forEach(el => el.classList.add('transition-opacity', 'duration-300'));
+                    const foucFix = document.getElementById('fouc-fix');
+                    if (foucFix) foucFix.remove();
+                }, 50);
+            }
+        });
     </script>
 </body>
 </html>

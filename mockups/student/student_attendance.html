@@ -12,39 +12,79 @@
         .fpt-orange-gradient { background: linear-gradient(135deg, #F26F21 0%, #F79C65 100%); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+        
+        /* Collapsed Sidebar styles */
+        #sidebar.w-\[88px\] nav a {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        #sidebar.w-\[88px\] nav a svg {
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+        }
+        #sidebar.w-\[88px\] nav a .sidebar-text {
+            display: none !important;
+        }
     </style>
+
+    <script>
+        (function() {
+            const isLecturer = window.location.pathname.includes('lecturer_') || window.location.pathname.includes('lecturer/');
+            const storageKey = isLecturer ? 'lecturerSidebarCollapsed' : 'sidebarCollapsed';
+            if (localStorage.getItem(storageKey) === 'true' && window.innerWidth >= 1024) {
+                document.write('<style id="fouc-fix">#sidebar { width: 88px !important; } #mainContent { margin-left: 88px !important; } .sidebar-text { display: none !important; } #collapseIcon { display: none !important; } #expandIcon { display: block !important; }</style>');
+            }
+        })();
+    </script>
 </head>
 <body class="h-screen flex overflow-hidden text-gray-800">
     
     <!-- Sidebar -->
-    <aside class="w-[280px] bg-white fixed h-full z-20 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-gray-100">
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden lg:hidden transition-opacity duration-300 opacity-0"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar-expanded w-[280px] bg-white fixed h-full z-30 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-gray-100 transition-all duration-300 -translate-x-full lg:translate-x-0">
         <!-- Logo -->
-        <a href="home.html" class="h-24 flex items-center px-8 cursor-pointer">
-            <div class="w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white mr-3 shadow-lg shadow-orange-200">
-                <i data-lucide="brain-circuit" class="w-6 h-6"></i>
-            </div>
-            <span class="text-2xl font-extrabold text-[#1B2559]">ART-AI</span>
-        </a>
+        <div class="h-24 flex items-center px-4 lg:px-6 relative overflow-hidden shrink-0">
+            <button id="desktopSidebarToggle" class="group relative w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white mr-3 shrink-0 shadow-lg shadow-orange-200 overflow-hidden z-20 outline-none cursor-pointer border-none">
+                <div class="absolute inset-0 flex items-center justify-center transition-all duration-500 group-hover:rotate-180 group-hover:opacity-0">
+                    <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center transition-all duration-500 -rotate-180 opacity-0 group-hover:rotate-0 group-hover:opacity-100">
+                    <i data-lucide="chevron-left" id="collapseIcon" class="w-6 h-6"></i>
+                    <i data-lucide="chevron-right" id="expandIcon" class="w-6 h-6 hidden"></i>
+                </div>
+            </button>
+            <a href="home.html" class="sidebar-text transition-opacity duration-300 text-2xl font-extrabold text-[#1B2559] whitespace-nowrap z-10 cursor-pointer hover:text-[#4318FF]">ART-AI</a>
+            
+            <!-- Mobile Close Button -->
+            <button id="mobileCloseSidebar" class="lg:hidden absolute right-4 text-gray-400 hover:text-gray-600 z-20">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
         
         <!-- Navigation -->
         <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto hide-scrollbar">
             <a href="home.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="home" class="w-5 h-5 mr-4"></i> Home Dashboard
+                <i data-lucide="home" class="w-5 h-5 mr-4 shrink-0"></i> <span class="sidebar-text whitespace-nowrap transition-opacity duration-300">Home Dashboard</span>
             </a>
             <a href="subjects.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="book-open" class="w-5 h-5 mr-4"></i> My Subjects
+                <i data-lucide="book-open" class="w-5 h-5 mr-4 shrink-0"></i> <span class="sidebar-text whitespace-nowrap transition-opacity duration-300">My Subjects</span>
             </a>
             <a href="schedule.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="calendar" class="w-5 h-5 mr-4"></i> Schedule
+                <i data-lucide="calendar" class="w-5 h-5 mr-4 shrink-0"></i> <span class="sidebar-text whitespace-nowrap transition-opacity duration-300">Schedule</span>
             </a>
             <a href="assignments.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="file-check-2" class="w-5 h-5 mr-4"></i> Assignments
+                <i data-lucide="file-check-2" class="w-5 h-5 mr-4 shrink-0"></i> <span class="sidebar-text whitespace-nowrap transition-opacity duration-300">Assignments</span>
             </a>
             <!-- Reports Dropdown -->
             <div class="relative">
                 <button class="w-full flex items-center justify-between px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50" onclick="this.nextElementSibling.classList.toggle('hidden'); const icon = this.querySelector('.chevron-icon'); if(icon) icon.classList.toggle('rotate-180');">
                     <div class="flex items-center">
-                        <i data-lucide="bar-chart-2" class="w-5 h-5 mr-4"></i> Reports
+                        <i data-lucide="bar-chart-2" class="w-5 h-5 mr-4 shrink-0"></i> <span class="sidebar-text whitespace-nowrap transition-opacity duration-300">Reports</span>
                     </div>
                     <i data-lucide="chevron-down" class="w-4 h-4 chevron-icon transition-transform rotate-180"></i>
                 </button>
@@ -57,23 +97,24 @@
                 </div>
             </div>
             <a href="news.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="newspaper" class="w-5 h-5 mr-4"></i> News
+                <i data-lucide="newspaper" class="w-5 h-5 mr-4 shrink-0"></i> <span class="sidebar-text whitespace-nowrap transition-opacity duration-300">News</span>
             </a>
             
-            <div class="pt-8 pb-2">
-                <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Account</p>
+            <div class="pt-8 pb-2 relative flex items-center px-4">
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider sidebar-text transition-opacity duration-300 w-full">Account</p>
+                <div class="absolute left-4 w-5 h-[2px] bg-gray-300 rounded-full transition-opacity duration-300 opacity-0 hidden collapsed-line"></div>
             </div>
             <a href="chat.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="message-circle" class="w-5 h-5 mr-4"></i> Messages
+                <i data-lucide="message-circle" class="w-5 h-5 mr-4 shrink-0"></i> <span class="sidebar-text whitespace-nowrap transition-opacity duration-300">Messages</span>
             </a>
             <a href="settings.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
-                <i data-lucide="settings" class="w-5 h-5 mr-4"></i> Settings
+                <i data-lucide="settings" class="w-5 h-5 mr-4 shrink-0"></i> <span class="sidebar-text whitespace-nowrap transition-opacity duration-300">Settings</span>
             </a>
         </nav>
     </aside>
 
     <!-- Main Wrapper -->
-    <main class="flex-1 ml-[280px] flex flex-col h-screen relative">
+    <main id="mainContent" class="flex-1 ml-0 lg:ml-[280px] flex flex-col h-screen relative transition-all duration-300">
         
         <!-- Header -->
         <header class="h-24 bg-[#F4F7FE] flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
@@ -89,12 +130,12 @@
                 </div>
             </div>
             
-            <div class="flex items-center space-x-6">
+            <div class="flex items-center space-x-2 md:space-x-6">
                 <button class="relative p-2 text-gray-400 hover:text-[#4318FF] transition-colors">
                     <i data-lucide="bell" class="w-6 h-6"></i>
                 </button>
                 <div class="flex items-center pl-4 border-l border-gray-300 gap-3">
-                    <div class="text-right">
+                    <div class="text-right hidden sm:block">
                         <p class="text-sm font-bold text-[#1B2559]">Viet Khoa</p>
                         <p class="text-xs font-medium text-gray-500">Student</p>
                     </div>
@@ -231,6 +272,117 @@
 
     <script>
         lucide.createIcons();
+    </script>
+
+    <script>
+        // Sidebar Toggle Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const mobileCloseSidebar = document.getElementById('mobileCloseSidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const desktopSidebarToggle = document.getElementById('desktopSidebarToggle');
+            const sidebarTexts = document.querySelectorAll('.sidebar-text');
+            const chevronIcons = document.querySelectorAll('.chevron-icon');
+
+            // Mobile Sidebar
+            const openMobileSidebar = () => {
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+            };
+
+            const closeMobileSidebar = () => {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+            };
+
+            if (sidebarToggle) sidebarToggle.addEventListener('click', openMobileSidebar);
+            if (mobileCloseSidebar) mobileCloseSidebar.addEventListener('click', closeMobileSidebar);
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar);
+
+            // Desktop Sidebar Collapse
+            const toggleDesktopSidebar = () => {
+                const isCollapsed = sidebar.classList.contains('w-[88px]');
+                if (isCollapsed) {
+                    // Expand
+                    sidebar.classList.remove('w-[88px]');
+                    document.getElementById('collapseIcon').classList.remove('hidden');
+                    document.getElementById('expandIcon').classList.add('hidden');
+                    sidebar.classList.add('w-[280px]');
+                    mainContent.classList.remove('lg:ml-[88px]');
+                    mainContent.classList.add('lg:ml-[280px]');
+                    sidebarTexts.forEach(el => {
+                        el.classList.remove('hidden');
+                        setTimeout(() => el.classList.remove('opacity-0'), 50);
+                    });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.add('opacity-0');
+                        setTimeout(() => el.classList.add('hidden'), 300);
+                    });
+                    chevronIcons.forEach(el => el.classList.remove('hidden'));
+                    localStorage.setItem('sidebarCollapsed', 'false');
+                } else {
+                    // Collapse
+                    sidebar.classList.remove('w-[280px]');
+                    document.getElementById('collapseIcon').classList.add('hidden');
+                    document.getElementById('expandIcon').classList.remove('hidden');
+                    sidebar.classList.add('w-[88px]');
+                    mainContent.classList.remove('lg:ml-[280px]');
+                    mainContent.classList.add('lg:ml-[88px]');
+                    sidebarTexts.forEach(el => {
+                        el.classList.add('opacity-0');
+                        setTimeout(() => el.classList.add('hidden'), 300);
+                    });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.remove('hidden');
+                        setTimeout(() => el.classList.remove('opacity-0'), 50);
+                    });
+                    chevronIcons.forEach(el => el.classList.add('hidden'));
+                    localStorage.setItem('sidebarCollapsed', 'true');
+                }
+            };
+
+            if (desktopSidebarToggle) desktopSidebarToggle.addEventListener('click', toggleDesktopSidebar);
+
+            // Init state
+            const storageKey = 'sidebarCollapsed';
+            if (localStorage.getItem(storageKey) === 'true' && window.innerWidth >= 1024) {
+                // Synchronously collapse without animations
+                sidebar.classList.remove('w-[280px]', 'transition-all', 'duration-300');
+                sidebar.classList.add('w-[88px]');
+                
+                mainContent.classList.remove('lg:ml-[280px]', 'transition-all', 'duration-300');
+                mainContent.classList.add('lg:ml-[88px]');
+                
+                const collapseIcon = document.getElementById('collapseIcon');
+                const expandIcon = document.getElementById('expandIcon');
+                if (collapseIcon) collapseIcon.classList.add('hidden');
+                if (expandIcon) expandIcon.classList.remove('hidden');
+                
+                sidebarTexts.forEach(el => {
+                    el.classList.remove('transition-opacity', 'duration-300');
+                    el.classList.add('opacity-0', 'hidden');
+                });
+                
+                document.querySelectorAll('.collapsed-line').forEach(el => {
+                    el.classList.remove('transition-opacity', 'duration-300', 'hidden');
+                    el.classList.remove('opacity-0');
+                });
+                
+                // Re-enable transitions after a tiny delay
+                setTimeout(() => {
+                    sidebar.classList.add('transition-all', 'duration-300');
+                    mainContent.classList.add('transition-all', 'duration-300');
+                    sidebarTexts.forEach(el => el.classList.add('transition-opacity', 'duration-300'));
+                    document.querySelectorAll('.collapsed-line').forEach(el => el.classList.add('transition-opacity', 'duration-300'));
+                    const foucFix = document.getElementById('fouc-fix');
+                    if (foucFix) foucFix.remove();
+                }, 50);
+            }
+        });
     </script>
 </body>
 </html>
