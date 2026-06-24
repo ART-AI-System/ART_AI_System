@@ -29,7 +29,7 @@ export const StudentSidebar = () => {
     <aside className="w-[280px] bg-white fixed h-full z-20 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-gray-100">
       {/* Logo */}
       <div className="h-24 flex items-center px-8 cursor-pointer">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F26F21] to-[#F79C65] flex items-center justify-center text-white mr-3 shadow-lg shadow-orange-200">
+        <div className="w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white mr-3 shadow-lg shadow-orange-200">
           <BrainCircuit className="w-6 h-6" />
         </div>
         <span className="text-2xl font-extrabold text-[#1B2559]">ART-AI</span>

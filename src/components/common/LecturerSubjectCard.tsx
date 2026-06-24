@@ -15,6 +15,7 @@ export interface LecturerSubjectProps {
   classesCount: number;
   studentsCount: number;
   classes: ClassData[];
+  linkTo?: string;
 }
 
 export const LecturerSubjectCard = ({
@@ -25,10 +26,11 @@ export const LecturerSubjectCard = ({
   classesCount,
   studentsCount,
   classes,
+  linkTo,
 }: LecturerSubjectProps) => {
   return (
     <Link
-      to={ROUTES.SUBJECT_DETAIL.replace(':id', id)}
+      to={linkTo || ROUTES.SUBJECT_DETAIL.replace(':id', id)}
       className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer block"
     >
       <div className="h-40 bg-gray-200 relative overflow-hidden">

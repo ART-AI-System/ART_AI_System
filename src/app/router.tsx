@@ -4,54 +4,56 @@ import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
-import StudentDashboardPage from '../pages/dashboard/StudentDashboardPage';
-import LecturerDashboardPage from '../pages/dashboard/LecturerDashboardPage';
-import SubjectHeadDashboardPage from '../pages/dashboard/SubjectHeadDashboardPage';
-import AdminDashboardPage from '../pages/dashboard/AdminDashboardPage';
-import AdminClassesPage from '../pages/dashboard/AdminClassesPage';
-import AdminStudentsPage from '../pages/dashboard/AdminStudentsPage';
-import AdminTeachersPage from '../pages/dashboard/AdminTeachersPage';
-import AdminSemestersPage from '../pages/dashboard/AdminSemestersPage';
-import AdminSubjectsPage from '../pages/dashboard/AdminSubjectsPage';
-import AdminMessagesPage from '../pages/dashboard/AdminMessagesPage';
-import AdminFeedbackPage from '../pages/dashboard/AdminFeedbackPage';
-import AdminSettingsPage from '../pages/dashboard/AdminSettingsPage';
+import StudentDashboardPage from '../pages/student/StudentDashboardPage';
+import LecturerDashboardPage from '../pages/lecturer/LecturerDashboardPage';
+import SubjectHeadDashboardPage from '../pages/subjectHead/SubjectHeadDashboardPage';
+import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
+import AdminClassesPage from '../pages/admin/AdminClassesPage';
+import AdminStudentsPage from '../pages/admin/AdminStudentsPage';
+import AdminTeachersPage from '../pages/admin/AdminTeachersPage';
+import AdminSemestersPage from '../pages/admin/AdminSemestersPage';
+import AdminSubjectsPage from '../pages/admin/AdminSubjectsPage';
+import AdminMessagesPage from '../pages/admin/AdminMessagesPage';
+import AdminFeedbackPage from '../pages/admin/AdminFeedbackPage';
+import AdminSettingsPage from '../pages/admin/AdminSettingsPage';
 import NotFoundPage from '../pages/not-found/NotFoundPage';
 import { EmptyState } from '../components/common/EmptyState';
 import ErrorState from '../components/common/ErrorState';
-import GradebookPage from '../pages/dashboard/GradebookPage';
-import MessagesPage from '../pages/dashboard/MessagesPage';
-import SchedulePage from '../pages/dashboard/SchedulePage';
-import SettingsPage from '../pages/dashboard/SettingsPage';
-import MySubmissionsPage from '../pages/dashboard/MySubmissionsPage';
-import SubmissionDetailPage from '../pages/dashboard/SubmissionDetailPage';
-import SubmissionGradePage from '../pages/dashboard/SubmissionGradePage';
-import UsersPage from '../pages/dashboard/UsersPage';
-import UserDetailPage from '../pages/dashboard/UserDetailPage';
+import GradebookPage from '../pages/student/GradebookPage';
+import MessagesPage from '../pages/student/MessagesPage';
+import SchedulePage from '../pages/student/SchedulePage';
+import SettingsPage from '../pages/student/SettingsPage';
+import MySubmissionsPage from '../pages/student/MySubmissionsPage';
+import SubmissionDetailPage from '../pages/student/SubmissionDetailPage';
+import SubmissionGradePage from '../pages/student/SubmissionGradePage';
+import UsersPage from '../pages/admin/UsersPage';
+import UserDetailPage from '../pages/admin/UserDetailPage';
 
 // Lecturer Pages
-import LecturerSubjectDetailPage from '../pages/dashboard/LecturerSubjectDetailPage';
-import LecturerGradingListPage from '../pages/dashboard/LecturerGradingListPage';
-import LecturerGradingDetailPage from '../pages/dashboard/LecturerGradingDetailPage';
-import LecturerCreateAssignmentPage from '../pages/dashboard/LecturerCreateAssignmentPage';
-import LecturerCreateTestPage from '../pages/dashboard/LecturerCreateTestPage';
-import LecturerTestAnalyticsPage from '../pages/dashboard/LecturerTestAnalyticsPage';
-import LecturerEditSlotPage from '../pages/dashboard/LecturerEditSlotPage';
-import LecturerNewsPage from '../pages/dashboard/LecturerNewsPage';
-import LecturerReportsPage from '../pages/dashboard/LecturerReportsPage';
-import LecturerSettingsPage from '../pages/dashboard/LecturerSettingsPage';
-import LecturerMessagesPage from '../pages/dashboard/LecturerMessagesPage';
+import LecturerSubjectDetailPage from '../pages/lecturer/LecturerSubjectDetailPage';
+import LecturerGradingListPage from '../pages/lecturer/LecturerGradingListPage';
+import LecturerGradingDetailPage from '../pages/lecturer/LecturerGradingDetailPage';
+import LecturerCreateAssignmentPage from '../pages/lecturer/LecturerCreateAssignmentPage';
+import LecturerCreateTestPage from '../pages/lecturer/LecturerCreateTestPage';
+import LecturerTestAnalyticsPage from '../pages/lecturer/LecturerTestAnalyticsPage';
+import LecturerEditSlotPage from '../pages/lecturer/LecturerEditSlotPage';
+import LecturerNewsPage from '../pages/lecturer/LecturerNewsPage';
+import LecturerReportsPage from '../pages/lecturer/LecturerReportsPage';
+import LecturerSettingsPage from '../pages/lecturer/LecturerSettingsPage';
+import LecturerMessagesPage from '../pages/lecturer/LecturerMessagesPage';
+import LecturerGradingSubjectsPage from '../pages/lecturer/LecturerGradingSubjectsPage';
+import LecturerGradingAssignmentsPage from '../pages/lecturer/LecturerGradingAssignmentsPage';
 
 // Student Pages
-import StudentSettingsPage from '../pages/dashboard/StudentSettingsPage';
-import StudentMessagesPage from '../pages/dashboard/StudentMessagesPage';
-import StudentNewsPage from '../pages/dashboard/StudentNewsPage';
-import StudentAttendancePage from '../pages/dashboard/StudentAttendancePage';
-import StudentTranscriptPage from '../pages/dashboard/StudentTranscriptPage';
-import StudentCurriculumPage from '../pages/dashboard/StudentCurriculumPage';
-import StudentTransactionsPage from '../pages/dashboard/StudentTransactionsPage';
-import StudentTakeTestPage from '../pages/dashboard/StudentTakeTestPage';
-import StudentTestResultPage from '../pages/dashboard/StudentTestResultPage';
+import StudentSettingsPage from '../pages/student/StudentSettingsPage';
+import StudentMessagesPage from '../pages/student/StudentMessagesPage';
+import StudentNewsPage from '../pages/student/StudentNewsPage';
+import StudentAttendancePage from '../pages/student/StudentAttendancePage';
+import StudentTranscriptPage from '../pages/student/StudentTranscriptPage';
+import StudentCurriculumPage from '../pages/student/StudentCurriculumPage';
+import StudentTransactionsPage from '../pages/student/StudentTransactionsPage';
+import StudentTakeTestPage from '../pages/student/StudentTakeTestPage';
+import StudentTestResultPage from '../pages/student/StudentTestResultPage';
 
 import { ROUTES } from '../config/routes';
 
@@ -299,6 +301,14 @@ export const router = createBrowserRouter([
               {
                 path: ROUTES.GRADING_DETAIL,
                 element: <LecturerGradingDetailPage />,
+              },
+              {
+                path: ROUTES.GRADING_SUBJECTS,
+                element: <LecturerGradingSubjectsPage />,
+              },
+              {
+                path: ROUTES.GRADING_ASSIGNMENTS,
+                element: <LecturerGradingAssignmentsPage />,
               },
             ],
           },

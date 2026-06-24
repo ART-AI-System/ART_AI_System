@@ -4,10 +4,10 @@ import { ROUTES } from '../../config/routes';
 import type { Role } from '../../types/role.type';
 
 import AccessDeniedPage from '../common/AccessDeniedPage';
-import LecturerClassesPage from '../../pages/dashboard/LecturerClassesPage';
-import LecturerClassDetailPage from '../../pages/dashboard/LecturerClassDetailPage';
-import ClassesPage from '../../pages/dashboard/StudentClassesPage';
-import ClassDetailPage from '../../pages/dashboard/StudentClassDetailPage';
+import LecturerClassesPage from '../../pages/lecturer/LecturerClassesPage';
+import LecturerClassDetailPage from '../../pages/lecturer/LecturerClassDetailPage';
+import ClassesPage from '../../pages/student/StudentClassesPage';
+import ClassDetailPage from '../../pages/student/StudentClassDetailPage';
 
 // ─── AUTH GUARD ───
 export const AuthGuard = () => {

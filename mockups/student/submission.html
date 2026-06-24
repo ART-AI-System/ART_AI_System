@@ -227,37 +227,33 @@
                             <div class="bg-white border border-gray-200 rounded-[24px] shadow-sm overflow-hidden flex flex-col h-[550px]">
                                 
                                 <!-- Top Horizontal Tabs (Sticky Header) -->
-                                <div class="flex items-center justify-between border-b border-gray-100 p-6 w-full bg-white shrink-0 z-20" id="categoryTabs">
-                                    <button class="tab-btn active whitespace-nowrap flex items-center px-4 py-2.5 bg-blue-50 border border-[#4318FF] text-[#4318FF] rounded-xl font-bold text-sm shadow-sm transition-colors relative z-10" data-index="0" data-title="Decomposition" data-desc="Breaking down complex problems into smaller, manageable parts." data-icon="puzzle">
-                                        <i data-lucide="puzzle" class="w-4 h-4 mr-2"></i> Decomposition
+                                <div class="flex items-center justify-start border-b border-gray-100 p-3 w-full bg-white shrink-0 z-20 overflow-x-auto hide-scrollbar gap-1" id="categoryTabs">
+                                    <button class="tab-btn active whitespace-nowrap flex items-center px-2 py-1.5 bg-blue-50 border border-[#4318FF] text-[#4318FF] rounded-lg font-bold text-[11px] shadow-sm transition-colors relative z-10" data-index="0" data-title="Decomposition" data-desc="Breaking down complex problems into smaller, manageable parts." data-icon="puzzle">
+                                        <i data-lucide="puzzle" class="w-3.5 h-3.5 mr-1.5"></i> Decomposition
                                     </button>
                                     
-                                    <!-- Arrow Separator -->
-                                    <div class="flex-1 h-[2px] bg-gray-300 relative mx-2"><i data-lucide="arrow-right" stroke-width="3" class="w-5 h-5 text-gray-600 absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-white px-1"></i></div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 flex-shrink-0"></i>
                                     
-                                    <button class="tab-btn whitespace-nowrap flex items-center px-4 py-2.5 text-gray-500 hover:bg-gray-50 rounded-xl font-medium text-sm transition-colors border border-transparent relative z-10" data-index="1" data-title="Pattern Recognition" data-desc="Finding similarities or patterns among small, decomposed problems." data-icon="scan">
-                                        <i data-lucide="scan" class="w-4 h-4 mr-2"></i> Pattern Recognition
+                                    <button class="tab-btn whitespace-nowrap flex items-center px-2 py-1.5 text-gray-500 hover:bg-gray-50 rounded-lg font-medium text-[11px] transition-colors border border-transparent relative z-10" data-index="1" data-title="Pattern Recognition" data-desc="Finding similarities or patterns among small, decomposed problems." data-icon="scan">
+                                        <i data-lucide="scan" class="w-3.5 h-3.5 mr-1.5"></i> Pattern Recognition
                                     </button>
                                     
-                                    <!-- Arrow Separator -->
-                                    <div class="flex-1 h-[2px] bg-gray-300 relative mx-2"><i data-lucide="arrow-right" stroke-width="3" class="w-5 h-5 text-gray-600 absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-white px-1"></i></div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 flex-shrink-0"></i>
                                     
-                                    <button class="tab-btn whitespace-nowrap flex items-center px-4 py-2.5 text-gray-500 hover:bg-gray-50 rounded-xl font-medium text-sm transition-colors border border-transparent relative z-10" data-index="2" data-title="Abstraction" data-desc="Focusing on the important information only, ignoring irrelevant detail." data-icon="layers">
-                                        <i data-lucide="layers" class="w-4 h-4 mr-2"></i> Abstraction
+                                    <button class="tab-btn whitespace-nowrap flex items-center px-2 py-1.5 text-gray-500 hover:bg-gray-50 rounded-lg font-medium text-[11px] transition-colors border border-transparent relative z-10" data-index="2" data-title="Abstraction" data-desc="Focusing on the important information only, ignoring irrelevant detail." data-icon="layers">
+                                        <i data-lucide="layers" class="w-3.5 h-3.5 mr-1.5"></i> Abstraction
                                     </button>
                                     
-                                    <!-- Arrow Separator -->
-                                    <div class="flex-1 h-[2px] bg-gray-300 relative mx-2"><i data-lucide="arrow-right" stroke-width="3" class="w-5 h-5 text-gray-600 absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-white px-1"></i></div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 flex-shrink-0"></i>
                                     
-                                    <button class="tab-btn whitespace-nowrap flex items-center px-4 py-2.5 text-gray-500 hover:bg-gray-50 rounded-xl font-medium text-sm transition-colors border border-transparent relative z-10" data-index="3" data-title="Algorithmic Thinking" data-desc="Developing a step-by-step solution to the problem." data-icon="git-branch">
-                                        <i data-lucide="git-branch" class="w-4 h-4 mr-2"></i> Algorithmic Thinking
+                                    <button class="tab-btn whitespace-nowrap flex items-center px-2 py-1.5 text-gray-500 hover:bg-gray-50 rounded-lg font-medium text-[11px] transition-colors border border-transparent relative z-10" data-index="3" data-title="Algorithmic Thinking" data-desc="Developing a step-by-step solution to the problem." data-icon="git-branch">
+                                        <i data-lucide="git-branch" class="w-3.5 h-3.5 mr-1.5"></i> Algorithmic Thinking
                                     </button>
                                     
-                                    <!-- Arrow Separator -->
-                                    <div class="flex-1 h-[2px] bg-gray-300 relative mx-2"><i data-lucide="arrow-right" stroke-width="3" class="w-5 h-5 text-gray-600 absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-white px-1"></i></div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 flex-shrink-0"></i>
                                     
-                                    <button class="tab-btn whitespace-nowrap flex items-center px-4 py-2.5 text-gray-500 hover:bg-gray-50 rounded-xl font-medium text-sm transition-colors border border-transparent relative z-10" data-index="4" data-title="Reflection" data-desc="Reviewing and evaluating the problem-solving process." data-icon="lightbulb">
-                                        <i data-lucide="lightbulb" class="w-4 h-4 mr-2"></i> Reflection
+                                    <button class="tab-btn whitespace-nowrap flex items-center px-2 py-1.5 text-gray-500 hover:bg-gray-50 rounded-lg font-medium text-[11px] transition-colors border border-transparent relative z-10" data-index="4" data-title="Reflection" data-desc="Reviewing and evaluating the problem-solving process." data-icon="lightbulb">
+                                        <i data-lucide="lightbulb" class="w-3.5 h-3.5 mr-1.5"></i> Reflection
                                     </button>
                                 </div>
                                 

@@ -12,7 +12,7 @@ export const AdminSidebar = () => {
     <aside className="w-[280px] bg-[#064E3B] fixed h-full z-20 flex flex-col shadow-2xl">
       {/* Logo */}
       <div className="h-24 flex items-center px-8 cursor-pointer border-b border-white/10 shrink-0">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#16A34A] to-[#4ADE80] flex items-center justify-center text-white mr-3 shadow-lg shadow-green-500/30">
+        <div className="w-10 h-10 rounded-xl admin-green-gradient flex items-center justify-center text-white mr-3 shadow-lg shadow-green-500/30">
           <BrainCircuit className="w-6 h-6" />
         </div>
         <span className="text-2xl font-extrabold text-white tracking-tight">ART-AI<span className="text-[#4ADE80] text-xs align-top ml-1">ADMIN</span></span>

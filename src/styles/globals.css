@@ -14,6 +14,10 @@ body {
   background: linear-gradient(135deg, #0072BC 0%, #122A5E 100%); 
 }
 
+.admin-green-gradient { 
+  background: linear-gradient(135deg, #16A34A 0%, #4ADE80 100%); 
+}
+
 .hide-scrollbar::-webkit-scrollbar { 
   display: none; 
 }

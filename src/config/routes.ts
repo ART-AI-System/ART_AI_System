@@ -76,6 +76,8 @@ export const ROUTES = {
   LECTURER_SETTINGS: '/lecturer/settings',
   CLASS_GRADING: '/classes/:classId/grading',
   GRADING_DETAIL: '/grading/:submissionId',
+  GRADING_SUBJECTS: '/grading',
+  GRADING_ASSIGNMENTS: '/grading/subjects/:subjectId',
   CREATE_ASSIGNMENT: '/assignments/create',
   CREATE_TEST: '/tests/create',
   TEST_ANALYTICS: '/tests/analytics',

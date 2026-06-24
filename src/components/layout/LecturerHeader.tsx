@@ -16,6 +16,10 @@ export const LecturerHeader = () => {
     title = 'My Subjects';
     description = 'Manage your enrolled subjects and classes';
     showSearch = true;
+  } else if (location.pathname === ROUTES.GRADING_SUBJECTS) {
+    title = 'Grading';
+    description = 'Manage your enrolled subjects and classes';
+    showSearch = true;
   } else if (location.pathname === ROUTES.NEWS) {
     title = 'News & Announcements';
     description = 'Stay updated with the latest faculty news';
@@ -58,6 +62,14 @@ export const LecturerHeader = () => {
           <Bell className="w-6 h-6" />
           <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
         </button>
+
+        <div className="flex items-center pl-6 border-l border-gray-200 gap-3">
+          <div className="text-right">
+            <p className="text-sm font-bold text-[#1B2559]">Dr. Nguyen Van A</p>
+            <p className="text-xs font-medium text-gray-500">Lecturer</p>
+          </div>
+          <img src="https://ui-avatars.com/api/?name=Lecturer&background=f97316&color=fff" className="w-10 h-10 rounded-full shadow-md cursor-pointer border-2 border-white" alt="Avatar" />
+        </div>
       </div>
     </header>
   );

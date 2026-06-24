@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { 
   ArrowLeft, AlertTriangle, Save, Send, Folder, ChevronRight, 
   FileCode2, Download, Sidebar as SidebarIcon, ChevronDown, FileCode,
-  AlertOctagon
+  AlertOctagon, RefreshCcw
 } from 'lucide-react';
 import { ROUTES } from '../../config/routes';
 
@@ -21,9 +21,16 @@ const LecturerGradingDetailPage = () => {
           <Link to={ROUTES.CLASS_GRADING.replace(':classId', '1')} className="p-2 mr-4 hover:bg-white/10 rounded-lg transition-colors text-gray-300 hover:text-white">
             <ArrowLeft className="w-5 h-5" />
           </Link>
+          
           <div>
-            <h1 className="text-sm font-bold">Practical Exam 1</h1>
-            <p className="text-xs text-blue-300">Student: Nguyen Van Duc (SE20A09)</p>
+            <div className="flex items-center text-[10px] font-bold text-gray-400 mb-0.5 uppercase tracking-wider">
+              <Link to={ROUTES.CLASSES} className="hover:text-white transition-colors">Grading</Link>
+              <ChevronRight className="w-3 h-3 mx-1" />
+              <Link to="#" className="hover:text-white transition-colors">PRJ301</Link>
+              <ChevronRight className="w-3 h-3 mx-1" />
+              <Link to="#" className="hover:text-white transition-colors">SE18D01 (PE 1)</Link>
+            </div>
+            <h1 className="text-sm font-bold">Nguyen Van Duc (HE150001)</h1>
           </div>
           
           <div className="hidden md:flex ml-6 px-3 py-1 bg-red-500/20 border border-red-500/50 rounded-full items-center">
@@ -33,6 +40,9 @@ const LecturerGradingDetailPage = () => {
         </div>
         
         <div className="flex items-center space-x-3">
+          <button className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-lg hover:bg-red-100 transition-all flex items-center hidden sm:flex">
+            <RefreshCcw className="w-4 h-4 mr-2" /> Request Resubmit
+          </button>
           <button className="px-4 py-2 bg-white/10 text-white border border-white/20 text-xs font-bold rounded-lg hover:bg-white/20 transition-all flex items-center hidden sm:flex">
             <Save className="w-4 h-4 mr-2" /> Save Draft
           </button>
@@ -108,7 +118,7 @@ const LecturerGradingDetailPage = () => {
             )}
 
             {/* Code View */}
-            <div className="flex-1 overflow-auto hide-scrollbar bg-white p-4">
+            <div className="flex-1 min-w-0 overflow-auto hide-scrollbar bg-white p-4">
               <table className="w-full text-sm font-mono leading-relaxed">
                 <tbody>
                   <tr className="hover:bg-gray-50 group">
@@ -227,32 +237,58 @@ const LecturerGradingDetailPage = () => {
                 </div>
               </div>
 
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Student's Declaration (1/1 Pair)</h3>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Student's AI Declaration (5 Steps)</h3>
               
-              {/* AI Pair Card */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-6 shadow-sm">
-                <div className="mb-4">
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Prompt / Input used</label>
-                  <div className="text-sm text-gray-800 bg-gray-50 p-3 rounded-xl">"How to setup a basic Servlet structure?"</div>
+              <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
+                <table className="w-full text-left text-sm text-gray-600">
+                  <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase">
+                    <tr>
+                      <th className="px-4 py-3 w-1/5">Phase</th>
+                      <th className="px-4 py-3 w-2/5">Prompt/Input</th>
+                      <th className="px-4 py-3 w-2/5">AI Output/Suggestion</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    <tr>
+                      <td className="px-4 py-3 font-bold text-[#1B2559]">1. Decomposition</td>
+                      <td className="px-4 py-3 text-xs italic">"Break down an e-commerce cart system."</td>
+                      <td className="px-4 py-3 text-xs">Suggested 4 components: Cart, Session, DB, UI.</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-3 font-bold text-[#1B2559]">2. Pattern Recognition</td>
+                      <td className="px-4 py-3 text-xs italic">"MVC pattern for cart"</td>
+                      <td className="px-4 py-3 text-xs">Provided MVC file structure for Java Servlet.</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-3 font-bold text-[#1B2559]">3. Abstraction</td>
+                      <td className="px-4 py-3 text-xs italic">"Cart Interface methods"</td>
+                      <td className="px-4 py-3 text-xs">add(), remove(), checkout(), getTotal().</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-3 font-bold text-[#1B2559]">4. Algorithm Design</td>
+                      <td className="px-4 py-3 text-xs italic">"Session logic for cart"</td>
+                      <td className="px-4 py-3 text-xs">HttpSession.setAttribute() snippet.</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-3 font-bold text-[#1B2559]">5. Self-Reflection</td>
+                      <td className="px-4 py-3 text-xs italic" colSpan={2}>"I used AI to understand how Session works in Servlets, but I implemented the checkout calculation myself to handle edge cases."</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Lecturer Evaluation */}
+              <div className="border-t border-gray-200 pt-6 mb-6">
+                <label className="block text-sm font-bold text-[#1B2559] mb-2">Lecturer's Verification</label>
+                <div className="flex space-x-4 mb-3">
+                  <label className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer">
+                    <input type="radio" name="overall_verify" className="text-green-500 focus:ring-green-500" /> <span>Accept</span>
+                  </label>
+                  <label className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer">
+                    <input type="radio" name="overall_verify" className="text-red-500 focus:ring-red-500" defaultChecked /> <span>Reject / Invalid</span>
+                  </label>
                 </div>
-                <div className="mb-4">
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Student's Reflection</label>
-                  <div className="text-sm text-gray-800 bg-gray-50 p-3 rounded-xl">I used this to understand the boilerplate, but wrote the logic myself.</div>
-                </div>
-                
-                {/* Lecturer Evaluation for this pair */}
-                <div className="border-t border-gray-100 pt-4 mt-2">
-                  <label className="block text-xs font-bold text-[#1B2559] mb-2">Lecturer's Verification</label>
-                  <div className="flex space-x-4 mb-3">
-                    <label className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer">
-                      <input type="radio" name="pair1" className="text-green-500 focus:ring-green-500" /> <span>Accept</span>
-                    </label>
-                    <label className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer">
-                      <input type="radio" name="pair1" className="text-red-500 focus:ring-red-500" defaultChecked /> <span>Reject / Invalid</span>
-                    </label>
-                  </div>
-                  <textarea rows={2} className="w-full bg-white border border-red-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500" placeholder="Add comment..." defaultValue="This reflection does not align with the system detection. You used AI for the core logic as well."></textarea>
-                </div>
+                <textarea rows={3} className="w-full bg-white border border-red-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500" placeholder="Add comment..." defaultValue="This reflection does not align with the system detection. You used AI for the core logic as well, not just the Session boilerplate."></textarea>
               </div>
 
               {/* Overall AI Feedback */}
