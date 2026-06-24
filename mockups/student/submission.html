@@ -90,9 +90,7 @@
                 <button id="sidebarToggle" class="mr-4 p-2 text-gray-500 hover:text-[#4318FF] transition-colors rounded-lg hover:bg-white lg:hidden">
                     <i data-lucide="menu" class="w-6 h-6"></i>
                 </button>
-                <button id="desktopSidebarToggle" class="mr-4 p-2 text-gray-500 hover:text-[#4318FF] transition-colors rounded-lg hover:bg-white hidden lg:block">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
-                </button>
+                
                 <!-- Search -->
                 <div class="hidden md:flex items-center flex-1 bg-white rounded-full px-5 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                     <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
@@ -499,6 +497,8 @@
                 if (isCollapsed) {
                     // Expand
                     sidebar.classList.remove('w-[88px]');
+                    document.getElementById('collapseIcon').classList.remove('hidden');
+                    document.getElementById('expandIcon').classList.add('hidden');
                     sidebar.classList.add('w-[280px]');
                     mainContent.classList.remove('lg:ml-[88px]');
                     mainContent.classList.add('lg:ml-[280px]');
@@ -511,6 +511,8 @@
                 } else {
                     // Collapse
                     sidebar.classList.remove('w-[280px]');
+                    document.getElementById('collapseIcon').classList.add('hidden');
+                    document.getElementById('expandIcon').classList.remove('hidden');
                     sidebar.classList.add('w-[88px]');
                     mainContent.classList.remove('lg:ml-[280px]');
                     mainContent.classList.add('lg:ml-[88px]');

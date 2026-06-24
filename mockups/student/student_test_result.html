@@ -177,6 +177,8 @@
                 if (isCollapsed) {
                     // Expand
                     sidebar.classList.remove('w-[88px]');
+                    document.getElementById('collapseIcon').classList.remove('hidden');
+                    document.getElementById('expandIcon').classList.add('hidden');
                     sidebar.classList.add('w-[280px]');
                     mainContent.classList.remove('lg:ml-[88px]');
                     mainContent.classList.add('lg:ml-[280px]');
@@ -189,6 +191,8 @@
                 } else {
                     // Collapse
                     sidebar.classList.remove('w-[280px]');
+                    document.getElementById('collapseIcon').classList.add('hidden');
+                    document.getElementById('expandIcon').classList.remove('hidden');
                     sidebar.classList.add('w-[88px]');
                     mainContent.classList.remove('lg:ml-[280px]');
                     mainContent.classList.add('lg:ml-[88px]');

@@ -29,11 +29,17 @@
     <!-- Sidebar -->
     <aside id="sidebar" class="sidebar-expanded w-[280px] bg-white fixed h-full z-30 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-gray-100 transition-all duration-300 -translate-x-full lg:translate-x-0">
         <!-- Logo -->
-        <div class="h-24 flex items-center px-6 lg:px-8 relative cursor-pointer">
-            <div class="w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white mr-3 shrink-0 shadow-lg shadow-orange-200">
-                <i data-lucide="brain-circuit" class="w-6 h-6"></i>
-            </div>
-            <span class="sidebar-text transition-opacity duration-300 text-2xl font-extrabold text-[#1B2559]">ART-AI</span>
+        <div class="h-24 flex items-center px-6 lg:px-8 relative overflow-hidden shrink-0">
+            <button id="desktopSidebarToggle" class="group relative w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white mr-3 shrink-0 shadow-lg shadow-orange-200 overflow-hidden z-20 outline-none cursor-pointer border-none">
+                <div class="absolute inset-0 flex items-center justify-center transition-all duration-500 group-hover:rotate-180 group-hover:opacity-0">
+                    <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center transition-all duration-500 -rotate-180 opacity-0 group-hover:rotate-0 group-hover:opacity-100">
+                    <i data-lucide="chevron-left" id="collapseIcon" class="w-6 h-6"></i>
+                    <i data-lucide="chevron-right" id="expandIcon" class="w-6 h-6 hidden"></i>
+                </div>
+            </button>
+            <a href="home.html" class="sidebar-text transition-opacity duration-300 text-2xl font-extrabold text-[#1B2559] whitespace-nowrap z-10 cursor-pointer hover:text-[#4318FF]">ART-AI</a>
         
             <!-- Mobile Close Button -->
             <button id="mobileCloseSidebar" class="lg:hidden absolute right-4 text-gray-400 hover:text-gray-600">
@@ -98,9 +104,7 @@
                 <button id="sidebarToggle" class="mr-4 p-2 text-gray-500 hover:text-[#4318FF] transition-colors rounded-lg hover:bg-white lg:hidden">
                     <i data-lucide="menu" class="w-6 h-6"></i>
                 </button>
-                <button id="desktopSidebarToggle" class="mr-4 p-2 text-gray-500 hover:text-[#4318FF] transition-colors rounded-lg hover:bg-white hidden lg:block">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
-                </button>
+                
                 <!-- Search -->
                 <div class="hidden md:flex items-center flex-1 bg-white rounded-full px-5 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                     <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
@@ -279,6 +283,8 @@
                 if (isCollapsed) {
                     // Expand
                     sidebar.classList.remove('w-[88px]');
+                    document.getElementById('collapseIcon').classList.remove('hidden');
+                    document.getElementById('expandIcon').classList.add('hidden');
                     sidebar.classList.add('w-[280px]');
                     mainContent.classList.remove('lg:ml-[88px]');
                     mainContent.classList.add('lg:ml-[280px]');
@@ -291,6 +297,8 @@
                 } else {
                     // Collapse
                     sidebar.classList.remove('w-[280px]');
+                    document.getElementById('collapseIcon').classList.add('hidden');
+                    document.getElementById('expandIcon').classList.remove('hidden');
                     sidebar.classList.add('w-[88px]');
                     mainContent.classList.remove('lg:ml-[280px]');
                     mainContent.classList.add('lg:ml-[88px]');
