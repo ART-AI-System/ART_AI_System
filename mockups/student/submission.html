@@ -233,28 +233,28 @@
                                         <span class="tab-text whitespace-nowrap ml-2 block">Decomposition</span>
                                     </button>
                                     
-                                    <div class="flex-1 h-[2px] bg-gray-100 relative mx-1 md:mx-2"></div>
+                                    <div class="flex-1 h-[2px] bg-gray-100 relative mx-1 md:mx-2 flex items-center justify-center tab-separator"></div>
                                     
                                     <button class="tab-btn flex items-center justify-center text-gray-500 hover:bg-gray-50 rounded-full font-medium text-sm transition-all border border-transparent relative z-10 w-10 h-10 p-0" data-index="1" data-title="Pattern Recognition" data-desc="Finding similarities or patterns among small, decomposed problems." data-icon="scan">
                                         <span class="num-badge w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs">2</span>
                                         <span class="tab-text hidden whitespace-nowrap ml-2">Pattern Recognition</span>
                                     </button>
                                     
-                                    <div class="flex-1 h-[2px] bg-gray-100 relative mx-1 md:mx-2"></div>
+                                    <div class="flex-1 h-[2px] bg-gray-100 relative mx-1 md:mx-2 flex items-center justify-center tab-separator"></div>
                                     
                                     <button class="tab-btn flex items-center justify-center text-gray-500 hover:bg-gray-50 rounded-full font-medium text-sm transition-all border border-transparent relative z-10 w-10 h-10 p-0" data-index="2" data-title="Abstraction" data-desc="Focusing on the important information only, ignoring irrelevant detail." data-icon="layers">
                                         <span class="num-badge w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs">3</span>
                                         <span class="tab-text hidden whitespace-nowrap ml-2">Abstraction</span>
                                     </button>
                                     
-                                    <div class="flex-1 h-[2px] bg-gray-100 relative mx-1 md:mx-2"></div>
+                                    <div class="flex-1 h-[2px] bg-gray-100 relative mx-1 md:mx-2 flex items-center justify-center tab-separator"></div>
                                     
                                     <button class="tab-btn flex items-center justify-center text-gray-500 hover:bg-gray-50 rounded-full font-medium text-sm transition-all border border-transparent relative z-10 w-10 h-10 p-0" data-index="3" data-title="Algorithmic Thinking" data-desc="Developing a step-by-step solution to the problem, or the rules to follow to solve the problem." data-icon="git-merge">
                                         <span class="num-badge w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs">4</span>
                                         <span class="tab-text hidden whitespace-nowrap ml-2">Algorithmic Thinking</span>
                                     </button>
                                     
-                                    <div class="flex-1 h-[2px] bg-gray-100 relative mx-1 md:mx-2"></div>
+                                    <div class="flex-1 h-[2px] bg-gray-100 relative mx-1 md:mx-2 flex items-center justify-center tab-separator"></div>
                                     
                                     <button class="tab-btn flex items-center justify-center text-gray-500 hover:bg-gray-50 rounded-full font-medium text-sm transition-all border border-transparent relative z-10 w-10 h-10 p-0" data-index="4" data-title="Reflection" data-desc="Reflecting on the solution to check if it is correct and efficient." data-icon="lightbulb">
                                         <span class="num-badge w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs">5</span>
@@ -336,6 +336,18 @@
                                         tabs.forEach((tab, i) => {
                                             const numBadge = tab.querySelector('.num-badge');
                                             const tabText = tab.querySelector('.tab-text');
+                                            
+                                            // Handle arrow visibility
+                                            const separators = document.querySelectorAll('.tab-separator');
+                                            separators.forEach((sep, sepIndex) => {
+                                                if (sepIndex === currentIndex) {
+                                                    sep.innerHTML = '<i data-lucide="chevron-right" class="w-4 h-4 text-[#4318FF] bg-white px-0.5"></i>';
+                                                } else if (sepIndex === currentIndex - 1) {
+                                                    sep.innerHTML = '<i data-lucide="chevron-left" class="w-4 h-4 text-[#4318FF] bg-white px-0.5"></i>';
+                                                } else {
+                                                    sep.innerHTML = '';
+                                                }
+                                            });
                                             if(i === index) {
                                                 tab.classList.add('active', 'bg-blue-50', 'border-[#4318FF]', 'text-[#4318FF]', 'shadow-sm', 'w-auto', 'px-4', 'py-2');
                                                 tab.classList.remove('text-gray-500', 'hover:bg-gray-50', 'border-transparent', 'w-10', 'h-10', 'p-0');
@@ -418,6 +430,9 @@
                                             updateUI(currentIndex);
                                         }
                                     });
+                                    
+                                    // Initialize the UI on page load to apply dynamic arrows and states correctly
+                                    updateUI(currentIndex);
                                 });
                             </script>
                         </div>
