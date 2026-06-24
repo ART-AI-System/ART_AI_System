@@ -198,58 +198,50 @@
                                     </div>
 
                                     <!-- POPOVER -->
-                                    <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 w-[350px] bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-2xl p-5 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none before:absolute before:right-[-8px] before:top-1/2 before:-translate-y-1/2 before:border-l-8 before:border-l-white before:border-y-8 before:border-y-transparent">
+                                    <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 w-[550px] bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-2xl p-5 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none before:absolute before:right-[-8px] before:top-1/2 before:-translate-y-1/2 before:border-l-8 before:border-l-white before:border-y-8 before:border-y-transparent">
                                         <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-50">
-                                            <h4 class="text-sm font-extrabold text-[#1B2559] flex items-center"><i data-lucide="scan-eye" class="w-4 h-4 mr-2 text-[#F26F21]"></i> AI Breakdown</h4>
+                                            <h4 class="text-sm font-extrabold text-[#1B2559] flex items-center"><i data-lucide="scan-eye" class="w-4 h-4 mr-2 text-[#F26F21]"></i> Student's AI Declaration (5 Steps)</h4>
                                             <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded uppercase">Quick View</span>
                                         </div>
-                                        <div class="space-y-3">
-                                            <!-- Row 1 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Logic & Structure</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-red-600">High</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 2 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Vocab & Syntax</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-red-600">High</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 3 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Code Formatting</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">High</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-red-600">High</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 4 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Commit Patterns</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-red-600">Med</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 5 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Problem Solving</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-red-600">High</strong></span>
-                                                </div>
-                                            </div>
+                                        
+                                        <div class="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden mt-3">
+                                            <table class="w-full text-left text-[11px] text-gray-600">
+                                                <thead class="bg-gray-100/50 border-b border-gray-200 font-bold text-gray-500 uppercase">
+                                                    <tr>
+                                                        <th class="px-3 py-2 w-1/4">Phase</th>
+                                                        <th class="px-3 py-2 w-1/4">Prompt/Input</th>
+                                                        <th class="px-3 py-2 w-2/4">AI Output</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-gray-100 bg-white">
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">1. Decomposition</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"Break down an e-commerce cart system."</td>
+                                                        <td class="px-3 py-2">Suggested 4 components: Cart, Session, DB, UI.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">2. Pattern Recognition</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"MVC pattern for cart"</td>
+                                                        <td class="px-3 py-2">Provided MVC file structure for Java Servlet.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">3. Abstraction</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"Cart Interface methods"</td>
+                                                        <td class="px-3 py-2">add(), remove(), checkout(), getTotal().</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">4. Algorithm Design</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"Session logic for cart"</td>
+                                                        <td class="px-3 py-2">HttpSession.setAttribute() snippet.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">5. Self-Reflection</td>
+                                                        <td class="px-3 py-2 italic text-gray-500" colspan="2">"I used AI to understand how Session works in Servlets, but I implemented the checkout calculation myself to handle edge cases."</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
+                                    </div>
                                     </div>
                                 </div>
                                 </td>
@@ -303,58 +295,50 @@
                                     </div>
 
                                     <!-- POPOVER -->
-                                    <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 w-[350px] bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-2xl p-5 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none before:absolute before:right-[-8px] before:top-1/2 before:-translate-y-1/2 before:border-l-8 before:border-l-white before:border-y-8 before:border-y-transparent">
+                                    <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 w-[550px] bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-2xl p-5 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none before:absolute before:right-[-8px] before:top-1/2 before:-translate-y-1/2 before:border-l-8 before:border-l-white before:border-y-8 before:border-y-transparent">
                                         <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-50">
-                                            <h4 class="text-sm font-extrabold text-[#1B2559] flex items-center"><i data-lucide="scan-eye" class="w-4 h-4 mr-2 text-[#F26F21]"></i> AI Breakdown</h4>
+                                            <h4 class="text-sm font-extrabold text-[#1B2559] flex items-center"><i data-lucide="scan-eye" class="w-4 h-4 mr-2 text-[#F26F21]"></i> Student's AI Declaration (5 Steps)</h4>
                                             <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded uppercase">Quick View</span>
                                         </div>
-                                        <div class="space-y-3">
-                                            <!-- Row 1 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Logic & Structure</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-green-600">Low</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 2 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Vocab & Syntax</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-green-600">Low</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 3 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Code Formatting</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-green-600">Low</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 4 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Commit Patterns</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-green-600">Low</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 5 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Problem Solving</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-green-600">Low</strong></span>
-                                                </div>
-                                            </div>
+                                        
+                                        <div class="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden mt-3">
+                                            <table class="w-full text-left text-[11px] text-gray-600">
+                                                <thead class="bg-gray-100/50 border-b border-gray-200 font-bold text-gray-500 uppercase">
+                                                    <tr>
+                                                        <th class="px-3 py-2 w-1/4">Phase</th>
+                                                        <th class="px-3 py-2 w-1/4">Prompt/Input</th>
+                                                        <th class="px-3 py-2 w-2/4">AI Output</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-gray-100 bg-white">
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">1. Decomposition</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"Break down an e-commerce cart system."</td>
+                                                        <td class="px-3 py-2">Suggested 4 components: Cart, Session, DB, UI.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">2. Pattern Recognition</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"MVC pattern for cart"</td>
+                                                        <td class="px-3 py-2">Provided MVC file structure for Java Servlet.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">3. Abstraction</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"Cart Interface methods"</td>
+                                                        <td class="px-3 py-2">add(), remove(), checkout(), getTotal().</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">4. Algorithm Design</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"Session logic for cart"</td>
+                                                        <td class="px-3 py-2">HttpSession.setAttribute() snippet.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">5. Self-Reflection</td>
+                                                        <td class="px-3 py-2 italic text-gray-500" colspan="2">"I used AI to understand how Session works in Servlets, but I implemented the checkout calculation myself to handle edge cases."</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
+                                    </div>
                                     </div>
                                 </div>
                                 </td>
@@ -408,58 +392,50 @@
                                     </div>
 
                                     <!-- POPOVER -->
-                                    <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 w-[350px] bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-2xl p-5 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none before:absolute before:right-[-8px] before:top-1/2 before:-translate-y-1/2 before:border-l-8 before:border-l-white before:border-y-8 before:border-y-transparent">
+                                    <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 w-[550px] bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-2xl p-5 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none before:absolute before:right-[-8px] before:top-1/2 before:-translate-y-1/2 before:border-l-8 before:border-l-white before:border-y-8 before:border-y-transparent">
                                         <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-50">
-                                            <h4 class="text-sm font-extrabold text-[#1B2559] flex items-center"><i data-lucide="scan-eye" class="w-4 h-4 mr-2 text-[#F26F21]"></i> AI Breakdown</h4>
+                                            <h4 class="text-sm font-extrabold text-[#1B2559] flex items-center"><i data-lucide="scan-eye" class="w-4 h-4 mr-2 text-[#F26F21]"></i> Student's AI Declaration (5 Steps)</h4>
                                             <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded uppercase">Quick View</span>
                                         </div>
-                                        <div class="space-y-3">
-                                            <!-- Row 1 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Logic & Structure</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-gray-600">None</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 2 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Vocab & Syntax</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-gray-600">None</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 3 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Code Formatting</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-gray-600">None</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 4 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Commit Patterns</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-gray-600">None</strong></span>
-                                                </div>
-                                            </div>
-                                            <!-- Row 5 -->
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-gray-500 font-medium w-1/2">Problem Solving</span>
-                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
-                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="text-gray-400">Det: <strong class="text-gray-600">None</strong></span>
-                                                </div>
-                                            </div>
+                                        
+                                        <div class="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden mt-3">
+                                            <table class="w-full text-left text-[11px] text-gray-600">
+                                                <thead class="bg-gray-100/50 border-b border-gray-200 font-bold text-gray-500 uppercase">
+                                                    <tr>
+                                                        <th class="px-3 py-2 w-1/4">Phase</th>
+                                                        <th class="px-3 py-2 w-1/4">Prompt/Input</th>
+                                                        <th class="px-3 py-2 w-2/4">AI Output</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-gray-100 bg-white">
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">1. Decomposition</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"Break down an e-commerce cart system."</td>
+                                                        <td class="px-3 py-2">Suggested 4 components: Cart, Session, DB, UI.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">2. Pattern Recognition</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"MVC pattern for cart"</td>
+                                                        <td class="px-3 py-2">Provided MVC file structure for Java Servlet.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">3. Abstraction</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"Cart Interface methods"</td>
+                                                        <td class="px-3 py-2">add(), remove(), checkout(), getTotal().</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">4. Algorithm Design</td>
+                                                        <td class="px-3 py-2 italic text-gray-500">"Session logic for cart"</td>
+                                                        <td class="px-3 py-2">HttpSession.setAttribute() snippet.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-3 py-2 font-bold text-[#1B2559]">5. Self-Reflection</td>
+                                                        <td class="px-3 py-2 italic text-gray-500" colspan="2">"I used AI to understand how Session works in Servlets, but I implemented the checkout calculation myself to handle edge cases."</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
+                                    </div>
                                     </div>
                                 </div>
                                 </td>
