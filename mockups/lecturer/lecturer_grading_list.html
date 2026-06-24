@@ -25,43 +25,58 @@
 
         <nav class="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
             <a href="lecturer_dashboard.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-4 opacity-70"></i> Dashboard
-            </a>
+                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">Dashboard
+            </span>
+                </a>
             
             <a href="lecturer_subjects.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="book-open" class="w-5 h-5 mr-4 opacity-70"></i> My Subjects
-            </a>
+                <i data-lucide="book-open" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">My Subjects
+            </span>
+                </a>
 
             <a href="lecturer_grading_subjects.html" class="flex items-center px-4 py-3.5 bg-white/10 text-white font-bold rounded-xl transition-all relative">
                 <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#F26F21] rounded-r-full"></div>
-                <i data-lucide="file-check-2" class="w-5 h-5 mr-4 text-[#F26F21]"></i> Grading
+                <i data-lucide="file-check-2" class="w-5 h-5 mr-4 text-[#F26F21]"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">Grading
+                </span>
                 <span class="ml-auto bg-[#F26F21] text-white text-xs font-bold px-2 py-0.5 rounded-full">12</span>
             </a>
 
             <a href="lecturer_reports.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="bar-chart-2" class="w-5 h-5 mr-4 opacity-70"></i> Reports
-            </a>
+                <i data-lucide="bar-chart-2" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">Reports
+            </span>
+                </a>
 
             <a href="lecturer_news.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="newspaper" class="w-5 h-5 mr-4 opacity-70"></i> News
-            </a>
+                <i data-lucide="newspaper" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">News
+            </span>
+                </a>
 
-            <div class="pt-8 pb-2">
-                <p class="px-4 text-xs font-bold text-blue-400 uppercase tracking-wider">Account</p>
+            <div class="pt-8 pb-2 relative flex items-center px-4">
+                <p class="text-xs font-bold text-blue-400 uppercase tracking-wider sidebar-text transition-opacity duration-300 w-full">Account</p>
+                <div class="absolute left-4 w-5 h-[2px] bg-white/20 rounded-full transition-opacity duration-300 opacity-0 hidden collapsed-line"></div>
             </div>
             
             <a href="lecturer_messages.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="message-circle" class="w-5 h-5 mr-4 opacity-70"></i> Messages
-            </a>
+                <i data-lucide="message-circle" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">Messages
+            </span>
+                </a>
 
             <a href="lecturer_settings.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
-                <i data-lucide="settings" class="w-5 h-5 mr-4 opacity-70"></i> Settings
-            </a>
+                <i data-lucide="settings" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text transition-opacity duration-300 whitespace-nowrap">Settings
+            </span>
+                </a>
         </nav>
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+    <main id="mainContent" class="flex-1 ml-0 lg:ml-[280px] flex flex-col h-screen overflow-hidden relative transition-all duration-300">
         <!-- TOP HEADER -->
         <header class="h-24 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-10 sticky top-0 z-10">
             <div>
@@ -144,8 +159,13 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="bg-red-50 border border-red-100 rounded-xl p-2 relative overflow-hidden">
-                                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                                    <div class="group relative">
+                                    <div class="bg-red-50 border border-red-100 rounded-xl p-2 relative overflow-hidden pr-8 cursor-pointer hover:shadow-md transition-all border border-transparent group-hover:border-red-300">
+                                        <!-- Eye Icon -->
+                                        <div class="absolute right-2 top-1/2 -translate-y-1/2 text-red-400 group-hover:text-red-600 transition-colors opacity-50 group-hover:opacity-100">
+                                            <i data-lucide="eye" class="w-4 h-4"></i>
+                                        </div>
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
                                         <div class="flex justify-between items-center mb-1">
                                             <span class="text-[10px] font-bold text-red-600 flex items-center uppercase"><i data-lucide="shield-alert" class="w-3 h-3 mr-1"></i> High Discrepancy</span>
                                         </div>
@@ -160,6 +180,63 @@
                                             </div>
                                         </div>
                                     </div>
+                                    </div>
+
+                                    <!-- POPOVER -->
+                                    <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 w-[350px] bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-2xl p-5 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none before:absolute before:right-[-8px] before:top-1/2 before:-translate-y-1/2 before:border-l-8 before:border-l-white before:border-y-8 before:border-y-transparent">
+                                        <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-50">
+                                            <h4 class="text-sm font-extrabold text-[#1B2559] flex items-center"><i data-lucide="scan-eye" class="w-4 h-4 mr-2 text-[#F26F21]"></i> AI Breakdown</h4>
+                                            <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded uppercase">Quick View</span>
+                                        </div>
+                                        <div class="space-y-3">
+                                            <!-- Row 1 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Logic & Structure</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-red-600">High</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 2 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Vocab & Syntax</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-red-600">High</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 3 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Code Formatting</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">High</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-red-600">High</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 4 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Commit Patterns</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-red-600">Med</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 5 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Problem Solving</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-red-600">High</strong></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <span class="text-gray-400 font-bold">-</span>
@@ -187,8 +264,13 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="bg-green-50 border border-green-100 rounded-xl p-2 relative overflow-hidden">
-                                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
+                                    <div class="group relative">
+                                    <div class="bg-green-50 border border-green-100 rounded-xl p-2 relative overflow-hidden pr-8 cursor-pointer hover:shadow-md transition-all border border-transparent group-hover:border-green-300">
+                                        <!-- Eye Icon -->
+                                        <div class="absolute right-2 top-1/2 -translate-y-1/2 text-green-400 group-hover:text-green-600 transition-colors opacity-50 group-hover:opacity-100">
+                                            <i data-lucide="eye" class="w-4 h-4"></i>
+                                        </div>
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
                                         <div class="flex justify-between items-center mb-1">
                                             <span class="text-[10px] font-bold text-green-600 flex items-center uppercase"><i data-lucide="shield-check" class="w-3 h-3 mr-1"></i> Transparent</span>
                                         </div>
@@ -203,6 +285,63 @@
                                             </div>
                                         </div>
                                     </div>
+                                    </div>
+
+                                    <!-- POPOVER -->
+                                    <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 w-[350px] bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-2xl p-5 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none before:absolute before:right-[-8px] before:top-1/2 before:-translate-y-1/2 before:border-l-8 before:border-l-white before:border-y-8 before:border-y-transparent">
+                                        <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-50">
+                                            <h4 class="text-sm font-extrabold text-[#1B2559] flex items-center"><i data-lucide="scan-eye" class="w-4 h-4 mr-2 text-[#F26F21]"></i> AI Breakdown</h4>
+                                            <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded uppercase">Quick View</span>
+                                        </div>
+                                        <div class="space-y-3">
+                                            <!-- Row 1 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Logic & Structure</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-green-600">Low</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 2 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Vocab & Syntax</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-green-600">Low</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 3 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Code Formatting</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-green-600">Low</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 4 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Commit Patterns</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-green-600">Low</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 5 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Problem Solving</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-green-600">Low</strong></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <span class="text-gray-400 font-bold">-</span>
@@ -230,8 +369,13 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-2 relative overflow-hidden">
-                                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-300"></div>
+                                    <div class="group relative">
+                                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-2 relative overflow-hidden pr-8 cursor-pointer hover:shadow-md transition-all border border-transparent group-hover:border-gray-300">
+                                        <!-- Eye Icon -->
+                                        <div class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-gray-600 transition-colors opacity-50 group-hover:opacity-100">
+                                            <i data-lucide="eye" class="w-4 h-4"></i>
+                                        </div>
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-300"></div>
                                         <div class="flex justify-between items-center mb-1">
                                             <span class="text-[10px] font-bold text-gray-500 flex items-center uppercase"><i data-lucide="shield" class="w-3 h-3 mr-1"></i> No AI Used</span>
                                         </div>
@@ -246,6 +390,63 @@
                                             </div>
                                         </div>
                                     </div>
+                                    </div>
+
+                                    <!-- POPOVER -->
+                                    <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 w-[350px] bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-2xl p-5 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none before:absolute before:right-[-8px] before:top-1/2 before:-translate-y-1/2 before:border-l-8 before:border-l-white before:border-y-8 before:border-y-transparent">
+                                        <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-50">
+                                            <h4 class="text-sm font-extrabold text-[#1B2559] flex items-center"><i data-lucide="scan-eye" class="w-4 h-4 mr-2 text-[#F26F21]"></i> AI Breakdown</h4>
+                                            <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded uppercase">Quick View</span>
+                                        </div>
+                                        <div class="space-y-3">
+                                            <!-- Row 1 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Logic & Structure</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-gray-600">None</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 2 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Vocab & Syntax</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-gray-600">None</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 3 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Code Formatting</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-gray-600">None</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 4 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Commit Patterns</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">None</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-gray-600">None</strong></span>
+                                                </div>
+                                            </div>
+                                            <!-- Row 5 -->
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-gray-500 font-medium w-1/2">Problem Solving</span>
+                                                <div class="flex items-center space-x-2 w-1/2 justify-end">
+                                                    <span class="text-gray-400">Dec: <strong class="text-gray-800">Low</strong></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="text-gray-400">Det: <strong class="text-gray-600">None</strong></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <span class="text-lg font-extrabold text-[#1B2559]">8.5</span>
@@ -265,6 +466,83 @@
 
     <script>
         lucide.createIcons();
+    </script>
+
+    <script>
+        // Sidebar Toggle Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const mobileCloseSidebar = document.getElementById('mobileCloseSidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const desktopSidebarToggle = document.getElementById('desktopSidebarToggle');
+            const sidebarTexts = document.querySelectorAll('.sidebar-text');
+
+            // Mobile Sidebar
+            const openMobileSidebar = () => {
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+            };
+
+            const closeMobileSidebar = () => {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+            };
+
+            if (sidebarToggle) sidebarToggle.addEventListener('click', openMobileSidebar);
+            if (mobileCloseSidebar) mobileCloseSidebar.addEventListener('click', closeMobileSidebar);
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar);
+
+            // Desktop Sidebar Collapse
+            const toggleDesktopSidebar = () => {
+                const isCollapsed = sidebar.classList.contains('w-[88px]');
+                if (isCollapsed) {
+                    // Expand
+                    sidebar.classList.remove('w-[88px]');
+                    document.getElementById('collapseIcon').classList.remove('hidden');
+                    document.getElementById('expandIcon').classList.add('hidden');
+                    sidebar.classList.add('w-[280px]');
+                    mainContent.classList.remove('lg:ml-[88px]');
+                    mainContent.classList.add('lg:ml-[280px]');
+                    sidebarTexts.forEach(el => {
+                        el.classList.remove('hidden');
+                        setTimeout(() => el.classList.remove('opacity-0'), 50);
+                    });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.add('opacity-0');
+                        setTimeout(() => el.classList.add('hidden'), 300);
+                    });
+                    localStorage.setItem('lecturerSidebarCollapsed', 'false');
+                } else {
+                    // Collapse
+                    sidebar.classList.remove('w-[280px]');
+                    document.getElementById('collapseIcon').classList.add('hidden');
+                    document.getElementById('expandIcon').classList.remove('hidden');
+                    sidebar.classList.add('w-[88px]');
+                    mainContent.classList.remove('lg:ml-[280px]');
+                    mainContent.classList.add('lg:ml-[88px]');
+                    sidebarTexts.forEach(el => {
+                        el.classList.add('opacity-0');
+                        setTimeout(() => el.classList.add('hidden'), 300);
+                    });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.remove('hidden');
+                        setTimeout(() => el.classList.remove('opacity-0'), 50);
+                    });
+                    localStorage.setItem('lecturerSidebarCollapsed', 'true');
+                }
+            };
+
+            if (desktopSidebarToggle) desktopSidebarToggle.addEventListener('click', toggleDesktopSidebar);
+
+            // Init state
+            if (localStorage.getItem('lecturerSidebarCollapsed') === 'true' && window.innerWidth >= 1024) {
+                toggleDesktopSidebar();
+            }
+        });
     </script>
 </body>
 </html>

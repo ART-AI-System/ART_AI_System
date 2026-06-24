@@ -397,5 +397,82 @@
             }
         }
     </script>
+
+    <script>
+        // Sidebar Toggle Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const mobileCloseSidebar = document.getElementById('mobileCloseSidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const desktopSidebarToggle = document.getElementById('desktopSidebarToggle');
+            const sidebarTexts = document.querySelectorAll('.sidebar-text');
+
+            // Mobile Sidebar
+            const openMobileSidebar = () => {
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+            };
+
+            const closeMobileSidebar = () => {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+            };
+
+            if (sidebarToggle) sidebarToggle.addEventListener('click', openMobileSidebar);
+            if (mobileCloseSidebar) mobileCloseSidebar.addEventListener('click', closeMobileSidebar);
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar);
+
+            // Desktop Sidebar Collapse
+            const toggleDesktopSidebar = () => {
+                const isCollapsed = sidebar.classList.contains('w-[88px]');
+                if (isCollapsed) {
+                    // Expand
+                    sidebar.classList.remove('w-[88px]');
+                    document.getElementById('collapseIcon').classList.remove('hidden');
+                    document.getElementById('expandIcon').classList.add('hidden');
+                    sidebar.classList.add('w-[280px]');
+                    mainContent.classList.remove('lg:ml-[88px]');
+                    mainContent.classList.add('lg:ml-[280px]');
+                    sidebarTexts.forEach(el => {
+                        el.classList.remove('hidden');
+                        setTimeout(() => el.classList.remove('opacity-0'), 50);
+                    });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.add('opacity-0');
+                        setTimeout(() => el.classList.add('hidden'), 300);
+                    });
+                    localStorage.setItem('lecturerSidebarCollapsed', 'false');
+                } else {
+                    // Collapse
+                    sidebar.classList.remove('w-[280px]');
+                    document.getElementById('collapseIcon').classList.add('hidden');
+                    document.getElementById('expandIcon').classList.remove('hidden');
+                    sidebar.classList.add('w-[88px]');
+                    mainContent.classList.remove('lg:ml-[280px]');
+                    mainContent.classList.add('lg:ml-[88px]');
+                    sidebarTexts.forEach(el => {
+                        el.classList.add('opacity-0');
+                        setTimeout(() => el.classList.add('hidden'), 300);
+                    });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.remove('hidden');
+                        setTimeout(() => el.classList.remove('opacity-0'), 50);
+                    });
+                    localStorage.setItem('lecturerSidebarCollapsed', 'true');
+                }
+            };
+
+            if (desktopSidebarToggle) desktopSidebarToggle.addEventListener('click', toggleDesktopSidebar);
+
+            // Init state
+            if (localStorage.getItem('lecturerSidebarCollapsed') === 'true' && window.innerWidth >= 1024) {
+                toggleDesktopSidebar();
+            }
+        });
+    </script>
 </body>
 </html>
