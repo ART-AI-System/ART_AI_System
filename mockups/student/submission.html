@@ -337,17 +337,7 @@
                                             const numBadge = tab.querySelector('.num-badge');
                                             const tabText = tab.querySelector('.tab-text');
                                             
-                                            // Handle arrow visibility
-                                            const separators = document.querySelectorAll('.tab-separator');
-                                            separators.forEach((sep, sepIndex) => {
-                                                if (sepIndex === currentIndex) {
-                                                    sep.innerHTML = '<i data-lucide="chevron-right" class="w-4 h-4 text-[#4318FF] bg-white px-0.5"></i>';
-                                                } else if (sepIndex === currentIndex - 1) {
-                                                    sep.innerHTML = '<i data-lucide="chevron-left" class="w-4 h-4 text-[#4318FF] bg-white px-0.5"></i>';
-                                                } else {
-                                                    sep.innerHTML = '';
-                                                }
-                                            });
+                                            
                                             if(i === index) {
                                                 tab.classList.add('active', 'bg-blue-50', 'border-[#4318FF]', 'text-[#4318FF]', 'shadow-sm', 'w-auto', 'px-4', 'py-2');
                                                 tab.classList.remove('text-gray-500', 'hover:bg-gray-50', 'border-transparent', 'w-10', 'h-10', 'p-0');
@@ -433,6 +423,14 @@
                                     
                                     // Initialize the UI on page load to apply dynamic arrows and states correctly
                                     updateUI(currentIndex);
+                                
+                                    // Submit validation logic
+                                    const submitBtn = document.getElementById('submitBtn');
+                                    if (submitBtn) {
+                                        submitBtn.addEventListener('click', () => {
+                                            alert("Vui lòng điền đầy đủ các mục sau trước khi nộp bài:\n- Pattern Recognition\n- Reflection");
+                                        });
+                                    }
                                 });
                             </script>
                         </div>
@@ -440,7 +438,7 @@
                         <!-- Submit Button -->
                         <div class="mt-8 pt-6 border-t border-gray-100 flex justify-end">
                             <button class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl text-sm font-bold hover:bg-gray-200 mr-4">Save as Draft</button>
-                            <button class="fpt-orange-gradient text-white px-8 py-3 rounded-xl text-sm font-bold shadow-lg shadow-orange-200 hover:opacity-90 flex items-center">
+                            <button id="submitBtn" class="fpt-orange-gradient text-white px-8 py-3 rounded-xl text-sm font-bold shadow-lg shadow-orange-200 hover:opacity-90 flex items-center">
                                 <i data-lucide="send" class="w-4 h-4 mr-2"></i> Submit Final Work
                             </button>
                         </div>
