@@ -14,14 +14,19 @@
         .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .thin-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
     
+        
         /* Collapsed Sidebar styles */
         #sidebar.w-\[88px\] nav a {
-            justify-content: center;
-            padding-left: 0;
-            padding-right: 0;
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
         }
-        #sidebar.w-\[88px\] nav a i {
-            margin-right: 0;
+        #sidebar.w-\[88px\] nav a svg {
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+        }
+        #sidebar.w-\[88px\] nav a .sidebar-text {
+            display: none !important;
         }
     </style>
 </head>
