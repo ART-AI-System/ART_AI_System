@@ -284,8 +284,37 @@
             if (desktopSidebarToggle) desktopSidebarToggle.addEventListener('click', toggleDesktopSidebar);
 
             // Init state
-            if (localStorage.getItem('lecturerSidebarCollapsed') === 'true' && window.innerWidth >= 1024) {
-                toggleDesktopSidebar();
+            const storageKey = 'lecturerSidebarCollapsed';
+            if (localStorage.getItem(storageKey) === 'true' && window.innerWidth >= 1024) {
+                // Synchronously collapse without animations
+                sidebar.classList.remove('w-[280px]', 'transition-all', 'duration-300');
+                sidebar.classList.add('w-[88px]');
+                
+                mainContent.classList.remove('lg:ml-[280px]', 'transition-all', 'duration-300');
+                mainContent.classList.add('lg:ml-[88px]');
+                
+                const collapseIcon = document.getElementById('collapseIcon');
+                const expandIcon = document.getElementById('expandIcon');
+                if (collapseIcon) collapseIcon.classList.add('hidden');
+                if (expandIcon) expandIcon.classList.remove('hidden');
+                
+                sidebarTexts.forEach(el => {
+                    el.classList.remove('transition-opacity', 'duration-300');
+                    el.classList.add('opacity-0', 'hidden');
+                });
+                
+                document.querySelectorAll('.collapsed-line').forEach(el => {
+                    el.classList.remove('transition-opacity', 'duration-300', 'hidden');
+                    el.classList.remove('opacity-0');
+                });
+                
+                // Re-enable transitions after a tiny delay
+                setTimeout(() => {
+                    sidebar.classList.add('transition-all', 'duration-300');
+                    mainContent.classList.add('transition-all', 'duration-300');
+                    sidebarTexts.forEach(el => el.classList.add('transition-opacity', 'duration-300'));
+                    document.querySelectorAll('.collapsed-line').forEach(el => el.classList.add('transition-opacity', 'duration-300'));
+                }, 50);
             }
         });
     </script>
