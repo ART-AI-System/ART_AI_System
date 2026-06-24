@@ -73,8 +73,9 @@
                 <i data-lucide="newspaper" class="w-5 h-5 mr-4 shrink-0"></i> <span class="sidebar-text whitespace-nowrap transition-opacity duration-300">News</span>
             </a>
             
-            <div class="pt-8 pb-2">
-                <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Account</p>
+            <div class="pt-8 pb-2 relative flex items-center px-4">
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider sidebar-text transition-opacity duration-300 w-full">Account</p>
+                <div class="absolute left-6 w-5 h-[2px] bg-gray-300 rounded-full transition-opacity duration-300 opacity-0 hidden collapsed-line"></div>
             </div>
             <a href="chat.html" class="flex items-center px-4 py-3.5 text-gray-500 hover:text-gray-900 font-medium rounded-xl transition-all hover:bg-gray-50">
                 <i data-lucide="message-circle" class="w-5 h-5 mr-4 shrink-0"></i> <span class="sidebar-text whitespace-nowrap transition-opacity duration-300">Messages</span>
@@ -523,6 +524,10 @@
                         el.classList.remove('hidden');
                         setTimeout(() => el.classList.remove('opacity-0'), 50);
                     });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.add('opacity-0');
+                        setTimeout(() => el.classList.add('hidden'), 300);
+                    });
                     chevronIcons.forEach(el => el.classList.remove('hidden'));
                     localStorage.setItem('sidebarCollapsed', 'false');
                 } else {
@@ -536,6 +541,10 @@
                     sidebarTexts.forEach(el => {
                         el.classList.add('opacity-0');
                         setTimeout(() => el.classList.add('hidden'), 300);
+                    });
+                    document.querySelectorAll('.collapsed-line').forEach(el => {
+                        el.classList.remove('hidden');
+                        setTimeout(() => el.classList.remove('opacity-0'), 50);
                     });
                     chevronIcons.forEach(el => el.classList.add('hidden'));
                     localStorage.setItem('sidebarCollapsed', 'true');
