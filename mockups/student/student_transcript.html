@@ -28,6 +28,16 @@
             display: none !important;
         }
     </style>
+
+    <script>
+        (function() {
+            const isLecturer = window.location.pathname.includes('lecturer_') || window.location.pathname.includes('lecturer/');
+            const storageKey = isLecturer ? 'lecturerSidebarCollapsed' : 'sidebarCollapsed';
+            if (localStorage.getItem(storageKey) === 'true' && window.innerWidth >= 1024) {
+                document.write('<style id="fouc-fix">#sidebar { width: 88px !important; } #mainContent { margin-left: 88px !important; } .sidebar-text { display: none !important; } #collapseIcon { display: none !important; } #expandIcon { display: block !important; }</style>');
+            }
+        })();
+    </script>
 </head>
 <body class="h-screen flex overflow-hidden text-gray-800">
     
@@ -394,6 +404,8 @@
                     mainContent.classList.add('transition-all', 'duration-300');
                     sidebarTexts.forEach(el => el.classList.add('transition-opacity', 'duration-300'));
                     document.querySelectorAll('.collapsed-line').forEach(el => el.classList.add('transition-opacity', 'duration-300'));
+                    const foucFix = document.getElementById('fouc-fix');
+                    if (foucFix) foucFix.remove();
                 }, 50);
             }
         });
