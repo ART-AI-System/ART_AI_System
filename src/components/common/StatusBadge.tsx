@@ -25,3 +25,20 @@ export const StatusBadge = ({ label, variant = 'default', className = '' }: Stat
     </span>
   );
 };
+
+export type ReviewStatus = 'PENDING' | 'REVIEWED' | 'NEEDS_REVISION' | 'FLAGGED';
+
+export const ReviewStatusBadge = ({ status, className = '' }: { status: ReviewStatus, className?: string }) => {
+  const getReviewStatusProps = (status: ReviewStatus): { label: string, variant: StatusVariant } => {
+    switch(status) {
+      case 'PENDING': return { label: 'Pending', variant: 'default' };
+      case 'REVIEWED': return { label: 'Reviewed', variant: 'success' };
+      case 'NEEDS_REVISION': return { label: 'Needs Revision', variant: 'warning' };
+      case 'FLAGGED': return { label: 'Flagged', variant: 'error' };
+      default: return { label: status, variant: 'default' };
+    }
+  }
+
+  const { label, variant } = getReviewStatusProps(status);
+  return <StatusBadge label={label} variant={variant} className={className} />;
+};

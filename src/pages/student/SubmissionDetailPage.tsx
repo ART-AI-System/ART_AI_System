@@ -3,9 +3,35 @@ import { ArrowLeft, Clock, Paperclip, FileText, Download, Check, CheckCircle2, F
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../config/routes';
 import { Card } from '../../components/common/Card';
+import { FileUpload } from '../../components/common/FileUpload';
+import { AiDeclarationForm } from '../../components/student/AiDeclarationForm';
+import type { AiInteractionData } from '../../components/student/AiDeclarationForm';
 
 const SubmissionDetailPage = () => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [aiData, setAiData] = useState<Record<string, AiInteractionData>>({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleFinishDeclaration = () => {
+    // Scroll to the submit button
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  };
+
+  const handleSubmitFinalWork = () => {
+    if (!selectedFile) {
+      alert("Please upload your assignment file before submitting.");
+      return;
+    }
+    const categoriesCount = Object.keys(aiData).length;
+    if (categoriesCount < tabs.length) {
+      const confirmSubmit = window.confirm(`You have only filled ${categoriesCount}/${tabs.length} AI declaration sections. Do you want to submit anyway?`);
+      if (!confirmSubmit) return;
+    }
+    
+    alert("Assignment submitted successfully! The AI Evaluation process has been started in the background.");
+    setIsSubmitted(true);
+    // In a real app, we would make a POST request to /api/submissions/:id/finalize here.
+  };
 
   const tabs = [
     { title: 'Decomposition', desc: 'Breaking down complex problems into smaller, manageable parts.', icon: <Puzzle className="w-4 h-4 mr-2" />, id: 'decomposition' },
@@ -90,21 +116,30 @@ const SubmissionDetailPage = () => {
             <div className="mb-8 border-b border-gray-100 pb-8">
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">
-                  <CheckCircle2 className="w-4 h-4 text-green-500 mr-2" /> Step 1: File Uploaded
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mr-2" /> Step 1: File Upload
                 </h4>
-                <button className="text-xs font-bold text-[#4318FF] hover:underline">Change File</button>
+                {selectedFile && (
+                  <button onClick={() => setSelectedFile(null)} className="text-xs font-bold text-[#4318FF] hover:underline">Change File</button>
+                )}
               </div>
-              <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center mr-4">
-                    <FileCode className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#1B2559]">SE18D01_VietKhoa_C4Diagrams.pdf</p>
-                    <p className="text-xs text-gray-500 font-medium">Uploaded 2 mins ago • 3.4 MB</p>
+              {!selectedFile ? (
+                <FileUpload 
+                  onFileSelect={setSelectedFile} 
+                  onFileReject={(err) => alert(err)} 
+                />
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center mr-4">
+                      <FileCode className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-[#1B2559]">{selectedFile.name}</p>
+                      <p className="text-xs text-gray-500 font-medium">Ready to submit • {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Step 2: AI Declaration */}
@@ -114,99 +149,31 @@ const SubmissionDetailPage = () => {
                   <Brain className="w-4 h-4 mr-2" /> Step 2: AI Declaration
                 </h4>
                 <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
-                  Requirement: Complete 5 sections
+                  Requirement: Complete {tabs.length} sections
                 </span>
               </div>
               
-              <div className="bg-white border border-gray-200 rounded-[24px] shadow-sm overflow-hidden flex flex-col h-[550px]">
-                {/* Top Horizontal Tabs */}
-                <div className="flex items-center justify-start border-b border-gray-100 p-3 w-full bg-white shrink-0 z-20 overflow-x-auto hide-scrollbar gap-1">
-                  {tabs.map((tab, idx) => (
-                    <div key={tab.id} className="flex items-center">
-                      <button 
-                        onClick={() => setActiveTab(idx)}
-                        className={`whitespace-nowrap flex items-center px-2 py-1.5 rounded-lg font-medium text-[11px] transition-colors relative z-10 ${
-                          activeTab === idx 
-                            ? 'bg-blue-50 border border-[#4318FF] text-[#4318FF] font-bold shadow-sm' 
-                            : 'text-gray-500 hover:bg-gray-50 border border-transparent'
-                        }`}
-                      >
-                        {tab.icon} {tab.title}
-                      </button>
-                      {idx < tabs.length - 1 && (
-                        <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 mx-1" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Main Content Area */}
-                <div className="flex-1 overflow-y-auto p-6 thin-scrollbar flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center mb-6 pb-4 border-b border-gray-100">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#4318FF] flex items-center justify-center mr-4">
-                        {tabs[activeTab].icon}
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-[#1B2559]">{tabs[activeTab].title}</h3>
-                        <p className="text-sm text-gray-500">{tabs[activeTab].desc}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Prompt / Input Used <span className="text-red-500">*</span></label>
-                        <textarea rows={2} className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#4318FF] focus:ring-1 focus:ring-[#4318FF]" placeholder="e.g., Help me split the system into modules."></textarea>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">AI Suggestion <span className="text-red-500">*</span></label>
-                        <textarea rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#4318FF]" placeholder="Paste the AI's response here..."></textarea>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Student's Self-Reflection <span className="text-red-500">*</span></label>
-                        <textarea rows={3} className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#4318FF] focus:ring-1 focus:ring-[#4318FF]" placeholder="Explain how you modified or applied the AI suggestion..."></textarea>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Evidence (Screenshot) <span className="text-gray-400 font-normal ml-2">Optional</span></label>
-                        <div className="w-full border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer group">
-                          <div className="w-12 h-12 bg-blue-50 text-[#4318FF] rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                            <ImagePlus className="w-5 h-5" />
-                          </div>
-                          <p className="text-sm font-bold text-[#1B2559]">Click to upload or drag & drop</p>
-                          <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
-                    <button 
-                      onClick={() => setActiveTab(Math.max(0, activeTab - 1))}
-                      disabled={activeTab === 0}
-                      className={`px-5 py-2.5 font-bold text-sm flex items-center transition-colors ${activeTab === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-[#1B2559] hover:bg-gray-100 rounded-xl'}`}
-                    >
-                      <ChevronLeft className="w-4 h-4 mr-2" /> Previous
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab(Math.min(tabs.length - 1, activeTab + 1))}
-                      className={`px-5 py-2.5 text-white rounded-xl font-bold text-sm transition-colors flex items-center shadow-md ${activeTab === tabs.length - 1 ? 'bg-green-500 hover:bg-green-600' : 'bg-[#1B2559] hover:bg-gray-800'}`}
-                    >
-                      {activeTab === tabs.length - 1 ? 'Finish' : 'Next Category'} {activeTab !== tabs.length - 1 && <ChevronRight className="w-4 h-4 ml-2" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <AiDeclarationForm categories={tabs} data={aiData} onChange={setAiData} onFinish={handleFinishDeclaration} />
             </div>
 
             {/* Submit Button */}
             <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
-              <button className="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl text-sm font-bold hover:bg-gray-200 mr-4">Save as Draft</button>
-              <button className="bg-gradient-to-br from-[#F26F21] to-[#F79C65] text-white px-8 py-3 rounded-xl text-sm font-bold shadow-lg shadow-orange-200 hover:opacity-90 flex items-center">
-                <Send className="w-4 h-4 mr-2" /> Submit Final Work
-              </button>
+              {isSubmitted ? (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-6 py-3 rounded-xl text-sm font-bold flex items-center">
+                  <CheckCircle2 className="w-5 h-5 mr-2" /> 
+                  Submitted & Evaluated Successfully
+                </div>
+              ) : (
+                <>
+                  <button className="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl text-sm font-bold hover:bg-gray-200 mr-4">Save as Draft</button>
+                  <button 
+                    onClick={handleSubmitFinalWork}
+                    className="bg-gradient-to-br from-[#F26F21] to-[#F79C65] text-white px-8 py-3 rounded-xl text-sm font-bold shadow-lg shadow-orange-200 hover:opacity-90 flex items-center"
+                  >
+                    <Send className="w-4 h-4 mr-2" /> Submit Final Work
+                  </button>
+                </>
+              )}
             </div>
             
           </Card>
