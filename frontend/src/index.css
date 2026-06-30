@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-fpt-orange: #F26F21;
+  --color-fpt-blue: #1B2559;
+  --font-inter: "Inter", sans-serif;
+  --animate-fade-in: fadeIn 0.3s ease-out;
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer base {
+  body {
+    background-color: var(--color-gray-50);
+    color: var(--color-gray-900);
+  }
+}
