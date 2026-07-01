@@ -2,8 +2,8 @@
 
 **Date:** July 1, 2026  
 **Repository:** `FE_ART_AI_System` (Local Path: `e:\FPT\7_SU26\WDP\ART-AI`)  
-**Current Branch:** `feat/fe-admin-ui` (Fully synced & pushed directly to `fe/main` at commit `d3b71d6`)  
-**Build Status:** 🟢 **PASSING** (`npm run build` completed with 0 TypeScript/Vite errors across 1,862 modules)
+**Current Branch:** `feat/fe-admin-ui` (Fully synced & pushed directly to `fe/main` at commit `bc82dc3`)  
+**Build Status:** 🟢 **PASSING** (`npm run build` completed with 0 TypeScript/Vite errors across 1,893 modules)
 
 ---
 
@@ -43,7 +43,7 @@ We have completed and merged all 5 phases of the Frontend Academic Portal overha
 - **Test Results ([StudentTestResultPage.tsx](src/pages/student/StudentTestResultPage.tsx))**: Connected to `GET /test-attempts/:attemptId/result`.
 
 ### 🔔 Global Notification & Announcement System
-- **Notification Dropdown ([NotificationDropdown.tsx](src/components/common/NotificationDropdown.tsx))**: Universal topbar widget featuring real-time polling (60s interval), category tabs (All, Unread, System, Academic), and read-state toggles (`PATCH /notifications/:id/read`).
+- **Notification Dropdown ([NotificationDropdown.tsx](src/components/common/NotificationDropdown.tsx))**: Universal topbar widget upgraded to **Real-Time WebSocket listeners** (`socket.on('new_notification')` via `useSocket`), featuring a dynamic **LIVE/OFFLINE indicator badge**, category tabs (All, Unread, System, Academic), and read-state toggles (`PATCH /notifications/:id/read`).
 - **Announcement Broadcast Modal**: Built directly into the dropdown for Lecturers and Admins to broadcast messages (`POST /notifications/announcements`) to targeted roles (`STUDENT`, `LECTURER`, `SUBJECT_HEAD`, `ALL`).
 - **Header Integration**: Hardcoded bells replaced across all user roles in [Header.tsx](src/components/layout/Header.tsx), [LecturerHeader.tsx](src/components/layout/LecturerHeader.tsx), [StudentTopbar.tsx](src/components/layout/StudentTopbar.tsx), and [AdminHeader.tsx](src/components/layout/AdminHeader.tsx).
 
@@ -51,6 +51,7 @@ We have completed and merged all 5 phases of the Frontend Academic Portal overha
 
 ## 🛠️ 3. Key Technical Fixes Applied
 
+- **WebSocket Shared Architecture ([useSocket.ts](src/hooks/useSocket.ts), [chat.socket.ts](src/services/chat.socket.ts))**: Created a shared `useSocket` custom hook and exported a general `socketService` alias from the singleton service to prevent duplicate socket connections across notifications and messaging.
 - **AuthContext ([AuthContext.tsx](src/context/AuthContext.tsx))**: Added `isAuthenticated: boolean` getter and `name?: string` property to the `User` interface to ensure compatibility across legacy and new components.
 - **Role Guard ([Guards.tsx](src/components/guards/Guards.tsx))**: Cast `user.role as Role` to prevent strict TS mismatches during navigation routing.
 - **TSConfig ([tsconfig.app.json](tsconfig.app.json))**: Set `"noUnusedLocals": false` and `"noUnusedParameters": false` to allow iterative development without build blocking on legacy React imports.
@@ -60,8 +61,8 @@ We have completed and merged all 5 phases of the Frontend Academic Portal overha
 ## 🎯 4. Recommended Next Steps for the New Session
 
 1. **End-to-End Backend Verification**: Start the backend server (`backend/` or corresponding backend repository) and perform live walkthroughs of the Admin class creation flow -> Lecturer test creation -> Student exam submission flow.
-2. **Real-Time WebSocket Upgrade**: In [NotificationDropdown.tsx](src/components/common/NotificationDropdown.tsx), replace the 60-second `setInterval` polling with Socket.io event listeners (`socket.on('new_notification', ...)` using the already installed `socket.io-client` package) for instantaneous alerts.
-3. **Mobile Responsive Audit**: Verify layout rendering on smaller screens for newly added tables in `SuspiciousCasesPage.tsx` and `AdminClassesPage.tsx`.
+2. **Mobile Responsive Audit**: Verify layout rendering on smaller screens for newly added tables in `SuspiciousCasesPage.tsx` and `AdminClassesPage.tsx`.
+3. **Analytics & Reports Polish**: Verify charting components and export formatting across [SubjectHeadDashboardPage.tsx](src/pages/subjectHead/SubjectHeadDashboardPage.tsx) and [LecturerReportsPage.tsx](src/pages/lecturer/LecturerReportsPage.tsx).
 
 ---
 
