@@ -2,7 +2,7 @@ import { io, Socket } from 'socket.io-client';
 
 const SOCKET_URL = import.meta.env.VITE_API_BASE_URL 
   ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') 
-  : 'http://localhost:3000';
+  : 'http://localhost:4000';
 
 class ChatSocketService {
   private socket: Socket | null = null;
@@ -19,7 +19,7 @@ class ChatSocketService {
 
   public connect(): Socket {
     if (!this.socket) {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('access_token') || localStorage.getItem('accessToken');
       this.socket = io(SOCKET_URL, {
         auth: {
           token
