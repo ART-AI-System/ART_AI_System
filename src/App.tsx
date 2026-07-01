@@ -1,90 +1,95 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react'
-import './App.css'
-import { login, getStudentHome, getClassSessions, getAssignmentDetail, getNews } from './mocks/cluster1'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './pages/auth/LoginPage';
+import StudentDashboard from './pages/student/StudentDashboard';
+import LecturerDashboard from './pages/lecturer/LecturerDashboard';
+import LecturerSubjects from './pages/lecturer/LecturerSubjects';
+import LecturerSubjectDetail from './pages/lecturer/LecturerSubjectDetail';
+import StudentLayout from './layouts/StudentLayout';
+import LecturerLayout from './layouts/LecturerLayout';
+import StudentAssignments from './pages/student/StudentAssignments';
+import StudentSubmission from './pages/student/StudentSubmission';
+import StudentSubmitSuccess from './pages/student/StudentSubmitSuccess';
+import LecturerGradingSubjects from './pages/lecturer/LecturerGradingSubjects';
+import LecturerGradingList from './pages/lecturer/LecturerGradingList';
+import LecturerGradingDetail from './pages/lecturer/LecturerGradingDetail';
+import LecturerAssignmentCreate from './pages/lecturer/LecturerAssignmentCreate';
 
-function App() {
-  const [loginMsg, setLoginMsg] = useState("");
-  const [testResults, setTestResults] = useState<any>(null);
+// Admin Pages
+import AdminLayout from './layouts/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminSemesters from './pages/admin/AdminSemesters';
+import AdminSubjects from './pages/admin/AdminSubjects';
+import AdminTeachers from './pages/admin/AdminTeachers';
+import AdminClasses from './pages/admin/AdminClasses';
 
-  const handleTestLogin = async () => {
-    try {
-      const res = await login('SE182345', 'Password@123');
-      setLoginMsg(`✅ Đăng nhập thành công! User: ${res.data.user.fullName}`);
-    } catch (err: any) {
-      setLoginMsg(`❌ Lỗi Login: ${err.message || 'Sai thông tin'}`);
-    }
-  };
+import SettingsPage from './pages/SettingsPage';
+import { AuthProvider } from './context/AuthContext';
 
-  const handleTestFailLogin = async () => {
-    try {
-      const res = await login('SE182345', 'WrongPassword');
-      setLoginMsg(`✅ Đăng nhập thành công! User: ${res.data.user.fullName}`);
-    } catch (err: any) {
-      setLoginMsg(`❌ Lỗi Login: ${err.message} - ${err.errors?.[0]?.message}`);
-    }
-  };
-
-  const handleFetchData = async () => {
-    try {
-      setTestResults("Đang tải dữ liệu...");
-      const homeRes = await getStudentHome();
-      const newsRes = await getNews();
-      
-      let sessionsRes = null;
-      let assignmentRes = null;
-
-      const firstClassId = homeRes.data.enrolledClasses[0]?.id;
-      if (firstClassId) {
-        sessionsRes = await getClassSessions(firstClassId);
-      }
-
-      // 'a1' là ID của Assignment trong mockDatabase
-      assignmentRes = await getAssignmentDetail('a1');
-
-      setTestResults({
-        home: homeRes.data,
-        news: newsRes.data,
-        sessions: sessionsRes?.data,
-        assignmentDetail: assignmentRes?.data
-      });
-
-    } catch (err: any) {
-      setTestResults(`❌ Lỗi khi fetch data: ${err.message}`);
-    }
-  };
-
+function AppRoutes() {
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', color: 'white' }}>
-      <h1>ART-AI System - Cluster 1 Test</h1>
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<LoginPage />} />
       
-      <div style={{ padding: '1rem', border: '1px solid #444', borderRadius: '8px', marginBottom: '1rem', background: '#222' }}>
-        <h2>1. Test Authentication</h2>
-        <button onClick={handleTestLogin} style={{ marginRight: '10px', padding: '8px 16px', cursor: 'pointer' }}>
-          Test Login Đúng
-        </button>
-        <button onClick={handleTestFailLogin} style={{ padding: '8px 16px', cursor: 'pointer' }}>
-          Test Login Sai
-        </button>
-        <p style={{ marginTop: '10px', fontWeight: 'bold' }}>{loginMsg}</p>
-      </div>
-
-      <div style={{ padding: '1rem', border: '1px solid #444', borderRadius: '8px', background: '#222' }}>
-        <h2>2. Test API Fetch (Academic, Session, Assignment, News)</h2>
-        <button onClick={handleFetchData} style={{ padding: '8px 16px', cursor: 'pointer', marginBottom: '1rem' }}>
-          Tải toàn bộ dữ liệu Cụm 1
-        </button>
+      {/* Student Routes */}
+      <Route path="/student" element={<StudentLayout />}>
+        <Route index element={<Navigate to="/student/home" replace />} />
+        <Route path="home" element={<StudentDashboard />} />
+        <Route path="subjects" element={<div className="text-xl font-bold">Subjects Page</div>} />
+        <Route path="schedule" element={<div className="text-xl font-bold">Schedule Page</div>} />
         
-        {testResults && (
-          <div style={{ background: '#111', padding: '1rem', borderRadius: '4px', overflowX: 'auto' }}>
-            <pre style={{ fontSize: '14px', margin: 0 }}>
-              {typeof testResults === 'string' ? testResults : JSON.stringify(testResults, null, 2)}
-            </pre>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+        <Route path="assignments">
+          <Route index element={<StudentAssignments />} />
+          <Route path=":assignmentId/submit" element={<StudentSubmission />} />
+          <Route path="success" element={<StudentSubmitSuccess />} />
+        </Route>
+        
+        <Route path="news" element={<div className="text-xl font-bold">News Page</div>} />
+        <Route path="chat" element={<div className="text-xl font-bold">Chat Page</div>} />
+        <Route path="settings" element={<SettingsPage />} />
+      </Route>
+      
+      {/* Lecturer Routes */}
+      <Route path="/lecturer" element={<LecturerLayout />}>
+        <Route index element={<Navigate to="/lecturer/dashboard" replace />} />
+        <Route path="dashboard" element={<LecturerDashboard />} />
+        <Route path="subjects" element={<LecturerSubjects />} />
+        <Route path="subjects/:subjectId" element={<LecturerSubjectDetail />} />
+        <Route path="grading" element={<LecturerGradingSubjects />} />
+        <Route path="grading/:classId" element={<LecturerGradingList />} />
+        <Route path="reports" element={<div className="text-xl font-bold">Reports Page</div>} />
+        <Route path="news" element={<div className="text-xl font-bold">News Page</div>} />
+        <Route path="messages" element={<div className="text-xl font-bold">Messages Page</div>} />
+        <Route path="settings" element={<SettingsPage />} />
+      </Route>
+
+      {/* Lecturer Grading Detail (Full Screen) */}
+      <Route path="/lecturer/grading/detail/:submissionId" element={<LecturerGradingDetail />} />
+
+      {/* Admin Routes */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="users" element={<div className="text-xl font-bold p-6">Users Page</div>} />
+        <Route path="students" element={<div className="text-xl font-bold p-6">Students Page</div>} />
+        <Route path="teachers" element={<AdminTeachers />} />
+        <Route path="semesters" element={<AdminSemesters />} />
+        <Route path="subjects" element={<AdminSubjects />} />
+        <Route path="classes" element={<AdminClasses />} />
+        <Route path="settings" element={<SettingsPage />} />
+      </Route>
+    </Routes>
+  );
 }
 
-export default App
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </Router>
+  );
+}
+
+export default App;

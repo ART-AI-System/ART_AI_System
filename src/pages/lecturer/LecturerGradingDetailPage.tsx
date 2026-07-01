@@ -138,37 +138,47 @@ const LecturerGradingDetailPage = () => {
               </div>
               
               <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
-                <table className="w-full text-left text-sm text-gray-600">
-                  <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase">
-                    <tr>
-                      <th className="px-4 py-3 w-1/5">Phase</th>
-                      <th className="px-4 py-3 w-2/5">Prompt/Input</th>
-                      <th className="px-4 py-3 w-2/5">AI Output/Suggestion</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    <tr>
-                      <td className="px-4 py-3 font-bold text-[#1B2559] align-top">Abstraction</td>
-                      <td className="px-4 py-3 text-xs align-top bg-blue-50/50">"How do I abstract the database layer?"</td>
-                      <td className="px-4 py-3 text-xs align-top">Provided a generic repository interface for Java.</td>
-                    </tr>
-                    <tr>
-                      <td colSpan={3} className="px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs text-gray-600 italic">
-                        <strong>Reflection:</strong> I used this interface to create the User and Product repositories, modifying the method signatures to match my entities.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-3 font-bold text-[#1B2559] align-top">Composition</td>
-                      <td className="px-4 py-3 text-xs align-top bg-blue-50/50">"How to compose multiple services?"</td>
-                      <td className="px-4 py-3 text-xs align-top">Suggested using Dependency Injection and a central Facade.</td>
-                    </tr>
-                    <tr>
-                      <td colSpan={3} className="px-4 py-2 bg-gray-50 text-xs text-gray-600 italic">
-                        <strong>Reflection:</strong> I skipped DI for now to keep it simple, but I used the Facade pattern for the Checkout service.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div className="max-h-[300px] overflow-y-auto">
+                  <table className="w-full text-left text-sm text-gray-600">
+                    <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase sticky top-0 bg-gray-50 z-10">
+                      <tr>
+                        <th className="px-4 py-3 w-1/5">Phase</th>
+                        <th className="px-4 py-3 w-2/5">Prompt/Input</th>
+                        <th className="px-4 py-3 w-2/5">AI Output/Suggestion</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      <tr>
+                        <td className="px-4 py-3 font-bold text-[#1B2559] align-top">Abstraction</td>
+                        <td className="px-4 py-3 text-xs align-top bg-blue-50/50 max-w-[180px]">
+                          <div className="max-h-24 overflow-y-auto break-words pr-1">"How do I abstract the database layer?"</div>
+                        </td>
+                        <td className="px-4 py-3 text-xs align-top max-w-[180px]">
+                          <div className="max-h-24 overflow-y-auto break-words pr-1">Provided a generic repository interface for Java.</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colSpan={3} className="px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs text-gray-600 italic">
+                          <div className="max-h-20 overflow-y-auto break-words"><strong>Reflection:</strong> I used this interface to create the User and Product repositories, modifying the method signatures to match my entities.</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-3 font-bold text-[#1B2559] align-top">Composition</td>
+                        <td className="px-4 py-3 text-xs align-top bg-blue-50/50 max-w-[180px]">
+                          <div className="max-h-24 overflow-y-auto break-words pr-1">"How to compose multiple services?"</div>
+                        </td>
+                        <td className="px-4 py-3 text-xs align-top max-w-[180px]">
+                          <div className="max-h-24 overflow-y-auto break-words pr-1">Suggested using Dependency Injection and a central Facade.</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colSpan={3} className="px-4 py-2 bg-gray-50 text-xs text-gray-600 italic">
+                          <div className="max-h-20 overflow-y-auto break-words"><strong>Reflection:</strong> I skipped DI for now to keep it simple, but I used the Facade pattern for the Checkout service.</div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
               
               {/* Lecturer Evaluation */}
