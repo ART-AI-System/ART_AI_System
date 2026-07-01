@@ -10,7 +10,7 @@
 ## 📌 1. User Preferences & Operating Rules (CRITICAL FOR NEXT AGENT)
 
 Please adhere strictly to the following user preferences established during this session:
-1. **Push Directly to Main:** *"lần sau cứ đẩy thẳng lên main"* -> When finishing a feature or verified milestone, always push local changes directly to the `main` branch of the Frontend repository (`fe HEAD:main`) without asking for explicit permission.
+1. **Push ONLY Upon Explicit User Approval:** *"chỉ được push sau khi tôi nói push code lên main"* -> **DO NOT PUSH** code to git/remote automatically. Always wait for the user to verify/test locally and explicitly instruct to push to `main` before executing any `git push` command.
 2. **Autonomous Execution:** *"tiến hành không cần sự đồng ý về thứ tự công việc"* -> Proceed independently with implementation and task ordering without waiting for user approval at each minor step.
 3. **Layout & UI Stability:** *"Đừng bấm extra ra bị vỡ layout, cứ scroll thôi"* -> Avoid expanding containers or toggles that break or overflow layout boundaries. Always prefer clean scrollable containers (`overflow-y-auto`, `custom-scrollbar`).
 4. **Environment:** Frontend is hosted at `e:\FPT\7_SU26\WDP\ART-AI`. Backend API base URL is configured via `axiosClient` (`http://localhost:3000/api`).
