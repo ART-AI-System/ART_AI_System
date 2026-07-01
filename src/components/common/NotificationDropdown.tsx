@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Check, Trash2, Plus, Send, X, AlertCircle, Clock, BellRing, Sparkles } from 'lucide-react';
 import axiosClient from '../../api/axiosClient';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../hooks/useSocket';
 
 interface NotificationItem {
   _id: string;
@@ -41,6 +42,7 @@ const fallbackNotifications: NotificationItem[] = [
 
 export const NotificationDropdown: React.FC = () => {
   const { user } = useAuth();
+  const { socket, isConnected } = useSocket();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>(fallbackNotifications);
   const [unreadCount, setUnreadCount] = useState<number>(2);
@@ -75,9 +77,53 @@ export const NotificationDropdown: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // Check every minute
-    return () => clearInterval(interval);
   }, []);
+
+  // Sync notifications when socket connects or reconnects
+  useEffect(() => {
+    if (isConnected) {
+      fetchNotifications();
+    }
+  }, [isConnected]);
+
+  // Listen for real-time WebSocket events
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotification = (newNotif: any) => {
+      console.log('⚡ Real-time WebSocket notification received:', newNotif);
+      
+      if (newNotif && typeof newNotif === 'object' && (newNotif._id || newNotif.id || newNotif.title || newNotif.message)) {
+        const formattedNotif: NotificationItem = {
+          _id: newNotif._id || newNotif.id || `notif-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+          title: newNotif.title || 'New Notification',
+          message: newNotif.message || newNotif.content || 'You have received a new update.',
+          isRead: false,
+          type: newNotif.type || 'system',
+          createdAt: newNotif.createdAt || new Date().toISOString()
+        };
+
+        setNotifications(prev => {
+          if (prev.some(n => n._id === formattedNotif._id)) return prev;
+          return [formattedNotif, ...prev];
+        });
+        setUnreadCount(prev => prev + 1);
+      } else {
+        // Fallback: if payload is empty or a trigger signal, re-fetch full list from API
+        fetchNotifications();
+      }
+    };
+
+    socket.on('new_notification', handleNewNotification);
+    socket.on('notification', handleNewNotification);
+    socket.on('announcement', handleNewNotification);
+
+    return () => {
+      socket.off('new_notification', handleNewNotification);
+      socket.off('notification', handleNewNotification);
+      socket.off('announcement', handleNewNotification);
+    };
+  }, [socket]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -183,6 +229,16 @@ export const NotificationDropdown: React.FC = () => {
             <div className="flex items-center space-x-2">
               <BellRing className="w-5 h-5 text-[#F26F21]" />
               <h3 className="font-extrabold text-base">Notifications</h3>
+              {isConnected ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1"></span>
+                  LIVE
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-gray-300">
+                  OFFLINE
+                </span>
+              )}
               {unreadCount > 0 && (
                 <span className="bg-[#4318FF] text-white text-xs font-bold px-2 py-0.5 rounded-full">
                   {unreadCount} new

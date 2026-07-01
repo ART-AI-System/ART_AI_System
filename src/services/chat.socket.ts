@@ -63,3 +63,4 @@ class ChatSocketService {
 }
 
 export const chatSocketService = ChatSocketService.getInstance();
+export const socketService = chatSocketService;
