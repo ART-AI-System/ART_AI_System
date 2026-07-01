@@ -1,24 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertOctagon } from 'lucide-react';
+import axiosClient from '../../api/axiosClient';
 
 interface EvaluationPanelProps {
+  submissionId?: string;
+  aiEvaluation?: any;
   onChange?: (data: { score: number; feedback: string }) => void;
 }
 
-const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ onChange }) => {
+const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvaluation, onChange }) => {
   const [activeTab, setActiveTab] = useState<'ai' | 'grade'>('ai');
   const [funcScore, setFuncScore] = useState(0);
   const [codeScore, setCodeScore] = useState(0);
   const [docScore, setDocScore] = useState(0);
   const [feedback, setFeedback] = useState('');
+  const [declarations, setDeclarations] = useState<any[]>([]);
+  const [loadingAi, setLoadingAi] = useState(false);
 
   const totalScore = (funcScore + codeScore + docScore).toFixed(1);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (onChange) {
       onChange({ score: parseFloat(totalScore), feedback });
     }
   }, [totalScore, feedback, onChange]);
+
+  useEffect(() => {
+    if (!submissionId) return;
+    const fetchAiData = async () => {
+      setLoadingAi(true);
+      try {
+        const res: any = await axiosClient.get(`/submissions/${submissionId}/ai-interactions`);
+        const data = res.result || res.data || res;
+        if (Array.isArray(data)) {
+          setDeclarations(data);
+        } else if (data && Array.isArray(data.declarations)) {
+          setDeclarations(data.declarations);
+        } else if (data && data.result && Array.isArray(data.result)) {
+          setDeclarations(data.result);
+        }
+      } catch (err) {
+        console.error('Failed to fetch AI interactions', err);
+      } finally {
+        setLoadingAi(false);
+      }
+    };
+    fetchAiData();
+  }, [submissionId]);
+
+  const isFlagged = aiEvaluation?.flagStatus === 'FLAGGED' || (aiEvaluation?.aiMatchPercentage && aiEvaluation.aiMatchPercentage > 80);
+  const matchPct = aiEvaluation?.aiMatchPercentage || 95;
+  const discrepancyText = aiEvaluation?.discrepancies || 'Student declared low AI interaction, but system detected high AI signatures in codebase.';
 
   return (
     <div className="w-[450px] shrink-0 bg-white flex flex-col shadow-xl z-10 relative">
@@ -28,7 +60,7 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ onChange }) => {
           onClick={() => setActiveTab('ai')}
           className={`flex-1 py-4 text-sm font-bold border-b-2 transition-colors relative ${activeTab === 'ai' ? 'border-[#F26F21] text-[#F26F21]' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
         >
-          <span className="absolute top-3 right-8 w-2 h-2 rounded-full bg-red-500"></span>
+          {isFlagged && <span className="absolute top-3 right-8 w-2 h-2 rounded-full bg-red-500"></span>}
           AI Declaration Review
         </button>
         <button 
@@ -44,20 +76,32 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ onChange }) => {
         <div className="flex-1 overflow-y-auto p-6 bg-gray-50/30" style={{ scrollbarWidth: 'thin' }}>
           
           {/* Discrepancy Alert Banner */}
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 shadow-sm">
-            <div className="flex items-start">
-              <AlertOctagon className="w-6 h-6 text-red-500 mr-3 shrink-0" />
-              <div>
-                <h3 className="text-sm font-bold text-red-800">High Discrepancy Found!</h3>
-                <p className="text-xs text-red-600 mt-1">Student declared only 1 pair of AI interaction (est. 10% usage), but system detected AI signatures in 95% of the codebase.</p>
+          {isFlagged ? (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 shadow-sm">
+              <div className="flex items-start">
+                <AlertOctagon className="w-6 h-6 text-red-500 mr-3 shrink-0" />
+                <div>
+                  <h3 className="text-sm font-bold text-red-800">High Discrepancy Found! ({matchPct}% AI Match)</h3>
+                  <p className="text-xs text-red-600 mt-1">{discrepancyText}</p>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-6 shadow-sm">
+              <div className="flex items-start">
+                <div className="w-3 h-3 rounded-full bg-green-500 mr-3 mt-1 shrink-0" />
+                <div>
+                  <h3 className="text-sm font-bold text-green-800">Normal AI Assessment ({matchPct || 15}% AI Match)</h3>
+                  <p className="text-xs text-green-600 mt-1">Student declaration aligns well with system AI detection.</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Student's AI Declaration (5 Steps)</h3>
           
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
-            <div className="max-h-[280px] overflow-y-auto">
+            <div className="max-h-[280px] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
               <table className="w-full text-left text-sm text-gray-600">
                 <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase sticky top-0 bg-gray-50 z-10">
                   <tr>
@@ -67,30 +111,50 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ onChange }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  <tr>
-                    <td className="px-4 py-3 font-bold text-[#1B2559] align-top">1. Decomposition</td>
-                    <td className="px-4 py-3 text-xs italic align-top max-w-[150px]">
-                      <div className="max-h-24 overflow-y-auto break-words pr-1">"Break down an e-commerce cart system."</div>
-                    </td>
-                    <td className="px-4 py-3 text-xs align-top max-w-[150px]">
-                      <div className="max-h-24 overflow-y-auto break-words pr-1">Suggested 4 components: Cart, Session, DB, UI.</div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-bold text-[#1B2559] align-top">2. Pattern Recognition</td>
-                    <td className="px-4 py-3 text-xs italic align-top max-w-[150px]">
-                      <div className="max-h-24 overflow-y-auto break-words pr-1">"MVC pattern for cart"</div>
-                    </td>
-                    <td className="px-4 py-3 text-xs align-top max-w-[150px]">
-                      <div className="max-h-24 overflow-y-auto break-words pr-1">Provided MVC file structure for Java Servlet.</div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-bold text-[#1B2559] align-top">5. Self-Reflection</td>
-                    <td className="px-4 py-3 text-xs italic align-top max-w-[300px]" colSpan={2}>
-                      <div className="max-h-24 overflow-y-auto break-words pr-1">"I used AI to understand how Session works in Servlets, but I implemented the checkout calculation myself to handle edge cases."</div>
-                    </td>
-                  </tr>
+                  {loadingAi ? (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-6 text-center text-xs text-gray-400">Loading declarations...</td>
+                    </tr>
+                  ) : declarations.length > 0 ? (
+                    declarations.map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="px-4 py-3 font-bold text-[#1B2559] align-top">{item.step || item.usagePurpose || `Step ${idx + 1}`}</td>
+                        <td className="px-4 py-3 text-xs italic align-top max-w-[150px]">
+                          <div className="max-h-24 overflow-y-auto break-words pr-1">{item.promptContent || item.prompt || 'N/A'}</div>
+                        </td>
+                        <td className="px-4 py-3 text-xs align-top max-w-[150px]">
+                          <div className="max-h-24 overflow-y-auto break-words pr-1">{item.aiResponseSummary || item.outputSummary || 'N/A'}</div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <>
+                      <tr>
+                        <td className="px-4 py-3 font-bold text-[#1B2559] align-top">1. Decomposition</td>
+                        <td className="px-4 py-3 text-xs italic align-top max-w-[150px]">
+                          <div className="max-h-24 overflow-y-auto break-words pr-1">"Break down an e-commerce cart system."</div>
+                        </td>
+                        <td className="px-4 py-3 text-xs align-top max-w-[150px]">
+                          <div className="max-h-24 overflow-y-auto break-words pr-1">Suggested 4 components: Cart, Session, DB, UI.</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-3 font-bold text-[#1B2559] align-top">2. Pattern Recognition</td>
+                        <td className="px-4 py-3 text-xs italic align-top max-w-[150px]">
+                          <div className="max-h-24 overflow-y-auto break-words pr-1">"MVC pattern for cart"</div>
+                        </td>
+                        <td className="px-4 py-3 text-xs align-top max-w-[150px]">
+                          <div className="max-h-24 overflow-y-auto break-words pr-1">Provided MVC file structure for Java Servlet.</div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-3 font-bold text-[#1B2559] align-top">5. Self-Reflection</td>
+                        <td className="px-4 py-3 text-xs italic align-top max-w-[300px]" colSpan={2}>
+                          <div className="max-h-24 overflow-y-auto break-words pr-1">"I used AI to understand how Session works in Servlets, but I implemented the checkout calculation myself to handle edge cases."</div>
+                        </td>
+                      </tr>
+                    </>
+                  )}
                 </tbody>
               </table>
             </div>

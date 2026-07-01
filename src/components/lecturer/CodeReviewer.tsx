@@ -33,7 +33,7 @@ const CodeReviewer: React.FC<CodeReviewerProps> = ({ submissionId }) => {
         const extractedFiles: { [path: string]: JSZip.JSZipObject } = {};
         const tree: any = {};
 
-        zip.forEach((relativePath, file) => {
+        zip.forEach((relativePath: string, file: any) => {
           extractedFiles[relativePath] = file;
           
           // Build basic tree

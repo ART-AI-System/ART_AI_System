@@ -53,7 +53,7 @@ export const RoleGuard = ({ allowedRoles }: { allowedRoles: Role[] }) => {
     );
   }
   
-  if (!user || !allowedRoles.includes(user.role)) {
+  if (!user || !allowedRoles.includes(user.role as Role)) {
     // If not authorized for this role, show an access denied page
     return <Navigate to="/access-denied" replace />;
   }

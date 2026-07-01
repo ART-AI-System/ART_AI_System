@@ -5,6 +5,7 @@ import {
   CalendarDays, Library, BookOpen, MessageCircle, 
   ClipboardList, Settings, LogOut, Search, Bell, ChevronDown 
 } from 'lucide-react';
+import { NotificationDropdown } from '../components/common/NotificationDropdown';
 
 const AdminLayout: React.FC = () => {
   const location = useLocation();
@@ -119,10 +120,7 @@ const AdminLayout: React.FC = () => {
               <Search className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
             </div>
 
-            <button className="relative p-2.5 text-gray-400 hover:text-[#16A34A] hover:bg-green-50 rounded-xl transition-all">
-              <Bell className="w-6 h-6" />
-              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <NotificationDropdown />
 
             <div className="flex items-center pl-6 border-l border-gray-200 gap-3 cursor-pointer group">
               <div className="text-right">

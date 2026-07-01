@@ -1,6 +1,7 @@
 import { Bell, ChevronDown, Search } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { ROUTES } from '../../config/routes';
+import { NotificationDropdown } from '../common/NotificationDropdown';
 
 export const LecturerHeader = () => {
   const location = useLocation();
@@ -58,10 +59,7 @@ export const LecturerHeader = () => {
           <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
-        <button className="relative p-2.5 text-gray-400 hover:text-[#F26F21] hover:bg-orange-50 rounded-xl transition-all">
-          <Bell className="w-6 h-6" />
-          <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
+        <NotificationDropdown />
 
         <div className="flex items-center pl-6 border-l border-gray-200 gap-3">
           <div className="text-right">

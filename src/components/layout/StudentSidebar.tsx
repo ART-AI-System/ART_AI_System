@@ -6,17 +6,17 @@ import {
 } from 'lucide-react';
 
 interface StudentSidebarProps {
-  sidebarCollapsed: boolean;
-  mobileSidebarOpen: boolean;
-  setSidebarCollapsed: (val: boolean) => void;
-  setMobileSidebarOpen: (val: boolean) => void;
+  sidebarCollapsed?: boolean;
+  mobileSidebarOpen?: boolean;
+  setSidebarCollapsed?: (val: boolean) => void;
+  setMobileSidebarOpen?: (val: boolean) => void;
 }
 
 const StudentSidebar: React.FC<StudentSidebarProps> = ({ 
-  sidebarCollapsed, 
-  mobileSidebarOpen, 
-  setSidebarCollapsed, 
-  setMobileSidebarOpen 
+  sidebarCollapsed = false, 
+  mobileSidebarOpen = false, 
+  setSidebarCollapsed = () => {}, 
+  setMobileSidebarOpen = () => {} 
 }) => {
   const [reportsOpen, setReportsOpen] = useState(false);
   const location = useLocation();

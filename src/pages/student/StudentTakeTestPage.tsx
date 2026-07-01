@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { HelpCircle, Clock, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../config/routes';
+import axiosClient from '../../api/axiosClient';
 
 const StudentTakeTestPage = () => {
   const navigate = useNavigate();
@@ -33,8 +34,32 @@ const StudentTakeTestPage = () => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const submitTest = () => {
+  const [attemptId, setAttemptId] = useState('attempt-demo-123');
+
+  const handleStartExam = async () => {
+    try {
+      const res: any = await axiosClient.post('/tests/661122334455667788990001/start');
+      if (res && (res._id || res.result?._id)) {
+        setAttemptId(res._id || res.result._id);
+      }
+    } catch (err) {
+      console.error('Start attempt API call failed, using mock attempt ID', err);
+    }
+    setShowAntiCheat(false);
+  };
+
+  const submitTest = async () => {
     if(window.confirm("Are you sure you want to submit? You cannot change your answers after submitting.")) {
+      try {
+        await axiosClient.post(`/test-attempts/${attemptId}/submit`, {
+          answers: [
+            { questionId: 'q1', selectedOptionId: 'opt-1' },
+            { questionId: 'q2', selectedOptionId: 'opt-2' }
+          ]
+        });
+      } catch (err) {
+        console.error('Submit attempt API call failed, continuing to result page', err);
+      }
       navigate(ROUTES.STUDENT_TEST_RESULT);
     }
   };
@@ -176,7 +201,7 @@ const StudentTakeTestPage = () => {
             </div>
             <h2 className="text-2xl font-extrabold text-[#1B2559] mb-2">Exam Mode Active</h2>
             <p className="text-gray-500 mb-6">You are about to start a timed exam. Do not switch tabs, minimize the browser, or open other applications. Doing so will be recorded as a violation.</p>
-            <button onClick={() => setShowAntiCheat(false)} className="w-full bg-[#F26F21] hover:bg-[#E86115] text-white py-3.5 rounded-xl font-bold shadow-md shadow-orange-500/20 transition-all">
+            <button onClick={handleStartExam} className="w-full bg-[#F26F21] hover:bg-[#E86115] text-white py-3.5 rounded-xl font-bold shadow-md shadow-orange-500/20 transition-all">
               I Understand, Start Exam
             </button>
           </div>

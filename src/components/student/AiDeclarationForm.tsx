@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Brain, Puzzle, Scan, Layers, GitMerge, Lightbulb, ImagePlus, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 
-const categories = [
+const defaultCategories = [
   { id: 'Decomposition', title: 'Decomposition', desc: 'Breaking down complex problems into smaller, manageable parts.', icon: <Puzzle className="w-5 h-5" /> },
   { id: 'Pattern Recognition', title: 'Pattern Recognition', desc: 'Finding similarities or patterns among small, decomposed problems.', icon: <Scan className="w-5 h-5" /> },
   { id: 'Abstraction', title: 'Abstraction', desc: 'Focusing on the important information only, ignoring irrelevant detail.', icon: <Layers className="w-5 h-5" /> },
@@ -10,13 +10,24 @@ const categories = [
 ];
 
 interface AiDeclarationFormProps {
-  handleSubmit: (formData: any) => void;
+  handleSubmit?: (formData: any) => void;
   isSubmitting?: boolean;
+  categories?: any[];
+  data?: any;
+  onChange?: (val: any) => void;
+  onFinish?: () => void;
 }
 
-const AiDeclarationForm: React.FC<AiDeclarationFormProps> = ({ handleSubmit, isSubmitting }) => {
+const AiDeclarationForm: React.FC<AiDeclarationFormProps> = ({ 
+  handleSubmit, 
+  isSubmitting = false, 
+  categories = defaultCategories, 
+  data, 
+  onChange, 
+  onFinish 
+}) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<any>(data || {});
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -26,13 +37,15 @@ const AiDeclarationForm: React.FC<AiDeclarationFormProps> = ({ handleSubmit, isS
   }, [activeTab]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData({
+    const nextData = {
       ...formData,
       [activeTab]: {
         ...formData[activeTab],
         [field]: value
       }
-    });
+    };
+    setFormData(nextData);
+    onChange?.(nextData);
   };
 
   const handleNext = () => {
@@ -155,7 +168,7 @@ const AiDeclarationForm: React.FC<AiDeclarationFormProps> = ({ handleSubmit, isS
               <ChevronLeft className="w-4 h-4 mr-2" /> Previous
             </button>
             <button 
-              onClick={() => activeTab === categories.length - 1 ? handleSubmit(formData) : handleNext()}
+              onClick={() => activeTab === categories.length - 1 ? (handleSubmit ? handleSubmit(formData) : onFinish?.()) : handleNext()}
               disabled={isSubmitting || (activeTab === categories.length - 1 && !isFormComplete())}
               className={`px-5 py-2.5 text-white rounded-xl font-bold text-sm transition-colors flex items-center shadow-md ${
                 isSubmitting ? 'bg-gray-400 cursor-not-allowed' :
@@ -179,4 +192,14 @@ const AiDeclarationForm: React.FC<AiDeclarationFormProps> = ({ handleSubmit, isS
   );
 };
 
+export interface AiInteractionData {
+  [key: number]: {
+    prompt?: string;
+    ai?: string;
+    reflection?: string;
+    evidence?: string;
+  };
+}
+
+export { AiDeclarationForm };
 export default AiDeclarationForm;

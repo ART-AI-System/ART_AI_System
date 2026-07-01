@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Menu, Search, CalendarDays, ChevronDown, Bell, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { NotificationDropdown } from '../common/NotificationDropdown';
 
 interface StudentTopbarProps {
   setMobileSidebarOpen: (val: boolean) => void;
@@ -44,10 +45,7 @@ const StudentTopbar: React.FC<StudentTopbarProps> = ({ setMobileSidebarOpen }) =
       
       <div className="flex items-center space-x-2 md:space-x-6">
         <div className="flex items-center space-x-3">
-          <button className="relative p-2 text-gray-400 hover:text-orange-500 transition-colors block">
-            <Bell className="w-6 h-6" />
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#F4F7FE]"></span>
-          </button>
+          <NotificationDropdown />
         </div>
         <div className="flex items-center pl-4 border-l border-gray-300 gap-3">
           <div className="text-right hidden sm:block">

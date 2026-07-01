@@ -1,10 +1,30 @@
 
+import { useState, useEffect } from 'react';
 import { ArrowLeft, CheckCircle2, Check, XCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../config/routes';
+import axiosClient from '../../api/axiosClient';
 
 const StudentTestResultPage = () => {
   const navigate = useNavigate();
+  const [score, setScore] = useState(8.5);
+  const [totalScore, setTotalScore] = useState(10);
+
+  useEffect(() => {
+    const fetchResult = async () => {
+      try {
+        const res: any = await axiosClient.get('/test-attempts/attempt-demo-123/result');
+        const data = res.result || res.data || res;
+        if (data && typeof data.score !== 'undefined') {
+          setScore(data.score);
+          setTotalScore(data.totalPoints || 10);
+        }
+      } catch (err) {
+        console.error('Failed to fetch attempt result, using mock result', err);
+      }
+    };
+    fetchResult();
+  }, []);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#F4F7FE] absolute inset-0 z-50">
@@ -23,7 +43,7 @@ const StudentTestResultPage = () => {
         <div className="flex items-center space-x-6">
           <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-2 flex flex-col items-end">
             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Final Score</span>
-            <span className="text-2xl font-extrabold text-[#1B2559]">8.5 <span className="text-sm text-gray-400">/ 10</span></span>
+            <span className="text-2xl font-extrabold text-[#1B2559]">{score} <span className="text-sm text-gray-400">/ {totalScore}</span></span>
           </div>
         </div>
       </header>

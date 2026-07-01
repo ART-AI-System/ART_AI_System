@@ -7,6 +7,7 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import StudentDashboardPage from '../pages/student/StudentDashboardPage';
 import LecturerDashboardPage from '../pages/lecturer/LecturerDashboardPage';
 import SubjectHeadDashboardPage from '../pages/subjectHead/SubjectHeadDashboardPage';
+import SuspiciousCasesPage from '../pages/subjectHead/SuspiciousCasesPage';
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminClassesPage from '../pages/admin/AdminClassesPage';
 import AdminStudentsPage from '../pages/admin/AdminStudentsPage';
@@ -464,12 +465,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: ROUTES.SUSPICIOUS_CASES,
-                element: (
-                  <EmptyState
-                    title="Suspicious Cases Audit Logs"
-                    description="Audit trail of AI usage alerts and potential academic integrity flags."
-                  />
-                ),
+                element: <SuspiciousCasesPage />,
               },
             ],
           },

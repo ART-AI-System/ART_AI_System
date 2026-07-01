@@ -6,6 +6,7 @@ interface User {
   id: string;
   email: string;
   fullName: string;
+  name?: string;
   role: string;
   studentCode?: string;
   username?: string;
@@ -14,6 +15,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
   loading: boolean;
   login: (access_token: string, refresh_token: string, user: User) => void;
   logout: () => void;
@@ -67,8 +69,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const isAuthenticated = !!user;
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

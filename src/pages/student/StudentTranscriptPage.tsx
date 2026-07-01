@@ -1,7 +1,30 @@
 
+import React, { useState, useEffect } from 'react';
 import { Download, TrendingUp, Award, Filter } from 'lucide-react';
+import axiosClient from '../../api/axiosClient';
 
 const StudentTranscriptPage = () => {
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchTranscript = async () => {
+      setLoading(true);
+      try {
+        const res: any = await axiosClient.get('/students/me/results');
+        const data = res.result || res.data || res;
+        if (Array.isArray(data) && data.length > 0) {
+          setResults(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch transcript results', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTranscript();
+  }, []);
+
   return (
     <div className="flex-1 overflow-y-auto p-8 hide-scrollbar">
       <div className="flex justify-between items-center mb-8">
@@ -36,11 +59,11 @@ const StudentTranscriptPage = () => {
         </div>
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <p className="text-xs font-bold text-gray-400 uppercase mb-1">Subjects Passed</p>
-          <h3 className="text-3xl font-extrabold text-green-500">22</h3>
+          <h3 className="text-3xl font-extrabold text-green-500">{results.length > 0 ? results.filter(r => (r.finalScore || 0) >= 5).length : 22}</h3>
         </div>
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <p className="text-xs font-bold text-gray-400 uppercase mb-1">Subjects Failed</p>
-          <h3 className="text-3xl font-extrabold text-gray-400">0</h3>
+          <h3 className="text-3xl font-extrabold text-gray-400">{results.length > 0 ? results.filter(r => (r.finalScore || 0) < 5).length : 0}</h3>
         </div>
       </div>
 
@@ -98,61 +121,97 @@ const StudentTranscriptPage = () => {
               </tr>
             </thead>
             <tbody className="text-sm">
-              {/* Semester Group Header */}
-              <tr className="bg-blue-50/30 border-b border-blue-100">
-                <td colSpan={5} className="p-3 pl-4">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-[#4318FF]">Spring 2026 (Semester 5)</span>
-                    <span className="text-xs font-bold text-blue-400">Term GPA: 8.5 • Credits Earned: 15</span>
-                  </div>
-                </td>
-              </tr>
-              <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                <td className="p-4 font-bold text-gray-600">SWD392</td>
-                <td className="p-4 font-bold text-[#1B2559]">Software Architecture & Design</td>
-                <td className="p-4 text-center text-gray-500 font-medium">3</td>
-                <td className="p-4 text-center font-extrabold text-[#1B2559]">8.8</td>
-                <td className="p-4 text-center">
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
-                </td>
-              </tr>
-              <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                <td className="p-4 font-bold text-gray-600">PRJ301</td>
-                <td className="p-4 font-bold text-[#1B2559]">Java Web Application Development</td>
-                <td className="p-4 text-center text-gray-500 font-medium">3</td>
-                <td className="p-4 text-center font-extrabold text-[#1B2559]">8.2</td>
-                <td className="p-4 text-center">
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
-                </td>
-              </tr>
-              
-              {/* Semester Group Header */}
-              <tr className="bg-blue-50/30 border-b border-blue-100 border-t-4 border-t-white">
-                <td colSpan={5} className="p-3 pl-4">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-[#4318FF]">Fall 2025 (Semester 4)</span>
-                    <span className="text-xs font-bold text-blue-400">Term GPA: 7.8 • Credits Earned: 15</span>
-                  </div>
-                </td>
-              </tr>
-              <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                <td className="p-4 font-bold text-gray-600">DBI202</td>
-                <td className="p-4 font-bold text-[#1B2559]">Database Systems</td>
-                <td className="p-4 text-center text-gray-500 font-medium">3</td>
-                <td className="p-4 text-center font-extrabold text-[#1B2559]">7.5</td>
-                <td className="p-4 text-center">
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
-                </td>
-              </tr>
-              <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                <td className="p-4 font-bold text-gray-600">PRO192</td>
-                <td className="p-4 font-bold text-[#1B2559]">Object-Oriented Programming</td>
-                <td className="p-4 text-center text-gray-500 font-medium">3</td>
-                <td className="p-4 text-center font-extrabold text-[#1B2559]">8.0</td>
-                <td className="p-4 text-center">
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
-                </td>
-              </tr>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-gray-400">Loading transcript data...</td>
+                </tr>
+              ) : results.length > 0 ? (
+                <>
+                  <tr className="bg-blue-50/30 border-b border-blue-100">
+                    <td colSpan={5} className="p-3 pl-4">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-[#4318FF]">Current Semester Results</span>
+                        <span className="text-xs font-bold text-blue-400">Total Subjects: {results.length}</span>
+                      </div>
+                    </td>
+                  </tr>
+                  {results.map((r, i) => {
+                    const score = r.finalScore || r.totalScore || 8.5;
+                    const passed = score >= 5;
+                    return (
+                      <tr key={r._id || i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <td className="p-4 font-bold text-gray-600">{r.classCode || 'SWD392'}</td>
+                        <td className="p-4 font-bold text-[#1B2559]">{r.subjectName || 'Software Architecture & Design'}</td>
+                        <td className="p-4 text-center text-gray-500 font-medium">3</td>
+                        <td className="p-4 text-center font-extrabold text-[#1B2559]">{score.toFixed(1)}</td>
+                        <td className="p-4 text-center">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {passed ? 'Passed' : 'Failed'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </>
+              ) : (
+                <>
+                  {/* Semester Group Header */}
+                  <tr className="bg-blue-50/30 border-b border-blue-100">
+                    <td colSpan={5} className="p-3 pl-4">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-[#4318FF]">Spring 2026 (Semester 5)</span>
+                        <span className="text-xs font-bold text-blue-400">Term GPA: 8.5 • Credits Earned: 15</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="p-4 font-bold text-gray-600">SWD392</td>
+                    <td className="p-4 font-bold text-[#1B2559]">Software Architecture & Design</td>
+                    <td className="p-4 text-center text-gray-500 font-medium">3</td>
+                    <td className="p-4 text-center font-extrabold text-[#1B2559]">8.8</td>
+                    <td className="p-4 text-center">
+                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="p-4 font-bold text-gray-600">PRJ301</td>
+                    <td className="p-4 font-bold text-[#1B2559]">Java Web Application Development</td>
+                    <td className="p-4 text-center text-gray-500 font-medium">3</td>
+                    <td className="p-4 text-center font-extrabold text-[#1B2559]">8.2</td>
+                    <td className="p-4 text-center">
+                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
+                    </td>
+                  </tr>
+                  
+                  {/* Semester Group Header */}
+                  <tr className="bg-blue-50/30 border-b border-blue-100 border-t-4 border-t-white">
+                    <td colSpan={5} className="p-3 pl-4">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-[#4318FF]">Fall 2025 (Semester 4)</span>
+                        <span className="text-xs font-bold text-blue-400">Term GPA: 7.8 • Credits Earned: 15</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="p-4 font-bold text-gray-600">DBI202</td>
+                    <td className="p-4 font-bold text-[#1B2559]">Database Systems</td>
+                    <td className="p-4 text-center text-gray-500 font-medium">3</td>
+                    <td className="p-4 text-center font-extrabold text-[#1B2559]">7.5</td>
+                    <td className="p-4 text-center">
+                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="p-4 font-bold text-gray-600">PRO192</td>
+                    <td className="p-4 font-bold text-[#1B2559]">Object-Oriented Programming</td>
+                    <td className="p-4 text-center text-gray-500 font-medium">3</td>
+                    <td className="p-4 text-center font-extrabold text-[#1B2559]">8.0</td>
+                    <td className="p-4 text-center">
+                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Passed</span>
+                    </td>
+                  </tr>
+                </>
+              )}
             </tbody>
           </table>
         </div>

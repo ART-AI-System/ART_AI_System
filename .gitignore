@@ -25,3 +25,7 @@ dist-ssr
 
 docs/
 .env
+backend/
+.ecc_reference/
+.gh_cli/
+pr_body.txt

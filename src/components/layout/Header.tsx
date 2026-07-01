@@ -1,5 +1,6 @@
 import { Search, CalendarDays, ChevronDown, MessageSquare, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { NotificationDropdown } from '../common/NotificationDropdown';
 
 export const Header = () => {
   const { user } = useAuth();
@@ -36,10 +37,7 @@ export const Header = () => {
           <button className="relative p-2 text-gray-400 hover:text-[#4318FF] transition-colors">
             <MessageSquare className="w-6 h-6" />
           </button>
-          <button className="relative p-2 text-gray-400 hover:text-orange-500 transition-colors">
-            <Bell className="w-6 h-6" />
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#F4F7FE]"></span>
-          </button>
+          <NotificationDropdown />
         </div>
         <div className="flex items-center pl-4 border-l border-gray-300 gap-3">
           <div className="text-right">

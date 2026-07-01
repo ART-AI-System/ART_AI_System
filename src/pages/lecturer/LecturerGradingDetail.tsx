@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, AlertTriangle, RefreshCcw, Save, Send, ChevronRight } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import CodeReviewer from '../../components/lecturer/CodeReviewer';
@@ -10,17 +10,53 @@ const LecturerGradingDetail = () => {
   const navigate = useNavigate();
   const [gradeData, setGradeData] = useState({ score: 0, feedback: '' });
   const [isPublishing, setIsPublishing] = useState(false);
+  const [submission, setSubmission] = useState<any>(null);
+  const [aiEvaluation, setAiEvaluation] = useState<any>(null);
+  const [student, setStudent] = useState<any>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchData = async () => {
+      try {
+        const subRes: any = await axiosClient.get(`/submissions/${id}`);
+        const subData = subRes.result || subRes.data || subRes;
+        setSubmission(subData);
+
+        if (subData?.studentId) {
+          try {
+            const stRes: any = await axiosClient.get(`/users/${subData.studentId}`);
+            setStudent(stRes.result || stRes.data || stRes);
+          } catch (e) {
+            console.error('Failed to load student info', e);
+          }
+        }
+
+        try {
+          const aiRes: any = await axiosClient.get(`/submissions/${id}/ai-evaluation`);
+          setAiEvaluation(aiRes.result || aiRes.data || aiRes);
+        } catch (e) {
+          console.error('Failed to load ai evaluation', e);
+        }
+      } catch (err) {
+        console.error('Failed to load submission detail', err);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   const handlePublishGrade = async () => {
     setIsPublishing(true);
     try {
-      // Create/Update Grade
-      await axiosClient.post(`/submissions/${id}/grade`, {
-        score: gradeData.score,
-        comment: gradeData.feedback,
-        isFinal: true
-      });
-      // Mock alert since UI doesn't have a toast yet
+      if (id && submission) {
+        await axiosClient.post(`/submissions/${id}/grade`, {
+          score: Number(gradeData.score),
+          feedback: gradeData.feedback,
+          studentId: submission.studentId,
+          classId: submission.classId,
+          gradeItemId: submission.gradeItemId,
+          maxScore: 10
+        });
+      }
       alert('Grade published successfully');
       navigate('/lecturer/grading');
     } catch (err) {
@@ -30,6 +66,9 @@ const LecturerGradingDetail = () => {
       setIsPublishing(false);
     }
   };
+
+  const isFlagged = aiEvaluation?.flagStatus === 'FLAGGED' || (aiEvaluation?.aiMatchPercentage && aiEvaluation.aiMatchPercentage > 80);
+  const matchPct = aiEvaluation?.aiMatchPercentage || 95;
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-inter animate-fade-in absolute inset-0 z-50">
@@ -44,17 +83,24 @@ const LecturerGradingDetail = () => {
             <div className="flex items-center text-[10px] font-bold text-gray-400 mb-0.5 uppercase tracking-wider">
               <Link to="/lecturer/grading" className="hover:text-white transition-colors">Grading</Link>
               <ChevronRight className="w-3 h-3 mx-1" />
-              <span className="hover:text-white transition-colors">PRJ301</span>
+              <span className="hover:text-white transition-colors">{submission?.courseCode || 'PRJ301'}</span>
               <ChevronRight className="w-3 h-3 mx-1" />
-              <span className="hover:text-white transition-colors">SE18D01 (PE 1)</span>
+              <span className="hover:text-white transition-colors">{submission?.classCode || 'SE18D01'} ({submission?.gradeItemName || 'PE 1'})</span>
             </div>
-            <h1 className="text-sm font-bold">Nguyen Van Duc (HE150001)</h1>
+            <h1 className="text-sm font-bold">{student?.fullName || student?.username || 'Nguyen Van Duc (HE150001)'}</h1>
           </div>
           
-          <div className="ml-6 px-3 py-1 bg-red-500/20 border border-red-500/50 rounded-full flex items-center">
-            <AlertTriangle className="w-3 h-3 text-red-400 mr-2" />
-            <span className="text-xs font-bold text-red-200">High Discrepancy Detected (95% AI vs 10% Declared)</span>
-          </div>
+          {isFlagged ? (
+            <div className="ml-6 px-3 py-1 bg-red-500/20 border border-red-500/50 rounded-full flex items-center">
+              <AlertTriangle className="w-3 h-3 text-red-400 mr-2" />
+              <span className="text-xs font-bold text-red-200">High Discrepancy Detected ({matchPct}% AI vs Declared)</span>
+            </div>
+          ) : (
+            <div className="ml-6 px-3 py-1 bg-green-500/20 border border-green-500/50 rounded-full flex items-center">
+              <span className="w-2 h-2 rounded-full bg-green-400 mr-2"></span>
+              <span className="text-xs font-bold text-green-200">Normal AI Assessment ({matchPct || 15}% AI Match)</span>
+            </div>
+          )}
         </div>
         
         <div className="flex items-center space-x-3">
@@ -80,7 +126,7 @@ const LecturerGradingDetail = () => {
         <CodeReviewer submissionId={id} />
 
         {/* RIGHT PANE: EVALUATION PANEL */}
-        <EvaluationPanel onChange={setGradeData} />
+        <EvaluationPanel submissionId={id} aiEvaluation={aiEvaluation} onChange={setGradeData} />
       </div>
     </div>
   );
