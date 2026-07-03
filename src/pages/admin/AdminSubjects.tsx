@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Plus, Library, BookOpen } from 'lucide-react';
-import axiosClient from '../../api/axiosClient';
+import { subjectService } from '../../services/subject.service';
+import type { Subject } from '../../types/subject';
 
 const AdminSubjects = () => {
-  const [subjects, setSubjects] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -15,9 +17,9 @@ const AdminSubjects = () => {
   const fetchSubjects = async () => {
     setLoading(true);
     try {
-      const res: any = await axiosClient.get('/subjects');
-      setSubjects(res.result || []);
-    } catch (err) {
+      const result = await subjectService.getSubjects();
+      setSubjects(result || []);
+    } catch (err: any) {
       console.error('Failed to fetch subjects:', err);
     } finally {
       setLoading(false);
@@ -25,13 +27,14 @@ const AdminSubjects = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSubjects();
   }, []);
 
   const handleAddSubject = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axiosClient.post('/subjects', formData);
+      await subjectService.createSubject(formData);
       setShowAddModal(false);
       setFormData({
         code: '',

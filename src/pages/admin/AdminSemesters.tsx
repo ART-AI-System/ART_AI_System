@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Plus, CheckCircle, Calendar, CalendarOff } from 'lucide-react';
 import { semesterService } from '../../services/semester.service';
-import type { Semester } from '../../services/semester.service';
+import type { Semester } from '../../types/semester';
 
 const AdminSemesters = () => {
   const [semesters, setSemesters] = useState<Semester[]>([]);
@@ -17,21 +18,20 @@ const AdminSemesters = () => {
   });
 
   const fetchSemesters = async () => {
+    setLoading(true);
     try {
       const result = await semesterService.getSemesters();
       setSemesters(result || []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch semesters:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      await fetchSemesters();
-      setLoading(false);
-    };
-    load();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchSemesters();
   }, []);
 
   const handleAddSemester = async (e: React.FormEvent) => {
@@ -48,9 +48,8 @@ const AdminSemesters = () => {
         isCurrent: false
       });
       fetchSemesters();
-    } catch (err) {
-      const error = err as Error & { response?: { data?: { message?: string } } };
-      alert('Failed to add semester: ' + (error.response?.data?.message || error.message));
+    } catch (err: any) {
+      alert('Failed to add semester: ' + (err.response?.data?.message || err.message));
     }
   };
 
