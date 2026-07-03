@@ -168,9 +168,101 @@ class ClassesService {
           $set: { updatedAt: new Date() }
         }
       )
+      
+      const bulkOps = newStudents.map(student => ({
+        updateOne: {
+          filter: { classId: classObjectId, studentId: student.studentId },
+          update: {
+            $set: {
+              classId: classObjectId,
+              studentId: student.studentId,
+              semesterId: existingClass.semesterId,
+              status: 'active',
+              updatedAt: new Date()
+            },
+            $setOnInsert: {
+              createdAt: new Date()
+            }
+          },
+          upsert: true
+        }
+      }))
+      await databaseService.classMembers.bulkWrite(bulkOps)
     }
 
     return { totalRows: rows.length, success, failed, errors }
+  }
+
+  async addStudentToClass(classId: string, studentId: string) {
+    const classObjectId = new ObjectId(classId)
+    const studentObjectId = new ObjectId(studentId)
+
+    const existingClass = await databaseService.classes.findOne({ _id: classObjectId })
+    if (!existingClass) throw new Error('Class not found')
+
+    const user = await databaseService.users.findOne({ _id: studentObjectId, role: 'STUDENT' })
+    if (!user) throw new Error('Student not found')
+
+    const currentStudents = existingClass.students || []
+    if (currentStudents.some((s) => s.studentId.toString() === studentObjectId.toString())) {
+      throw new Error('Student is already in the class')
+    }
+
+    const studentSnapshot: StudentSnapshot = {
+      studentId: user._id,
+      studentCode: user.studentCode as string,
+      fullName: user.fullName,
+      email: user.email
+    }
+
+    await databaseService.classes.updateOne(
+      { _id: classObjectId },
+      { 
+        $push: { students: studentSnapshot },
+        $set: { updatedAt: new Date() }
+      }
+    )
+
+    await databaseService.classMembers.updateOne(
+      { classId: classObjectId, studentId: studentObjectId },
+      {
+        $set: {
+          classId: classObjectId,
+          studentId: studentObjectId,
+          semesterId: existingClass.semesterId,
+          status: 'active',
+          updatedAt: new Date()
+        },
+        $setOnInsert: { createdAt: new Date() }
+      },
+      { upsert: true }
+    )
+
+    return { message: 'Student added successfully', student: studentSnapshot }
+  }
+
+  async removeStudentFromClass(classId: string, studentId: string) {
+    const classObjectId = new ObjectId(classId)
+    const studentObjectId = new ObjectId(studentId)
+
+    const existingClass = await databaseService.classes.findOne({ _id: classObjectId })
+    if (!existingClass) throw new Error('Class not found')
+
+    await databaseService.classes.updateOne(
+      { _id: classObjectId },
+      { 
+        // @ts-ignore
+        $pull: { students: { studentId: studentObjectId } },
+        $set: { updatedAt: new Date() }
+      }
+    )
+
+    await databaseService.classMembers.updateOne(
+      { classId: classObjectId, studentId: studentObjectId },
+      { $set: { status: 'inactive', updatedAt: new Date() } }
+    )
+
+    return { message: 'Student removed successfully' }
   }
 }
 

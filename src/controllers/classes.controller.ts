@@ -93,3 +93,32 @@ export const importStudentsController = async (req: Request, res: Response, next
     next(error)
   }
 }
+
+export const addStudentToClassController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params
+    const { studentId } = req.body
+    if (!studentId) {
+      res.status(400).json({ message: 'studentId is required' })
+      return
+    }
+    const result = await classesService.addStudentToClass(id as string, studentId as string)
+    res.json(result)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const removeStudentFromClassController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id, studentId } = req.params
+    if (!studentId) {
+      res.status(400).json({ message: 'studentId is required' })
+      return
+    }
+    const result = await classesService.removeStudentFromClass(id as string, studentId as string)
+    res.json(result)
+  } catch (error) {
+    next(error)
+  }
+}
