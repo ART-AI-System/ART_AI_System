@@ -28,6 +28,17 @@ export const classService = {
     return response.result;
   },
 
+  importStudents: async (classId: string, file: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axiosClient.post<any, UserApiResponse<any>>(`/classes/${classId}/import`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.result;
+  },
+
   createClass: async (data: CreateClassDto): Promise<Class> => {
     const response = await axiosClient.post<any, UserApiResponse<Class>>('/classes', data);
     return response.result;

@@ -5,6 +5,7 @@ import { classService } from '../../services/class.service';
 import { semesterService } from '../../services/semester.service';
 import { subjectService } from '../../services/subject.service';
 import { userService } from '../../services/user.service';
+import { FileUpload } from '../../components/common/FileUpload';
 import type { Class } from '../../types/class';
 
 const AdminClasses = () => {
@@ -19,6 +20,9 @@ const AdminClasses = () => {
   const [manageStudentsClass, setManageStudentsClass] = useState<Class | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+  
+  const [importing, setImporting] = useState(false);
+  const [importSummary, setImportSummary] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     classCode: '',
@@ -109,6 +113,24 @@ const AdminClasses = () => {
       fetchData();
     } catch (err: any) {
       alert('Failed to remove student: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleImportStudents = async (file: File) => {
+    if (!manageStudentsClass) return;
+    setImporting(true);
+    setImportSummary(null);
+    try {
+      const response = await classService.importStudents(manageStudentsClass._id, file);
+      // The response struct is { totalRows, success, failed, errors } from backend
+      setImportSummary(response);
+      const updatedClass = await classService.getClassById(manageStudentsClass._id);
+      setManageStudentsClass(updatedClass);
+      fetchData();
+    } catch (err: any) {
+      alert('Failed to import students: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -324,6 +346,49 @@ const AdminClasses = () => {
             </div>
             
             <div className="p-6 overflow-y-auto flex-1">
+              {importSummary && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <h4 className="font-bold text-blue-800 mb-2">Import Summary</h4>
+                  <ul className="text-sm text-blue-700 space-y-1 mb-3">
+                    <li>Total Rows: {importSummary.totalRows}</li>
+                    <li>Imported: {importSummary.success}</li>
+                    <li>Failed/Skipped: {importSummary.failed}</li>
+                  </ul>
+                  {importSummary.errors && importSummary.errors.length > 0 && (
+                    <div className="max-h-32 overflow-y-auto bg-white p-3 rounded border border-blue-100 text-xs text-red-600">
+                      <ul className="space-y-1">
+                        {importSummary.errors.map((err: any, idx: number) => (
+                          <li key={idx}>Row {err.row}: {err.reason}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <button 
+                    onClick={() => setImportSummary(null)}
+                    className="mt-3 px-4 py-1.5 bg-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+
+              <div className="mb-8 p-5 border border-gray-200 rounded-xl bg-gray-50">
+                <h4 className="font-bold text-[#064E3B] mb-3 text-sm">Batch Import Students (Excel/CSV)</h4>
+                {importing ? (
+                  <div className="flex flex-col items-center justify-center py-6">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#16A34A] mb-2"></div>
+                    <span className="text-sm text-gray-600 font-medium">Uploading and processing...</span>
+                  </div>
+                ) : (
+                  <FileUpload 
+                    onFileSelect={handleImportStudents}
+                    onFileReject={(err) => alert(err)}
+                    accept=".xlsx,.xls,.csv"
+                    className="bg-white"
+                  />
+                )}
+              </div>
+
               <div className="flex gap-2 mb-6">
                 <select 
                   value={selectedStudentId}
@@ -381,7 +446,10 @@ const AdminClasses = () => {
             
             <div className="bg-gray-50 px-6 py-4 flex justify-end border-t border-gray-100">
               <button 
-                onClick={() => setManageStudentsClass(null)}
+                onClick={() => {
+                  setManageStudentsClass(null);
+                  setImportSummary(null);
+                }}
                 className="px-6 py-2 bg-white border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 rounded-xl transition-colors"
               >
                 Close
