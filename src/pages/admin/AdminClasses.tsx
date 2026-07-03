@@ -1,15 +1,21 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Plus, BookOpen, GraduationCap, Users } from 'lucide-react';
-import axiosClient from '../../api/axiosClient';
+import { classService } from '../../services/class.service';
+import { semesterService } from '../../services/semester.service';
+import { subjectService } from '../../services/subject.service';
+import { userService } from '../../services/user.service';
+import type { Class } from '../../types/class';
 
 const AdminClasses = () => {
-  const [classes, setClasses] = useState<any[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [semesters, setSemesters] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     classCode: '',
@@ -22,16 +28,16 @@ const AdminClasses = () => {
     setLoading(true);
     try {
       const [clsRes, semRes, subRes, tchrRes] = await Promise.all([
-        axiosClient.get('/classes'),
-        axiosClient.get('/semesters'),
-        axiosClient.get('/subjects'),
-        axiosClient.get('/users?role=LECTURER')
+        classService.getClasses(),
+        semesterService.getSemesters(),
+        subjectService.getSubjects(),
+        userService.getUsers({ role: 'LECTURER' })
       ]);
-      setClasses((clsRes as any).result || []);
-      setSemesters((semRes as any).result || []);
-      setSubjects((subRes as any).result || []);
-      setTeachers((tchrRes as any).result?.users || []);
-    } catch (err) {
+      setClasses(clsRes || []);
+      setSemesters(semRes || []);
+      setSubjects(subRes || []);
+      setTeachers(tchrRes.users || []);
+    } catch (err: any) {
       console.error('Failed to fetch data:', err);
     } finally {
       setLoading(false);
@@ -39,10 +45,43 @@ const AdminClasses = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
-  const handleAddClass = async (e: React.FormEvent) => {
+  const openAddModal = () => {
+    setEditingId(null);
+    setFormData({
+      classCode: '',
+      semesterId: '',
+      subjectId: '',
+      lecturerId: ''
+    });
+    setShowAddModal(true);
+  };
+
+  const openEditModal = (cls: Class) => {
+    setEditingId(cls._id);
+    setFormData({
+      classCode: cls.classCode,
+      semesterId: cls.semesterId,
+      subjectId: cls.subjectId,
+      lecturerId: cls.lecturer.lecturerId
+    });
+    setShowAddModal(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this class?')) return;
+    try {
+      await classService.deleteClass(id);
+      fetchData();
+    } catch (err: any) {
+      alert('Failed to delete class: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleSubmitClass = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Find the selected subject and teacher to build snapshots
@@ -71,8 +110,14 @@ const AdminClasses = () => {
     };
     
     try {
-      await axiosClient.post('/classes', payload);
+      if (editingId) {
+        // Build an UpdateClassDto. It expects isActive, etc, or just partial fields.
+        await classService.updateClass(editingId, payload);
+      } else {
+        await classService.createClass(payload);
+      }
       setShowAddModal(false);
+      setEditingId(null);
       setFormData({
         classCode: '',
         semesterId: '',
@@ -81,7 +126,7 @@ const AdminClasses = () => {
       });
       fetchData();
     } catch (err: any) {
-      alert('Failed to add class: ' + (err.response?.data?.message || err.message));
+      alert(`Failed to ${editingId ? 'update' : 'add'} class: ` + (err.response?.data?.message || err.message));
     }
   };
 
@@ -91,7 +136,7 @@ const AdminClasses = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-bold text-[#064E3B]">Class Management</h2>
           <button 
-            onClick={() => setShowAddModal(true)}
+            onClick={openAddModal}
             className="bg-[#16A34A] text-white px-4 py-2 rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center shadow-md shadow-green-500/20"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -139,7 +184,10 @@ const AdminClasses = () => {
                 
                 <div className="mt-auto pt-4 flex justify-between items-center">
                   <button className="text-[#16A34A] text-sm font-bold hover:underline">Manage Students</button>
-                  <button className="text-gray-500 text-sm font-bold hover:underline">Edit</button>
+                  <div className="space-x-3 flex">
+                    <button onClick={() => openEditModal(cls)} className="text-gray-500 text-sm font-bold hover:underline">Edit</button>
+                    <button onClick={() => handleDelete(cls._id)} className="text-red-500 text-sm font-bold hover:underline">Delete</button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -152,10 +200,10 @@ const AdminClasses = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="bg-[#064E3B] px-6 py-4 flex justify-between items-center text-white">
-              <h3 className="font-bold text-lg flex items-center"><BookOpen className="w-5 h-5 mr-2" /> Create New Class</h3>
+              <h3 className="font-bold text-lg flex items-center"><BookOpen className="w-5 h-5 mr-2" /> {editingId ? 'Edit Class' : 'Create New Class'}</h3>
             </div>
             
-            <form onSubmit={handleAddClass} className="p-6 space-y-5">
+            <form onSubmit={handleSubmitClass} className="p-6 space-y-5">
               <div>
                 <label className="block text-sm font-bold text-[#064E3B] mb-1">Class Code</label>
                 <input 
@@ -227,7 +275,7 @@ const AdminClasses = () => {
                   type="submit" 
                   className="px-5 py-2 bg-[#16A34A] text-white font-bold rounded-xl hover:bg-green-700 transition-colors shadow-md shadow-green-500/20"
                 >
-                  Create Class
+                  {editingId ? 'Save Changes' : 'Create Class'}
                 </button>
               </div>
             </form>

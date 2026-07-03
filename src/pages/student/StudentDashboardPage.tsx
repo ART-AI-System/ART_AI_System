@@ -1,13 +1,46 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../config/routes';
 import { SubjectCard } from '../../components/common/SubjectCard';
 import { Card } from '../../components/common/Card';
-import { MOCK_CLASSES } from '../../mocks/classes.mock';
+import { classService } from '../../services/class.service';
 import { Heatmap } from '../../components/common/Heatmap';
 import { EmptyState } from '../../components/common/EmptyState';
 
 const StudentDashboardPage = () => {
+  const [classes, setClasses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const response = await classService.getStudentHome();
+        const subjects = response?.subjects || [];
+        
+        const mappedClasses = subjects.map((sub: any) => ({
+          id: sub.classId,
+          code: sub.subjectCode || 'UNK',
+          name: sub.subjectName || 'Unknown Subject',
+          classCode: sub.classCode || 'Unknown Class',
+          slots: 30, // Fallback as backend doesn't provide slots currently
+          image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80', // Fallback
+          lecturerName: sub.lecturerName || 'Unknown Lecturer',
+          lecturerAvatarColor: { bg: 'EBF4FF', text: '0072BC' }
+        }));
+        
+        setClasses(mappedClasses);
+      } catch (err) {
+        console.error('Failed to fetch student classes:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchClasses();
+  }, []);
+
   return (
     <div className="space-y-8">
       {/* Top Section: Semester Selector & Heatmap */}
@@ -61,17 +94,23 @@ const StudentDashboardPage = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {MOCK_CLASSES.map((subject) => (
-            <SubjectCard key={subject.id} {...subject} />
-          ))}
+        {loading ? (
+          <div className="flex justify-center items-center h-40 col-span-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
+            {classes.map((subject) => (
+              <SubjectCard key={subject.id} {...subject} />
+            ))}
 
-          <EmptyState 
-            icon={<Plus className="w-6 h-6" />} 
-            title="Enroll New Subject" 
-            onClick={() => {}} 
-          />
-        </div>
+            <EmptyState 
+              icon={<Plus className="w-6 h-6" />} 
+              title="Enroll New Subject" 
+              onClick={() => {}} 
+            />
+          </div>
+        )}
       </div>
     </div>
   );
