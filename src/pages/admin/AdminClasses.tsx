@@ -12,10 +12,13 @@ const AdminClasses = () => {
   const [semesters, setSemesters] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
+  const [allStudents, setAllStudents] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [manageStudentsClass, setManageStudentsClass] = useState<Class | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   
   const [formData, setFormData] = useState({
     classCode: '',
@@ -27,16 +30,18 @@ const AdminClasses = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [clsRes, semRes, subRes, tchrRes] = await Promise.all([
+      const [clsRes, semRes, subRes, tchrRes, stdRes] = await Promise.all([
         classService.getClasses(),
         semesterService.getSemesters(),
         subjectService.getSubjects(),
-        userService.getUsers({ role: 'LECTURER' })
+        userService.getUsers({ role: 'LECTURER' }),
+        userService.getUsers({ role: 'STUDENT' })
       ]);
       setClasses(clsRes || []);
       setSemesters(semRes || []);
       setSubjects(subRes || []);
       setTeachers(tchrRes.users || []);
+      setAllStudents(stdRes.users || []);
     } catch (err: any) {
       console.error('Failed to fetch data:', err);
     } finally {
@@ -78,6 +83,32 @@ const AdminClasses = () => {
       fetchData();
     } catch (err: any) {
       alert('Failed to delete class: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleAddStudent = async () => {
+    if (!manageStudentsClass || !selectedStudentId) return;
+    try {
+      await classService.addStudentToClass(manageStudentsClass._id, selectedStudentId);
+      const updatedClass = await classService.getClassById(manageStudentsClass._id);
+      setManageStudentsClass(updatedClass);
+      fetchData();
+      setSelectedStudentId('');
+    } catch (err: any) {
+      alert('Failed to add student: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleRemoveStudent = async (studentId: string) => {
+    if (!manageStudentsClass) return;
+    if (!window.confirm('Are you sure you want to remove this student?')) return;
+    try {
+      await classService.removeStudentFromClass(manageStudentsClass._id, studentId);
+      const updatedClass = await classService.getClassById(manageStudentsClass._id);
+      setManageStudentsClass(updatedClass);
+      fetchData();
+    } catch (err: any) {
+      alert('Failed to remove student: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -183,7 +214,7 @@ const AdminClasses = () => {
                 </div>
                 
                 <div className="mt-auto pt-4 flex justify-between items-center">
-                  <button className="text-[#16A34A] text-sm font-bold hover:underline">Manage Students</button>
+                  <button onClick={() => setManageStudentsClass(cls)} className="text-[#16A34A] text-sm font-bold hover:underline">Manage Students</button>
                   <div className="space-x-3 flex">
                     <button onClick={() => openEditModal(cls)} className="text-gray-500 text-sm font-bold hover:underline">Edit</button>
                     <button onClick={() => handleDelete(cls._id)} className="text-red-500 text-sm font-bold hover:underline">Delete</button>
@@ -279,6 +310,83 @@ const AdminClasses = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Students Modal */}
+      {manageStudentsClass && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="bg-[#064E3B] px-6 py-4 flex justify-between items-center text-white">
+              <h3 className="font-bold text-lg flex items-center"><Users className="w-5 h-5 mr-2" /> Manage Students - {manageStudentsClass.classCode}</h3>
+              <button onClick={() => setManageStudentsClass(null)} className="text-white hover:text-green-200">✕</button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="flex gap-2 mb-6">
+                <select 
+                  value={selectedStudentId}
+                  onChange={e => setSelectedStudentId(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-green-500/20"
+                >
+                  <option value="" disabled>Select Student to Add</option>
+                  {allStudents.filter(s => !(manageStudentsClass.students || []).some(cs => cs.studentId === s._id)).map(student => (
+                    <option key={student._id} value={student._id}>{student.studentCode} - {student.fullName}</option>
+                  ))}
+                </select>
+                <button 
+                  onClick={handleAddStudent}
+                  disabled={!selectedStudentId}
+                  className="px-6 py-2 bg-[#16A34A] text-white font-bold rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+
+              <div className="border border-gray-100 rounded-xl overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100">
+                      <th className="px-4 py-3 text-sm font-bold text-gray-700">Code</th>
+                      <th className="px-4 py-3 text-sm font-bold text-gray-700">Name</th>
+                      <th className="px-4 py-3 text-sm font-bold text-gray-700 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(manageStudentsClass.students || []).length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="px-4 py-8 text-center text-gray-500 text-sm">No students enrolled.</td>
+                      </tr>
+                    ) : (
+                      (manageStudentsClass.students || []).map((student) => (
+                        <tr key={student.studentId} className="border-b border-gray-50 hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-semibold">{student.studentCode}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{student.fullName}</td>
+                          <td className="px-4 py-3 text-right">
+                            <button 
+                              onClick={() => handleRemoveStudent(student.studentId)}
+                              className="text-red-500 text-sm font-bold hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 px-6 py-4 flex justify-end border-t border-gray-100">
+              <button 
+                onClick={() => setManageStudentsClass(null)}
+                className="px-6 py-2 bg-white border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

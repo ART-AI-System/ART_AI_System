@@ -18,6 +18,16 @@ export const classService = {
     return response.result;
   },
 
+  addStudentToClass: async (classId: string, studentId: string): Promise<any> => {
+    const response = await axiosClient.post<any, UserApiResponse<any>>(`/classes/${classId}/students`, { studentId });
+    return response.result;
+  },
+
+  removeStudentFromClass: async (classId: string, studentId: string): Promise<any> => {
+    const response = await axiosClient.delete<any, UserApiResponse<any>>(`/classes/${classId}/students/${studentId}`);
+    return response.result;
+  },
+
   createClass: async (data: CreateClassDto): Promise<Class> => {
     const response = await axiosClient.post<any, UserApiResponse<Class>>('/classes', data);
     return response.result;
