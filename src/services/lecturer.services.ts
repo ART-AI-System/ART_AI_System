@@ -8,7 +8,15 @@ class LecturerService {
    * Helper to verify if lecturer teaches the class
    */
   private async verifyClassOwnership(lecturerOid: ObjectId, classOid: ObjectId) {
-    const cls = await databaseService.classes.findOne({ _id: classOid, lecturerId: lecturerOid })
+    const cls = await databaseService.classes.findOne({
+      _id: classOid,
+      $or: [
+        { lecturerId: lecturerOid },
+        { lecturerId: lecturerOid.toHexString() },
+        { 'lecturer.lecturerId': lecturerOid },
+        { 'lecturer.lecturerId': lecturerOid.toHexString() }
+      ]
+    } as any)
     if (!cls) {
       throw new ErrorWithStatus({
         message: 'Lecturer is not assigned to this class or class does not exist',
@@ -31,7 +39,25 @@ class LecturerService {
     }
 
     const classes = await databaseService.classes
-      .find({ lecturerId: lecturerOid, semesterId: currentSemester._id, isActive: true })
+      .find({
+        $and: [
+          {
+            $or: [
+              { lecturerId: lecturerOid },
+              { lecturerId: lecturerId },
+              { 'lecturer.lecturerId': lecturerOid },
+              { 'lecturer.lecturerId': lecturerId }
+            ]
+          },
+          {
+            $or: [
+              { semesterId: currentSemester._id },
+              { semesterId: currentSemester._id.toHexString() }
+            ]
+          },
+          { isActive: true }
+        ]
+      } as any)
       .toArray()
 
     return {
@@ -42,8 +68,8 @@ class LecturerService {
       classes: classes.map((c: any) => ({
         classId: c._id,
         classCode: c.classCode,
-        subjectCode: c.subjectName, // fallback
-        subjectName: c.subjectName,
+        subjectCode: c.subjectSnapshot?.code || c.courseCode,
+        subjectName: c.subjectSnapshot?.name || 'Unknown Subject',
         totalStudents: c.students?.length || 0
       }))
     }
