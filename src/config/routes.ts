@@ -27,15 +27,23 @@ export const ROUTES = {
   ADMIN_FEEDBACK: '/dashboard/admin/feedback',
   ADMIN_SETTINGS: '/dashboard/admin/settings',
 
+  // Assignments & Materials
+  ASSIGNMENTS: '/assignments',
+  ASSIGNMENT_DETAIL: '/assignments/:id',
+  CREATE_ASSIGNMENT: '/lecturer/subjects/:id/create-assignment',
+
+  // Submissions
+  SUBMISSION_DETAIL: '/submissions/:id',
+  ASSIGNMENT_SUBMISSIONS: '/assignments/:id/submissions',
+  CLASS_GRADE_ITEMS: '/classes/:classId/grade-items',
+
   // Academic Structure
   CLASSES: '/classes',
   SUBJECT_DETAIL: '/subjects/:id',
   CLASS_DETAIL: '/student/classes/:id',
-  CLASS_GRADE_ITEMS: '/classes/:classId/grade-items',
 
   // Assignment Submission Management
   GRADE_ITEM_SUBMISSIONS: '/grade-items/:gradeItemId/submissions',
-  SUBMISSION_DETAIL: '/submissions/:id',
   MY_SUBMISSIONS: '/my-submissions',
 
   // Lecturer Review

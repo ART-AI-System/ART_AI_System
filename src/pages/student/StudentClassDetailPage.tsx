@@ -173,7 +173,7 @@ const ClassDetailPage = () => {
                           <p className="text-xs text-gray-500 font-medium">Pending submission</p>
                         </div>
                         <Link 
-                          to={ROUTES.SUBMISSION_DETAIL.replace(':id', '1')} 
+                          to={`/student/assignments/1/submit`} 
                           className="px-6 py-2.5 bg-gradient-to-br from-[#F26F21] to-[#F79C65] text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 hover:opacity-90 transition-opacity flex items-center"
                         >
                           Start Assignment <ArrowRight className="w-4 h-4 ml-2" />

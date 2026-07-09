@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Info, Users, Calendar, Settings2, CheckCircle, BrainCircuit } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 
 const LecturerAssignmentCreate = () => {
   const navigate = useNavigate();
+  const { assignmentId } = useParams();
+  const isEditMode = !!assignmentId;
+
   const [classes, setClasses] = useState<any[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,21 +25,44 @@ const LecturerAssignmentCreate = () => {
   const [maxAiInteractions, setMaxAiInteractions] = useState(10);
 
   useEffect(() => {
-    const fetchClasses = async () => {
+    const fetchData = async () => {
       try {
         const response: any = await axiosClient.get('/lecturer/home');
         if (response.result && response.result.classes) {
           setClasses(response.result.classes);
         }
+
+        if (isEditMode) {
+          const assignmentRes: any = await axiosClient.get(`/grade-items/standalone/${assignmentId}`);
+          const item = assignmentRes.result;
+          if (item) {
+            setTitle(item.title || '');
+            setDescription(item.description || '');
+            if (item.deadline) {
+              // Convert to YYYY-MM-DDTHH:mm format for datetime-local input
+              const date = new Date(item.deadline);
+              const formatted = date.toISOString().slice(0, 16);
+              setDeadline(formatted);
+            }
+            setWeight(item.weight || 10);
+            setMaxScore(item.maxScore || 10);
+            setAiInteractionRequired(item.aiInteractionRequired !== false);
+            setMinAiInteractions(item.minAiInteractions || 5);
+            setMaxAiInteractions(item.maxAiInteractions || 10);
+            if (item.classId) {
+              setSelectedClasses([item.classId]);
+            }
+          }
+        }
       } catch (err) {
-        console.error('Failed to fetch classes:', err);
-        setError('Failed to load your classes.');
+        console.error('Failed to fetch data:', err);
+        setError('Failed to load data.');
       } finally {
         setLoading(false);
       }
     };
-    fetchClasses();
-  }, []);
+    fetchData();
+  }, [assignmentId, isEditMode]);
 
   const handleClassToggle = (classId: string) => {
     setSelectedClasses(prev => 
@@ -63,25 +89,32 @@ const LecturerAssignmentCreate = () => {
     setError('');
 
     try {
-      // For each selected class, create a grade item (assignment)
-      const promises = selectedClasses.map(classId => 
-        axiosClient.post(`/classes/${classId}/grade-items`, {
-          title,
-          description,
-          weight,
-          maxScore,
-          deadline: new Date(deadline).toISOString(),
-          aiInteractionRequired,
-          minAiInteractions,
-          maxAiInteractions
-        })
-      );
+      const payload = {
+        title,
+        description,
+        weight,
+        maxScore,
+        deadline: new Date(deadline).toISOString(),
+        aiInteractionRequired,
+        minAiInteractions,
+        maxAiInteractions
+      };
 
-      await Promise.all(promises);
-      navigate('/lecturer/dashboard');
+      if (isEditMode) {
+        // Edit mode: only update this specific assignment
+        await axiosClient.put(`/grade-items/standalone/${assignmentId}`, payload);
+      } else {
+        // Create mode: For each selected class, create a grade item (assignment)
+        const promises = selectedClasses.map(classId => 
+          axiosClient.post(`/classes/${classId}/grade-items`, payload)
+        );
+        await Promise.all(promises);
+      }
+      
+      navigate(-1);
     } catch (err: any) {
-      console.error('Failed to create assignment:', err);
-      setError(err.response?.data?.message || 'An error occurred while creating the assignment.');
+      console.error('Failed to save assignment:', err);
+      setError(err.response?.data?.message || 'An error occurred while saving the assignment.');
       setSubmitting(false);
     }
   };

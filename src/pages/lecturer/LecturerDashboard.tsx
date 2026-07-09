@@ -10,7 +10,7 @@ const LecturerDashboard = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const response: any = await axiosClient.get('/lecturers/home');
+        const response: any = await axiosClient.get('/lecturer/home');
         setData(response.result);
       } catch (error) {
         console.error('Failed to load dashboard data:', error);

@@ -7,6 +7,7 @@ const LecturerSubjectDetail = () => {
   const { subjectId } = useParams();
   const [activeTab, setActiveTab] = useState('classes');
   const [classData, setClassData] = useState<any>(null);
+  const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,7 +15,7 @@ const LecturerSubjectDetail = () => {
     // For now, we reuse the class overview or dashboard endpoint to simulate it
     const fetchClassOverview = async () => {
       try {
-        const response: any = await axiosClient.get(`/lecturers/classes/${subjectId}/overview`);
+        const response: any = await axiosClient.get(`/lecturer/classes/${subjectId}/overview`);
         setClassData(response.result);
       } catch (error) {
         console.error('Failed to load subject details:', error);
@@ -22,8 +23,19 @@ const LecturerSubjectDetail = () => {
         setLoading(false);
       }
     };
+    
+    const fetchAssignments = async () => {
+      try {
+        const res: any = await axiosClient.get(`/classes/${subjectId}/grade-items`);
+        setAssignments(res.result || []);
+      } catch (error) {
+        console.error('Failed to load assignments:', error);
+      }
+    };
+
     if (subjectId) {
       fetchClassOverview();
+      fetchAssignments();
     }
   }, [subjectId]);
 
@@ -146,7 +158,7 @@ const LecturerSubjectDetail = () => {
                     <span className="text-sm font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full flex items-center">
                       <Check className="w-4 h-4 mr-1" /> Synced
                     </span>
-                    <button className="p-2 text-gray-400 hover:text-[#4318FF] transition-colors"><Edit2 className="w-5 h-5" /></button>
+                    <Link to="/lecturer/slots/1/edit" className="p-2 text-gray-400 hover:text-[#4318FF] transition-colors"><Edit2 className="w-5 h-5" /></Link>
                   </div>
                 </div>
               </div>
@@ -169,24 +181,28 @@ const LecturerSubjectDetail = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm flex items-center justify-between group">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-xl bg-orange-50 text-[#F26F21] flex items-center justify-center mr-4">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[#1B2559] text-lg">Assignment 1</h3>
-                    <div className="flex items-center text-sm font-medium text-gray-500 mt-1">
-                      <Calendar className="w-4 h-4 mr-1" /> Due: June 25, 2026
-                      <span className="mx-3 text-gray-300">|</span>
-                      <Copy className="w-4 h-4 mr-1" /> Cloned to class
+              {assignments.length > 0 ? assignments.map((assignment, idx) => (
+                <div key={assignment._id || idx} className="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm flex items-center justify-between group">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 rounded-xl bg-orange-50 text-[#F26F21] flex items-center justify-center mr-4">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-[#1B2559] text-lg">{assignment.title}</h3>
+                      <div className="flex items-center text-sm font-medium text-gray-500 mt-1">
+                        <Calendar className="w-4 h-4 mr-1" /> Due: {new Date(assignment.deadline).toLocaleDateString()}
+                        <span className="mx-3 text-gray-300">|</span>
+                        <Copy className="w-4 h-4 mr-1" /> Weight: {assignment.weight}%
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center space-x-3">
+                    <Link to={`/lecturer/assignments/${assignment._id}/edit`} className="p-2 text-gray-400 hover:text-[#4318FF] transition-colors"><Edit2 className="w-5 h-5" /></Link>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <button className="p-2 text-gray-400 hover:text-[#4318FF] transition-colors"><Edit2 className="w-5 h-5" /></button>
-                </div>
-              </div>
+              )) : (
+                <div className="text-gray-500 text-center py-10">No global assignments created yet.</div>
+              )}
             </div>
           </div>
         )}
@@ -203,9 +219,9 @@ const LecturerSubjectDetail = () => {
                 <button className="bg-white border border-gray-200 hover:border-[#F26F21] hover:text-[#F26F21] text-[#1B2559] px-5 py-2.5 rounded-xl font-bold shadow-sm transition-all flex items-center">
                   <UploadCloud className="w-4 h-4 mr-2" /> Import CSV
                 </button>
-                <button className="bg-[#F26F21] hover:bg-[#E86115] text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-orange-500/20 transition-all flex items-center">
+                <Link to="/lecturer/tests/create" className="bg-[#F26F21] hover:bg-[#E86115] text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-orange-500/20 transition-all flex items-center">
                   <Plus className="w-5 h-5 mr-2" /> Create Test
-                </button>
+                </Link>
               </div>
             </div>
 

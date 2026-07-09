@@ -47,11 +47,11 @@ const LecturerCreateTestPage = () => {
     try {
       await axiosClient.post('/classes/661122334455667788990021/tests', payload);
       alert('Test created and published successfully!');
-      navigate(ROUTES.SUBJECT_DETAIL.replace(':id', '1'));
+      navigate(-1);
     } catch (err) {
       console.error('Failed to create test via API', err);
       alert('Test created and saved successfully!');
-      navigate(ROUTES.SUBJECT_DETAIL.replace(':id', '1'));
+      navigate(-1);
     } finally {
       setSaving(false);
     }
@@ -62,14 +62,14 @@ const LecturerCreateTestPage = () => {
       {/* TOP HEADER */}
       <header className="h-24 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-4 md:px-10 sticky top-0 z-30 shrink-0">
         <div className="flex items-center">
-          <Link to={ROUTES.SUBJECT_DETAIL.replace(':id', '1')} className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 hover:bg-[#F26F21] hover:border-[#F26F21] text-gray-500 hover:text-white flex items-center justify-center transition-all mr-5 shadow-sm shrink-0">
+          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 hover:bg-[#F26F21] hover:border-[#F26F21] text-gray-500 hover:text-white flex items-center justify-center transition-all mr-5 shadow-sm shrink-0">
             <ArrowLeft className="w-5 h-5" />
-          </Link>
+          </button>
           <div className="flex flex-col">
             <div className="flex flex-wrap items-center text-sm font-bold text-gray-400 mb-1 gap-1">
-              <Link to={ROUTES.CLASSES} className="hover:text-[#4318FF] transition-colors">My Subjects</Link>
+              <Link to="/lecturer/subjects" className="hover:text-[#4318FF] transition-colors">My Subjects</Link>
               <ChevronRight className="w-4 h-4" />
-              <Link to={ROUTES.SUBJECT_DETAIL.replace(':id', '1')} className="hover:text-[#4318FF] transition-colors">PRJ301</Link>
+              <button onClick={() => navigate(-1)} className="hover:text-[#4318FF] transition-colors">Subject Detail</button>
               <ChevronRight className="w-4 h-4" />
               <span className="text-[#F26F21]">Create Test</span>
             </div>

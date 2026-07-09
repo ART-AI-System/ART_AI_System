@@ -15,6 +15,9 @@ import LecturerGradingSubjects from './pages/lecturer/LecturerGradingSubjects';
 import LecturerGradingList from './pages/lecturer/LecturerGradingList';
 import LecturerGradingDetail from './pages/lecturer/LecturerGradingDetail';
 import LecturerAssignmentCreate from './pages/lecturer/LecturerAssignmentCreate';
+import LecturerSubmissionList from './pages/lecturer/LecturerSubmissionList';
+import LecturerCreateTestPage from './pages/lecturer/LecturerCreateTestPage';
+import LecturerEditSlotPage from './pages/lecturer/LecturerEditSlotPage';
 
 // Admin Pages
 import AdminLayout from './layouts/AdminLayout';
@@ -58,6 +61,11 @@ function AppRoutes() {
         <Route path="dashboard" element={<LecturerDashboard />} />
         <Route path="subjects" element={<LecturerSubjects />} />
         <Route path="subjects/:subjectId" element={<LecturerSubjectDetail />} />
+        <Route path="assignments/create" element={<LecturerAssignmentCreate />} />
+        <Route path="assignments/:assignmentId/edit" element={<LecturerAssignmentCreate />} />
+        <Route path="tests/create" element={<LecturerCreateTestPage />} />
+        <Route path="slots/:slotId/edit" element={<LecturerEditSlotPage />} />
+        <Route path="assignments/:assignmentId/submissions" element={<LecturerSubmissionList />} />
         <Route path="grading" element={<LecturerGradingSubjects />} />
         <Route path="grading/:classId" element={<LecturerGradingList />} />
         <Route path="reports" element={<div className="text-xl font-bold">Reports Page</div>} />

@@ -1,27 +1,45 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Check, Send } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import AssignmentDetails from '../../components/student/AssignmentDetails';
 import FileUploadSection from '../../components/student/FileUploadSection';
 import AiDeclarationForm from '../../components/student/AiDeclarationForm';
-import axiosClient from '../../api/axiosClient';
+import { assignmentService } from '../../services/assignment.service';
+import { submissionService } from '../../services/submission.service';
 
 const StudentSubmission = () => {
   const navigate = useNavigate();
-  const { assignmentId } = useParams();
-  const [assignment, setAssignment] = useState<any>(null);
+  const { assignmentId } = useParams<{ assignmentId: string }>();
+  const [assignment, setAssignment] = useState<unknown>(null);
+  const [submission, setSubmission] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  React.useEffect(() => {
-    const fetchAssignment = async () => {
+  useEffect(() => {
+    const fetchAssignmentAndSubmission = async () => {
       if (!assignmentId) return;
       try {
-        const response: any = await axiosClient.get(`/grade-items/standalone/${assignmentId}`);
-        setAssignment(response.result);
+        const [assignmentRes, submissionRes] = await Promise.all([
+          assignmentService.getAssignmentDetail(assignmentId),
+          submissionService.getMySubmission(assignmentId).catch(() => null)
+        ]);
+        
+        // Ensure we properly extract the data from AxiosResponse or API Wrapper
+        const assignData: any = assignmentRes;
+        setAssignment(assignData.data?.result || assignData.result || assignData);
+        
+        if (submissionRes) {
+          const subData: any = submissionRes;
+          const extractedSub = subData.data?.result || subData.result || subData;
+          setSubmission(extractedSub);
+          if (subData?.status === 'FINALIZED') {
+            // Optional: redirect to success or show finalized view
+            // navigate('/student/assignments/success');
+          }
+        }
       } catch (err) {
         console.error('Failed to load assignment details', err);
         setError('Failed to load assignment details.');
@@ -29,11 +47,11 @@ const StudentSubmission = () => {
         setLoading(false);
       }
     };
-    fetchAssignment();
+    fetchAssignmentAndSubmission();
   }, [assignmentId]);
 
-  const handleSubmit = async (aiDeclarationData: any) => {
-    if (!file) {
+  const handleSubmit = async () => {
+    if (!file && !submission) {
       alert('Please upload a file first!');
       return;
     }
@@ -42,24 +60,14 @@ const StudentSubmission = () => {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      // We parse the aiDeclarationData from the form into the required schema if needed
-      // but for now let's just stringify what we have
-      formData.append('aiDeclaration', JSON.stringify({
-        useAi: true,
-        details: Object.values(aiDeclarationData)
-      }));
-
-      // Adjust endpoint based on backend setup, usually /assignments/:assignmentId/submissions
-      // For now we try this endpoint
-      await axiosClient.post(`/assignments/${assignmentId}/submissions`, formData);
-
+      if (file) {
+        await submissionService.createSubmission(assignmentId!, file);
+      }
       navigate('/student/assignments/success');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Submission error:', err);
-      setError(err.response?.data?.message || 'Failed to submit assignment. Please try again.');
+      const error = err as { response?: { data?: { message?: string } }, message?: string };
+      setError(error.response?.data?.message || 'Failed to submit assignment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
