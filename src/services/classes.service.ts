@@ -139,6 +139,15 @@ class ClassesService {
         }
       }
 
+      const classesWithSameSubject = await databaseService.classes
+        .find({ semesterId: existingClass.semesterId, subjectId: existingClass.subjectId })
+        .toArray()
+      const classIdsWithSameSubject = classesWithSameSubject.map(c => c._id)
+
+      const existingEnrollments = await databaseService.classMembers
+        .find({ classId: { $in: classIdsWithSameSubject }, status: 'active' })
+        .toArray()
+
       if (user) {
         // Check if already in class
         const isAlreadyInClass = currentStudents.some(s => s.studentId.toString() === user!._id.toString()) || 
@@ -146,6 +155,15 @@ class ClassesService {
         
         if (isAlreadyInClass) {
           errors.push({ row: rowNumber, reason: `Student ${email} is already in the class` })
+          failed++
+          continue
+        }
+
+        const isEnrolledInAnotherClass = existingEnrollments.some(e => e.studentId.toString() === user!._id.toString())
+        if (isEnrolledInAnotherClass) {
+          const enrolledClassId = existingEnrollments.find(e => e.studentId.toString() === user!._id.toString())?.classId
+          const enrolledClass = classesWithSameSubject.find(c => c._id.toString() === enrolledClassId?.toString())
+          errors.push({ row: rowNumber, reason: `Student ${email} is already enrolled in this subject in class ${enrolledClass?.classCode}` })
           failed++
           continue
         }
@@ -208,6 +226,22 @@ class ClassesService {
       throw new Error('Student is already in the class')
     }
 
+    const classesWithSameSubject = await databaseService.classes
+      .find({ semesterId: existingClass.semesterId, subjectId: existingClass.subjectId })
+      .toArray()
+    const classIdsWithSameSubject = classesWithSameSubject.map(c => c._id)
+
+    const existingEnrollment = await databaseService.classMembers.findOne({
+      studentId: studentObjectId,
+      classId: { $in: classIdsWithSameSubject },
+      status: 'active'
+    })
+    
+    if (existingEnrollment) {
+      const enrolledClass = classesWithSameSubject.find(c => c._id.toString() === existingEnrollment.classId.toString())
+      throw new Error(`Student is already enrolled in this subject in class ${enrolledClass?.classCode}`)
+    }
+
     const studentSnapshot: StudentSnapshot = {
       studentId: user._id,
       studentCode: user.studentCode as string,
@@ -263,6 +297,98 @@ class ClassesService {
     )
 
     return { message: 'Student removed successfully' }
+  }
+
+  async promoteCohort(
+    sourceClassId: string,
+    targetSemesterId: string,
+    assignments: { subjectId: string; lecturerId: string }[]
+  ) {
+    const classObjectId = new ObjectId(sourceClassId)
+    const semesterObjectId = new ObjectId(targetSemesterId)
+    
+    // Find the source class to get students and classCode
+    const sourceClass = await databaseService.classes.findOne({ _id: classObjectId })
+    if (!sourceClass) throw new Error('Source class not found')
+
+    const students = sourceClass.students || []
+    
+    const results = []
+    
+    for (const assignment of assignments) {
+      const subjectObjectId = new ObjectId(assignment.subjectId)
+      const lecturerObjectId = new ObjectId(assignment.lecturerId)
+      
+      // Fetch subject and lecturer snapshots
+      const subject = await databaseService.subjects.findOne({ _id: subjectObjectId })
+      const lecturer = await databaseService.users.findOne({ _id: lecturerObjectId })
+      
+      if (!subject || !lecturer) {
+        continue;
+      }
+      
+      // Check for duplicate class (same cohort, same semester, same subject)
+      const existingClass = await databaseService.classes.findOne({
+        classCode: sourceClass.classCode,
+        semesterId: semesterObjectId,
+        subjectId: subjectObjectId
+      })
+      if (existingClass) {
+        throw new Error(`Class ${sourceClass.classCode} already has subject ${subject.code} in the selected semester.`)
+      }
+      
+      const newClass: ClassType = {
+        classCode: sourceClass.classCode,
+        semesterId: semesterObjectId,
+        subjectId: subjectObjectId,
+        subjectSnapshot: {
+          subjectId: subjectObjectId,
+          code: subject.code,
+          name: subject.name
+        },
+        lecturer: {
+          lecturerId: lecturerObjectId,
+          fullName: lecturer.fullName,
+          email: lecturer.email
+        },
+        students: students,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      
+      const createdClass = await this.createClass(newClass)
+      
+      // Also copy class_members for all students
+      if (students.length > 0) {
+        const bulkOps = students.map(student => ({
+          updateOne: {
+            filter: { classId: createdClass._id, studentId: student.studentId },
+            update: {
+              $set: {
+                classId: createdClass._id,
+                studentId: student.studentId,
+                semesterId: semesterObjectId,
+                status: 'active',
+                updatedAt: new Date()
+              },
+              $setOnInsert: {
+                createdAt: new Date()
+              }
+            },
+            upsert: true
+          }
+        }))
+        await databaseService.classMembers.bulkWrite(bulkOps)
+      }
+      
+      results.push(createdClass)
+    }
+    
+    return {
+      message: 'Cohort promoted successfully',
+      createdClassesCount: results.length
+    }
   }
 }
 

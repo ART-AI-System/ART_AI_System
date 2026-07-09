@@ -20,14 +20,27 @@ class StudentService {
       .find({ _id: { $in: classIds }, isActive: true })
       .toArray()
 
-    return classes.map((c: any) => ({
-      subjectId: c._id, // Using class ID as fallback if subjectId is missing
-      subjectCode: c.subjectName, // fallback
-      subjectName: c.subjectName,
-      classId: c._id,
-      classCode: c.classCode,
-      lecturerName: c.lecturer?.fullName
-    }))
+    const subjectIds = classes.map((c: any) => c.subjectId).filter(Boolean)
+    const lecturerIds = classes.map((c: any) => c.lecturer?.lecturerId || c.lecturerId).filter(Boolean)
+
+    const [subjects, lecturers] = await Promise.all([
+      databaseService.subjects.find({ _id: { $in: subjectIds } }).toArray(),
+      databaseService.users.find({ _id: { $in: lecturerIds } }).toArray()
+    ])
+
+    return classes.map((c: any) => {
+      const subject = subjects.find((s) => s._id.toString() === (c.subjectId || c.subjectSnapshot?.subjectId)?.toString())
+      const lecturer = lecturers.find((l) => l._id.toString() === (c.lecturerId || c.lecturer?.lecturerId)?.toString())
+      
+      return {
+        subjectId: c.subjectSnapshot?.subjectId || c.subjectId,
+        subjectCode: c.subjectSnapshot?.code || subject?.code || 'UNK',
+        subjectName: c.subjectSnapshot?.name || subject?.name || 'Unknown Subject',
+        classId: c._id,
+        classCode: c.classCode,
+        lecturerName: c.lecturer?.fullName || lecturer?.fullName || 'Unknown Lecturer'
+      }
+    })
   }
 
   async getHome(studentId: string) {

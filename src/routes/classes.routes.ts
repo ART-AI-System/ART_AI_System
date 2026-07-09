@@ -8,7 +8,8 @@ import {
   deleteClassController,
   importStudentsController,
   addStudentToClassController,
-  removeStudentFromClassController
+  removeStudentFromClassController,
+  promoteCohortController
 } from '~/controllers/classes.controller'
 import { parseImportFile } from '~/middlewares/import.middleware'
 
@@ -22,6 +23,9 @@ classesRouter.delete('/:id', requireAuth, requireRole('ADMIN', 'SUBJECT_HEAD'), 
 
 // Admin imports student list
 classesRouter.post('/:id/import', requireAuth, requireRole('ADMIN'), parseImportFile, importStudentsController)
+
+// Admin promotes a cohort to next semester
+classesRouter.post('/:id/promote', requireAuth, requireRole('ADMIN'), promoteCohortController)
 
 // Manage individual students
 classesRouter.post('/:id/students', requireAuth, requireRole('ADMIN', 'SUBJECT_HEAD', 'LECTURER'), addStudentToClassController)

@@ -122,3 +122,20 @@ export const removeStudentFromClassController = async (req: Request, res: Respon
     next(error)
   }
 }
+
+export const promoteCohortController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params
+    const { targetSemesterId, assignments } = req.body
+    
+    if (!targetSemesterId || !assignments || !Array.isArray(assignments) || assignments.length === 0) {
+      res.status(400).json({ message: 'targetSemesterId and assignments array are required' })
+      return
+    }
+    
+    const result = await classesService.promoteCohort(id as string, targetSemesterId, assignments)
+    res.json(result)
+  } catch (error) {
+    next(error)
+  }
+}
