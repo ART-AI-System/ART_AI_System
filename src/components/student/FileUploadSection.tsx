@@ -58,7 +58,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({ onFileSelect }) =
             <Upload className="w-6 h-6 text-[#4318FF]" />
           </div>
           <p className="text-sm font-bold text-[#1B2559]">Click to browse or drag and drop</p>
-          <p className="text-xs text-gray-500 mt-1">PDF, ZIP, RAR, DOCX (Max 10MB)</p>
+          <p className="text-xs text-gray-500 mt-1">PDF, ZIP, RAR, DOCX, TXT (Max 10MB)</p>
         </div>
       ) : (
         <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl flex items-center justify-between">

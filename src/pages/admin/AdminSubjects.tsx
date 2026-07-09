@@ -8,10 +8,13 @@ const AdminSubjects = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [formData, setFormData] = useState({
     code: '',
     name: '',
-    description: ''
+    description: '',
+    defaultSlots: 10
   });
 
   const fetchSubjects = async () => {
@@ -39,11 +42,42 @@ const AdminSubjects = () => {
       setFormData({
         code: '',
         name: '',
-        description: ''
+        description: '',
+        defaultSlots: 10
       });
       fetchSubjects();
     } catch (err: any) {
       alert('Failed to add subject: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const openEditModal = (subject: Subject) => {
+    setEditingSubject(subject);
+    setFormData({
+      code: subject.code,
+      name: subject.name,
+      description: subject.description || '',
+      defaultSlots: subject.defaultSlots || 10
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSubject?._id) return;
+    try {
+      await subjectService.updateSubject(editingSubject._id, formData);
+      setShowEditModal(false);
+      setEditingSubject(null);
+      setFormData({
+        code: '',
+        name: '',
+        description: '',
+        defaultSlots: 10
+      });
+      fetchSubjects();
+    } catch (err: any) {
+      alert('Failed to update subject: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -89,6 +123,12 @@ const AdminSubjects = () => {
                   <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${sub.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     {sub.isActive ? 'Active' : 'Inactive'}
                   </span>
+                  <button 
+                    onClick={() => openEditModal(sub)}
+                    className="text-xs font-bold text-gray-500 hover:text-[#4318FF] flex items-center p-2"
+                  >
+                    Edit
+                  </button>
                 </div>
               </div>
             ))}
@@ -139,6 +179,19 @@ const AdminSubjects = () => {
                   className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-green-500/20 transition-all" 
                 ></textarea>
               </div>
+
+              <div>
+                <label className="block text-sm font-bold text-[#064E3B] mb-1">Default Slots</label>
+                <input 
+                  type="number"
+                  min="1"
+                  max="100"
+                  required
+                  value={formData.defaultSlots}
+                  onChange={e => setFormData({...formData, defaultSlots: parseInt(e.target.value) || 10})}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-green-500/20 transition-all" 
+                />
+              </div>
               
               <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-gray-100">
                 <button 
@@ -153,6 +206,79 @@ const AdminSubjects = () => {
                   className="px-5 py-2 bg-[#16A34A] text-white font-bold rounded-xl hover:bg-green-700 transition-colors shadow-md shadow-green-500/20"
                 >
                   Save Subject
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-[#4318FF] px-6 py-4 flex justify-between items-center text-white">
+              <h3 className="font-bold text-lg flex items-center"><Library className="w-5 h-5 mr-2" /> Edit Subject</h3>
+            </div>
+            
+            <form onSubmit={handleEditSubject} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-[#1B2559] mb-1">Subject Code</label>
+                <input 
+                  type="text" 
+                  required
+                  value={formData.code}
+                  onChange={e => setFormData({...formData, code: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#4318FF] focus:ring-2 focus:ring-blue-500/20 transition-all uppercase" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold text-[#1B2559] mb-1">Subject Name</label>
+                <input 
+                  type="text" 
+                  required
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#4318FF] focus:ring-2 focus:ring-blue-500/20 transition-all" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-[#1B2559] mb-1">Description</label>
+                <textarea 
+                  rows={3}
+                  value={formData.description}
+                  onChange={e => setFormData({...formData, description: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#4318FF] focus:ring-2 focus:ring-blue-500/20 transition-all" 
+                ></textarea>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-[#1B2559] mb-1">Default Slots</label>
+                <input 
+                  type="number"
+                  min="1"
+                  max="100"
+                  required
+                  value={formData.defaultSlots}
+                  onChange={e => setFormData({...formData, defaultSlots: parseInt(e.target.value) || 10})}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#4318FF] focus:ring-2 focus:ring-blue-500/20 transition-all" 
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-gray-100">
+                <button 
+                  type="button" 
+                  onClick={() => setShowEditModal(false)}
+                  className="px-5 py-2 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-5 py-2 bg-[#4318FF] text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/20"
+                >
+                  Update Subject
                 </button>
               </div>
             </form>

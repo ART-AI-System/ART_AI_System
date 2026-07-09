@@ -72,9 +72,7 @@ const AiDeclarationForm: React.FC<AiDeclarationFormProps> = ({
         <h4 className="text-sm font-bold text-[#4318FF] uppercase tracking-wider flex items-center">
           <Brain className="w-4 h-4 mr-2" /> Step 2: AI Declaration
         </h4>
-        <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
-          Requirement: Complete 5 sections
-        </span>
+
       </div>
       
       {/* Horizontal Tabs */}

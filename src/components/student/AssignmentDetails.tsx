@@ -35,7 +35,7 @@ const AssignmentDetails: React.FC<AssignmentDetailsProps> = ({ assignment }) => 
         
         {assignment.aiInteractionRequired && (
           <p className="mt-4 text-red-500">
-            Note: You MUST declare any AI tools used. Minimum {assignment.minAiInteractions} interactions required.
+            Note: You MUST declare any AI tools used.
           </p>
         )}
       </div>

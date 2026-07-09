@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Info, Users, Calendar, Settings2, CheckCircle, BrainCircuit } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 
 const LecturerAssignmentCreate = () => {
   const navigate = useNavigate();
   const { assignmentId } = useParams();
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get('sessionId');
   const isEditMode = !!assignmentId;
 
   const [classes, setClasses] = useState<any[]>([]);
@@ -39,7 +41,6 @@ const LecturerAssignmentCreate = () => {
             setTitle(item.title || '');
             setDescription(item.description || '');
             if (item.deadline) {
-              // Convert to YYYY-MM-DDTHH:mm format for datetime-local input
               const date = new Date(item.deadline);
               const formatted = date.toISOString().slice(0, 16);
               setDeadline(formatted);
@@ -89,7 +90,7 @@ const LecturerAssignmentCreate = () => {
     setError('');
 
     try {
-      const payload = {
+      const payload: any = {
         title,
         description,
         weight,
@@ -99,6 +100,10 @@ const LecturerAssignmentCreate = () => {
         minAiInteractions,
         maxAiInteractions
       };
+      
+      if (sessionId) {
+        payload.sessionId = sessionId;
+      }
 
       if (isEditMode) {
         // Edit mode: only update this specific assignment
@@ -223,7 +228,7 @@ const LecturerAssignmentCreate = () => {
                         className="mt-1 w-4 h-4 text-[#4318FF] border-gray-300 rounded focus:ring-[#4318FF]" 
                       />
                       <div className="ml-3">
-                        <span className="block text-sm font-bold text-[#1B2559]">{cls.classCode}</span>
+                        <span className="block text-sm font-bold text-[#1B2559]">{cls.subjectCode} - {cls.classCode}</span>
                         <span className="block text-xs font-medium text-gray-400 mt-0.5">{cls.totalStudents || 0} Students</span>
                       </div>
                     </label>

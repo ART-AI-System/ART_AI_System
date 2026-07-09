@@ -35,7 +35,7 @@ export const assignmentService = {
   },
 
   getAssignmentDetail: async (assignmentId: string) => {
-    return axiosClient.get(`/assignments/${assignmentId}`);
+    return axiosClient.get(`/grade-items/standalone/${assignmentId}`);
   },
 
   updateAssignment: async (assignmentId: string, payload: Partial<AssignmentPayload>) => {
