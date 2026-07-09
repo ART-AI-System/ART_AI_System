@@ -31,6 +31,30 @@ class ClassesService {
   async createClass(payload: ClassType) {
     const newClass = new Class(normalizeClassPayload(payload))
     const result = await databaseService.classes.insertOne(newClass)
+
+    // Auto-generate sessions based on subject's defaultSlots
+    const subject = await databaseService.subjects.findOne({ _id: newClass.subjectId })
+    const slots = subject?.defaultSlots || 10
+    
+    const sessions = []
+    const now = new Date()
+    for (let i = 1; i <= slots; i++) {
+      sessions.push({
+        classId: result.insertedId,
+        sessionNo: i,
+        title: `Session ${i}`,
+        description: '',
+        startTime: now,
+        endTime: now,
+        createdAt: now,
+        updatedAt: now
+      })
+    }
+    
+    if (sessions.length > 0) {
+      await databaseService.sessions.insertMany(sessions)
+    }
+
     return { ...newClass, _id: result.insertedId }
   }
 

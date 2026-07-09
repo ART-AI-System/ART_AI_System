@@ -45,6 +45,36 @@ class SubjectsService {
         status: HTTP_STATUS.NOT_FOUND
       })
     }
+
+    // Auto-generate missing sessions for existing classes if defaultSlots is provided
+    if (payload.defaultSlots) {
+      const targetSlots = payload.defaultSlots
+      const classes = await databaseService.classes.find({ subjectId: new ObjectId(id) }).toArray()
+      
+      const now = new Date()
+      for (const cls of classes) {
+        const existingSessionsCount = await databaseService.sessions.countDocuments({ classId: cls._id })
+        if (existingSessionsCount < targetSlots) {
+          const sessionsToInsert = []
+          for (let i = existingSessionsCount + 1; i <= targetSlots; i++) {
+            sessionsToInsert.push({
+              classId: cls._id,
+              sessionNo: i,
+              title: `Session ${i}`,
+              description: '',
+              startTime: now,
+              endTime: now,
+              createdAt: now,
+              updatedAt: now
+            })
+          }
+          if (sessionsToInsert.length > 0) {
+            await databaseService.sessions.insertMany(sessionsToInsert)
+          }
+        }
+      }
+    }
+
     return result
   }
 

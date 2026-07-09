@@ -22,6 +22,7 @@ import testsRouter from '~/routes/tests.routes'
 import aiDeclarationRouter from '~/routes/aiDeclaration.routes'
 import aiEvaluationRouter from '~/routes/aiEvaluation.routes'
 import notificationsRouter from '~/routes/notifications.routes'
+import sessionsRouter from '~/routes/sessions.routes'
 import databaseService from '~/services/database.service'
 import { defaultErrorHandler } from '~/middlewares/error.middleware'
 import { config } from 'dotenv'
@@ -69,6 +70,7 @@ app.use('/api', testsRouter)
 app.use('/api', aiDeclarationRouter)
 app.use('/api', aiEvaluationRouter)
 app.use('/api', notificationsRouter)
+app.use('/api/sessions', sessionsRouter)
 
 app.use('/api/reports', reportRouter)
 

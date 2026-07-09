@@ -7,6 +7,7 @@ import {
   getSubjectsBySemesterController,
   getClassSessionsController
 } from '~/controllers/student.controllers'
+import { getStudentScheduleController } from '~/controllers/sessions.controller'
 
 const validateObjectIdParam = (paramName: string) =>
   validate(
@@ -29,6 +30,8 @@ const studentRouter = Router()
 studentRouter.use(requireAuth)
 
 studentRouter.get('/home', getStudentHomeController)
+
+studentRouter.get('/me/schedule', getStudentScheduleController)
 
 studentRouter.get(
   '/semesters/:semesterId/subjects',

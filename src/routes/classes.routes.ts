@@ -11,6 +11,10 @@ import {
   removeStudentFromClassController,
   promoteCohortController
 } from '~/controllers/classes.controller'
+import {
+  getSessionsByClassController,
+  createSessionController
+} from '~/controllers/sessions.controller'
 import { parseImportFile } from '~/middlewares/import.middleware'
 
 const classesRouter = Router()
@@ -30,5 +34,9 @@ classesRouter.post('/:id/promote', requireAuth, requireRole('ADMIN'), promoteCoh
 // Manage individual students
 classesRouter.post('/:id/students', requireAuth, requireRole('ADMIN', 'SUBJECT_HEAD', 'LECTURER'), addStudentToClassController)
 classesRouter.delete('/:id/students/:studentId', requireAuth, requireRole('ADMIN', 'SUBJECT_HEAD', 'LECTURER'), removeStudentFromClassController)
+
+// Sessions for this class
+classesRouter.get('/:classId/sessions', requireAuth, getSessionsByClassController)
+classesRouter.post('/:classId/sessions', requireAuth, requireRole('ADMIN', 'LECTURER'), createSessionController)
 
 export default classesRouter

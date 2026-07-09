@@ -19,6 +19,7 @@ import Subject from '~/models/schemas/subjects.schema'
 import { Test } from '~/models/schemas/tests.schema'
 import { TestAttempt } from '~/models/schemas/testAttempts.schema'
 import Assignment from '~/models/schemas/assignments.schema'
+import Session from '~/models/schemas/sessions.schema'
 dotenv.config()
 
 const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USERNAME as string)}:${encodeURIComponent(process.env.DB_PASSWORD as string)}@art-ai-system.rpdlfxc.mongodb.net/`
@@ -452,7 +453,7 @@ class DatabaseService {
     return this.db.collection(process.env.DB_CLASS_MEMBERS_COLLECTION || 'class_members')
   }
 
-  get sessions(): Collection<any> {
+  get sessions(): Collection<Session> {
     return this.db.collection(process.env.DB_SESSIONS_COLLECTION || 'sessions')
   }
 
