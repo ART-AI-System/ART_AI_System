@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
-import { Plus, BookOpen, GraduationCap, Users } from 'lucide-react';
+import { Plus, BookOpen, GraduationCap, Users, ArrowRight } from 'lucide-react';
 import { classService } from '../../services/class.service';
 import { semesterService } from '../../services/semester.service';
 import { subjectService } from '../../services/subject.service';
 import { userService } from '../../services/user.service';
 import { FileUpload } from '../../components/common/FileUpload';
+import { PromoteCohortModal } from '../../components/classes/PromoteCohortModal';
 import type { Class } from '../../types/class';
 
 const AdminClasses = () => {
@@ -18,8 +19,9 @@ const AdminClasses = () => {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [manageStudentsClass, setManageStudentsClass] = useState<Class | null>(null);
+  const [promoteClass, setPromoteClass] = useState<Class | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   
   const [importing, setImporting] = useState(false);
   const [importSummary, setImportSummary] = useState<any>(null);
@@ -75,7 +77,7 @@ const AdminClasses = () => {
       classCode: cls.classCode,
       semesterId: cls.semesterId,
       subjectId: cls.subjectId,
-      lecturerId: cls.lecturer.lecturerId
+      lecturerId: cls.lecturer?.lecturerId || (cls as any).lecturerId || ''
     });
     setShowAddModal(true);
   };
@@ -91,15 +93,19 @@ const AdminClasses = () => {
   };
 
   const handleAddStudent = async () => {
-    if (!manageStudentsClass || !selectedStudentId) return;
+    if (!manageStudentsClass || selectedStudentIds.length === 0) return;
     try {
-      await classService.addStudentToClass(manageStudentsClass._id, selectedStudentId);
+      await Promise.all(
+        selectedStudentIds.map(studentId => 
+          classService.addStudentToClass(manageStudentsClass._id, studentId)
+        )
+      );
       const updatedClass = await classService.getClassById(manageStudentsClass._id);
       setManageStudentsClass(updatedClass);
       fetchData();
-      setSelectedStudentId('');
+      setSelectedStudentIds([]);
     } catch (err: any) {
-      alert('Failed to add student: ' + (err.response?.data?.message || err.message));
+      alert('Failed to add some students: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -235,11 +241,33 @@ const AdminClasses = () => {
                   </div>
                 </div>
                 
-                <div className="mt-auto pt-4 flex justify-between items-center">
-                  <button onClick={() => setManageStudentsClass(cls)} className="text-[#16A34A] text-sm font-bold hover:underline">Manage Students</button>
-                  <div className="space-x-3 flex">
-                    <button onClick={() => openEditModal(cls)} className="text-gray-500 text-sm font-bold hover:underline">Edit</button>
-                    <button onClick={() => handleDelete(cls._id)} className="text-red-500 text-sm font-bold hover:underline">Delete</button>
+                <div className="pt-4 border-t border-gray-100 flex items-center justify-between mt-auto">
+                  <button 
+                    onClick={() => setManageStudentsClass(cls)}
+                    className="text-[#16A34A] font-bold text-sm hover:underline flex items-center gap-1"
+                  >
+                    <Users size={16} /> Manage Students
+                  </button>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => setPromoteClass(cls)}
+                      className="text-blue-500 font-bold text-sm hover:underline flex items-center gap-1"
+                      title="Promote cohort to next semester"
+                    >
+                      <ArrowRight size={16} /> Promote
+                    </button>
+                    <button 
+                      onClick={() => openEditModal(cls)}
+                      className="text-gray-600 font-bold text-sm hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(cls._id)}
+                      className="text-red-500 font-bold text-sm hover:underline"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               </div>
@@ -389,24 +417,58 @@ const AdminClasses = () => {
                 )}
               </div>
 
-              <div className="flex gap-2 mb-6">
-                <select 
-                  value={selectedStudentId}
-                  onChange={e => setSelectedStudentId(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-green-500/20"
-                >
-                  <option value="" disabled>Select Student to Add</option>
-                  {allStudents.filter(s => !(manageStudentsClass.students || []).some(cs => cs.studentId === s._id)).map(student => (
-                    <option key={student._id} value={student._id}>{student.studentCode} - {student.fullName}</option>
-                  ))}
-                </select>
-                <button 
-                  onClick={handleAddStudent}
-                  disabled={!selectedStudentId}
-                  className="px-6 py-2 bg-[#16A34A] text-white font-bold rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Add
-                </button>
+              <div className="mb-6">
+                <div className="border border-gray-200 rounded-xl overflow-hidden bg-white flex flex-col h-48">
+                  <div className="bg-gray-50 px-4 py-2 text-sm font-bold text-gray-700 border-b border-gray-200 flex justify-between items-center">
+                    <span>Select Students to Add</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const available = allStudents.filter(s => !(manageStudentsClass.students || []).some(cs => cs.studentId === s._id));
+                        if (selectedStudentIds.length === available.length) {
+                          setSelectedStudentIds([]); // Deselect all
+                        } else {
+                          setSelectedStudentIds(available.map(s => s._id)); // Select all
+                        }
+                      }}
+                      className="text-[#16A34A] hover:underline"
+                    >
+                      {selectedStudentIds.length > 0 ? 'Deselect All' : 'Select All'}
+                    </button>
+                  </div>
+                  <div className="overflow-y-auto p-2 flex-1">
+                    {allStudents.filter(s => !(manageStudentsClass.students || []).some(cs => cs.studentId === s._id)).length === 0 ? (
+                      <div className="text-center text-gray-400 py-4 text-sm">All students are already in this class.</div>
+                    ) : (
+                      allStudents.filter(s => !(manageStudentsClass.students || []).some(cs => cs.studentId === s._id)).map(student => (
+                        <label key={student._id} className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="mr-3 rounded border-gray-300 text-[#16A34A] focus:ring-[#16A34A]"
+                            checked={selectedStudentIds.includes(student._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedStudentIds([...selectedStudentIds, student._id]);
+                              } else {
+                                setSelectedStudentIds(selectedStudentIds.filter(id => id !== student._id));
+                              }
+                            }}
+                          />
+                          <span className="text-sm font-medium text-gray-700">{student.studentCode} - {student.fullName}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <button 
+                    onClick={handleAddStudent}
+                    disabled={selectedStudentIds.length === 0}
+                    className="px-6 py-2 bg-[#16A34A] text-white font-bold rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Add {selectedStudentIds.length > 0 ? `(${selectedStudentIds.length})` : ''}
+                  </button>
+                </div>
               </div>
 
               <div className="border border-gray-100 rounded-xl overflow-hidden">
@@ -457,6 +519,21 @@ const AdminClasses = () => {
             </div>
           </div>
         </div>
+      )}
+      {/* Promote Cohort Modal */}
+      {promoteClass && (
+        <PromoteCohortModal
+          isOpen={true}
+          onClose={() => setPromoteClass(null)}
+          sourceClass={promoteClass}
+          semesters={semesters}
+          subjects={subjects}
+          lecturers={teachers}
+          onSuccess={() => {
+            fetchData();
+            alert('Cohort promoted successfully! The new classes have been created.');
+          }}
+        />
       )}
     </div>
   );

@@ -30,7 +30,7 @@ export const ROUTES = {
   // Academic Structure
   CLASSES: '/classes',
   SUBJECT_DETAIL: '/subjects/:id',
-  CLASS_DETAIL: '/classes/:id',
+  CLASS_DETAIL: '/student/classes/:id',
   CLASS_GRADE_ITEMS: '/classes/:classId/grade-items',
 
   // Assignment Submission Management
@@ -60,6 +60,7 @@ export const ROUTES = {
   MESSAGES: '/messages', // Retain for other roles
 
   // Student specific
+  STUDENT_SUBJECTS: '/student/subjects',
   STUDENT_NEWS: '/student/news',
   STUDENT_MESSAGES: '/student/messages',
   STUDENT_SETTINGS: '/student/settings',

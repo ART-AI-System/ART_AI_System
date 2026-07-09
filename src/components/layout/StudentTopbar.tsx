@@ -33,13 +33,14 @@ const StudentTopbar: React.FC<StudentTopbarProps> = ({ setMobileSidebarOpen }) =
           <input type="text" placeholder="Search..." className="bg-transparent border-none outline-none ml-3 w-full text-sm font-medium text-gray-700 placeholder-gray-400" />
         </div>
         
-        <div className="flex items-center bg-white rounded-full px-5 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
-          <CalendarDays className="w-5 h-5 text-[#4318FF] mr-3" />
-          <select className="bg-transparent text-sm font-bold text-[#1B2559] outline-none cursor-pointer pr-4 appearance-none">
-            <option>Summer 2026</option>
-            <option>Spring 2026</option>
-          </select>
-          <ChevronDown className="w-4 h-4 text-gray-400 pointer-events-none -ml-2" />
+        {/* Center: Semester Dropdown */}
+        <div className="hidden md:flex items-center space-x-2">
+          <div className="relative group">
+            <select className="appearance-none bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold px-4 py-2 pr-10 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer transition-all">
+              <option>Current Semester</option>
+            </select>
+            <ChevronDown className="w-4 h-4 text-indigo-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-indigo-700 transition-colors" />
+          </div>
         </div>
       </div>
       

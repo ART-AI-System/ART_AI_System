@@ -20,7 +20,7 @@ const ClassDetailPage = () => {
       {/* Page Title */}
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <Link to={ROUTES.CLASSES} className="inline-flex items-center text-sm font-bold text-gray-400 hover:text-[#4318FF] mb-2 transition-colors">
+          <Link to={ROUTES.STUDENT_SUBJECTS} className="inline-flex items-center text-sm font-bold text-gray-400 hover:text-[#4318FF] mb-2 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to Subjects
           </Link>
           <h1 className="text-3xl font-extrabold text-[#1B2559]">SWD392 - Software Architecture</h1>

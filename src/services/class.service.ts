@@ -28,6 +28,14 @@ export const classService = {
     return response.result;
   },
 
+  promoteCohort: async (classId: string, targetSemesterId: string, assignments: { subjectId: string; lecturerId: string }[]): Promise<any> => {
+    const response = await axiosClient.post<any, UserApiResponse<any>>(`/classes/${classId}/promote`, {
+      targetSemesterId,
+      assignments
+    });
+    return response.result;
+  },
+
   importStudents: async (classId: string, file: File): Promise<any> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -55,12 +63,12 @@ export const classService = {
   },
 
   getStudentHome: async (): Promise<any> => {
-    const response = await axiosClient.get<any, UserApiResponse<any>>('/students/home');
+    const response = await axiosClient.get<any, UserApiResponse<any>>('/student/home');
     return response.result;
   },
 
   getLecturerHome: async (): Promise<any> => {
-    const response = await axiosClient.get<any, UserApiResponse<any>>('/lecturers/home');
+    const response = await axiosClient.get<any, UserApiResponse<any>>('/lecturer/home');
     return response.result;
   }
 };

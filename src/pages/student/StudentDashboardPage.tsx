@@ -87,7 +87,7 @@ const StudentDashboardPage = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-extrabold text-[#1B2559]">Recently Accessed</h2>
           <Link 
-            to={ROUTES.CLASSES} 
+            to={ROUTES.STUDENT_SUBJECTS} 
             className="text-sm font-bold text-[#4318FF] bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-shadow"
           >
             View All Subjects

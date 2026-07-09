@@ -9,6 +9,8 @@ import LecturerLayout from './layouts/LecturerLayout';
 import StudentAssignments from './pages/student/StudentAssignments';
 import StudentSubmission from './pages/student/StudentSubmission';
 import StudentSubmitSuccess from './pages/student/StudentSubmitSuccess';
+import StudentClassesPage from './pages/student/StudentClassesPage';
+import StudentClassDetailPage from './pages/student/StudentClassDetailPage';
 import LecturerGradingSubjects from './pages/lecturer/LecturerGradingSubjects';
 import LecturerGradingList from './pages/lecturer/LecturerGradingList';
 import LecturerGradingDetail from './pages/lecturer/LecturerGradingDetail';
@@ -35,7 +37,8 @@ function AppRoutes() {
       <Route path="/student" element={<StudentLayout />}>
         <Route index element={<Navigate to="/student/home" replace />} />
         <Route path="home" element={<StudentDashboard />} />
-        <Route path="subjects" element={<div className="text-xl font-bold">Subjects Page</div>} />
+        <Route path="subjects" element={<StudentClassesPage />} />
+        <Route path="classes/:id" element={<StudentClassDetailPage />} />
         <Route path="schedule" element={<div className="text-xl font-bold">Schedule Page</div>} />
         
         <Route path="assignments">

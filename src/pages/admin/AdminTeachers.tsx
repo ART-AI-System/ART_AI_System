@@ -6,6 +6,7 @@ const AdminTeachers = () => {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -29,11 +30,30 @@ const AdminTeachers = () => {
     fetchTeachers();
   }, []);
 
+  const openEditModal = (teacher: any) => {
+    setEditingId(teacher._id);
+    setFormData({
+      fullName: teacher.fullName,
+      email: teacher.email,
+      password: '',
+      role: teacher.role
+    });
+    setShowAddModal(true);
+  };
+
   const handleAddTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axiosClient.post('/users', formData);
+      if (editingId) {
+        // Prepare update data, excluding email and password if empty
+        const updateData: any = { fullName: formData.fullName, role: formData.role };
+        if (formData.password) updateData.password = formData.password;
+        await axiosClient.put(`/users/${editingId}`, updateData);
+      } else {
+        await axiosClient.post('/users', formData);
+      }
       setShowAddModal(false);
+      setEditingId(null);
       setFormData({
         fullName: '',
         email: '',
@@ -42,7 +62,7 @@ const AdminTeachers = () => {
       });
       fetchTeachers();
     } catch (err: any) {
-      alert('Failed to add lecturer: ' + (err.response?.data?.message || err.message));
+      alert(`Failed to ${editingId ? 'update' : 'add'} lecturer: ` + (err.response?.data?.message || err.message));
     }
   };
 
@@ -103,7 +123,12 @@ const AdminTeachers = () => {
                   <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${teacher.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     {teacher.isActive ? 'Active' : 'Inactive'}
                   </span>
-                  <button className="text-[#16A34A] text-sm font-bold hover:underline">Edit</button>
+                  <button 
+                    onClick={() => openEditModal(teacher)}
+                    className="text-[#16A34A] text-sm font-bold hover:underline"
+                  >
+                    Edit
+                  </button>
                 </div>
               </div>
             ))}
@@ -116,7 +141,10 @@ const AdminTeachers = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="bg-[#064E3B] px-6 py-4 flex justify-between items-center text-white">
-              <h3 className="font-bold text-lg flex items-center"><Users className="w-5 h-5 mr-2" /> Add New Lecturer</h3>
+              <h3 className="font-bold text-lg flex items-center">
+                <Users className="w-5 h-5 mr-2" /> 
+                {editingId ? 'Edit Lecturer' : 'Add New Lecturer'}
+              </h3>
             </div>
             
             <form onSubmit={handleAddTeacher} className="p-6 space-y-4">
@@ -133,49 +161,54 @@ const AdminTeachers = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-bold text-[#064E3B] mb-1">Email Address</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
                 <div className="relative">
+                  <Mail className="w-5 h-5 absolute left-3 top-2.5 text-gray-400" />
                   <input 
                     type="email" 
-                    required
-                    placeholder="e.g. alan@fpt.edu.vn"
+                    required={!editingId}
+                    disabled={!!editingId}
                     value={formData.email}
-                    onChange={e => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-4 py-2 pl-10 border border-gray-200 rounded-xl outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-green-500/20 transition-all" 
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    className={`w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-green-500/20 ${editingId ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
+                    placeholder="lecturer@school.edu"
                   />
-                  <Mail className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-[#064E3B] mb-1">Initial Password</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  {editingId ? 'New Password (leave blank to keep current)' : 'Password'}
+                </label>
                 <div className="relative">
+                  <Key className="w-5 h-5 absolute left-3 top-2.5 text-gray-400" />
                   <input 
                     type="password" 
-                    required
-                    placeholder="Set an initial password"
+                    required={!editingId}
                     value={formData.password}
-                    onChange={e => setFormData({...formData, password: e.target.value})}
-                    className="w-full px-4 py-2 pl-10 border border-gray-200 rounded-xl outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-green-500/20 transition-all" 
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-green-500/20"
+                    placeholder="••••••••"
                   />
-                  <Key className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters long</p>
               </div>
               
-              <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-gray-100">
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3 rounded-b-[24px]">
                 <button 
                   type="button" 
-                  onClick={() => setShowAddModal(false)}
-                  className="px-5 py-2 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition-colors"
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setEditingId(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-xl transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="px-5 py-2 bg-[#16A34A] text-white font-bold rounded-xl hover:bg-green-700 transition-colors shadow-md shadow-green-500/20"
+                  className="bg-[#16A34A] text-white px-6 py-2 rounded-xl font-bold hover:bg-green-700 transition-colors shadow-md shadow-green-500/20"
                 >
-                  Save Lecturer
+                  {editingId ? 'Save Changes' : 'Add Lecturer'}
                 </button>
               </div>
             </form>
