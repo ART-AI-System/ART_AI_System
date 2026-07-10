@@ -32,7 +32,12 @@ export const useMessages = (roomId: string | null) => {
         setHasMore(true);
       }
 
-      setMessages(prev => append ? [...reversedData, ...prev] : reversedData);
+      setMessages(prev => {
+        if (!append) return reversedData;
+        const existingIds = new Set(prev.map(m => m._id));
+        const filteredNew = reversedData.filter(m => !existingIds.has(m._id));
+        return [...filteredNew, ...prev];
+      });
       setPage(pageNum);
     } catch (err) {
       console.error('Failed to load messages:', err);

@@ -1,5 +1,7 @@
 import React from 'react';
 import { Download, Search, CheckCircle2, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ROUTES } from '../../config/routes';
 import { submissionService } from '../../services/submission.service';
 
 interface LecturerSubmissionsTableProps {
@@ -82,16 +84,23 @@ const LecturerSubmissionsTable: React.FC<LecturerSubmissionsTableProps> = ({ ass
                       {new Date(sub.updatedAt || sub.createdAt).toLocaleString()}
                     </p>
                   </td>
-                  <td className="py-4 px-4 text-right">
-                    <button
-                      onClick={() => handleDownload(sub)}
-                      className="inline-flex items-center justify-center p-2 rounded-xl text-[#4318FF] bg-[#4318FF]/10 hover:bg-[#4318FF]/20 transition-colors"
-                      title="Download Submission"
+                  <td className="px-6 py-4 border-b border-gray-100 text-right">
+                  <div className="flex items-center justify-end space-x-3">
+                    <Link
+                      to={ROUTES.LECTURER_SUBMISSION_REVIEW.replace(':id', sub._id)}
+                      className="flex items-center px-4 py-2 bg-[#4318FF] text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      <Download className="w-4 h-4 mr-2" />
-                      <span className="text-sm font-bold">Download</span>
+                      <span className="text-sm font-bold">Grade</span>
+                    </Link>
+                    <button 
+                      onClick={() => handleDownload(sub)}
+                      className="flex items-center px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                      title="Download File"
+                    >
+                      <Download className="w-4 h-4" />
                     </button>
-                  </td>
+                  </div>
+                </td>
                 </tr>
               ))
             )}

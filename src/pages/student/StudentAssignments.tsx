@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, Calendar, HelpCircle, ArrowRight, ExternalLink } from 'lucide-react';
+import { Clock, Calendar, HelpCircle, ArrowRight, ExternalLink, Eye, X, CheckCircle2, Brain, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 
@@ -12,6 +12,7 @@ const StudentAssignments = () => {
   const [assignments, setAssignments] = useState<any[]>([]);
   const [filter, setFilter] = useState('upcoming'); // upcoming, past_due, completed
   const [subjectFilter, setSubjectFilter] = useState('all');
+  const [viewingSubmission, setViewingSubmission] = useState<any>(null);
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -204,9 +205,10 @@ const StudentAssignments = () => {
                   )}
                   {isCompleted && (
                     <button 
-                      className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-bold shadow-sm cursor-default"
+                      onClick={() => setViewingSubmission(assignment.submission)}
+                      className="px-6 py-2.5 bg-green-50 text-green-600 rounded-xl text-sm font-bold shadow-sm hover:bg-green-100 transition-colors flex items-center"
                     >
-                      Submitted
+                      <Eye className="w-4 h-4 mr-2" /> View Details
                     </button>
                   )}
                   {isPastDue && (
@@ -223,6 +225,92 @@ const StudentAssignments = () => {
           })
         )}
       </div>
+
+      {/* Submission Detail Modal */}
+      {viewingSubmission && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[24px] shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h2 className="text-xl font-extrabold text-[#1B2559]">Submission Details</h2>
+              <button 
+                onClick={() => setViewingSubmission(null)}
+                className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto">
+              <div className="mb-6 flex items-center justify-between bg-green-50 rounded-xl p-4 border border-green-100">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-4">
+                    <CheckCircle2 className="w-6 h-6 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-green-800">Status: Submitted</p>
+                    <p className="text-xs text-green-600">{new Date(viewingSubmission.updatedAt || viewingSubmission.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => window.open(viewingSubmission.fileUrl || '#', '_blank')}
+                  className="px-4 py-2 bg-white border border-green-200 text-green-700 rounded-lg text-sm font-bold hover:bg-green-50 flex items-center"
+                >
+                  <Download className="w-4 h-4 mr-2" /> File
+                </button>
+              </div>
+
+              <h3 className="text-lg font-bold text-[#1B2559] mb-4 flex items-center">
+                <Brain className="w-5 h-5 mr-2 text-[#4318FF]" /> AI Declaration Info
+              </h3>
+              
+              {(!viewingSubmission.aiInteractions || viewingSubmission.aiInteractions.length === 0) ? (
+                <div className="text-center p-6 bg-gray-50 rounded-xl text-gray-500 font-medium">
+                  No AI declarations submitted.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {viewingSubmission.aiInteractions.map((interaction: any, idx: number) => (
+                    <div key={idx} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="px-3 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg uppercase tracking-wider">
+                          {interaction.aiTool || 'AI Tool'}
+                        </span>
+                        <span className="text-sm font-bold text-gray-500">
+                          Purpose: {interaction.usagePurpose?.replace('_', ' ')}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <p className="font-bold text-gray-700 mb-1">Prompt Used:</p>
+                          <p className="text-gray-600 bg-gray-50 p-3 rounded-lg">{interaction.promptContent || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-700 mb-1">AI Response Summary:</p>
+                          <p className="text-gray-600 bg-gray-50 p-3 rounded-lg">{interaction.aiResponseSummary || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-700 mb-1">Self Reflection:</p>
+                          <p className="text-gray-600 bg-gray-50 p-3 rounded-lg">{interaction.reflectionText || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+              <button 
+                onClick={() => setViewingSubmission(null)}
+                className="px-6 py-2 bg-[#1B2559] text-white rounded-lg text-sm font-bold hover:bg-gray-800"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

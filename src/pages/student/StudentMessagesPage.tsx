@@ -68,7 +68,10 @@ const StudentMessagesPage = () => {
         try {
           // Create real room
           const newRoom = await chatService.createRoom([contactId], 'direct');
-          setConversations(prev => [newRoom, ...prev]);
+          setConversations(prev => {
+            if (prev.some(c => c._id === newRoom._id)) return prev;
+            return [newRoom, ...prev];
+          });
           setActiveRoomId(newRoom._id);
           
           // Join room immediately before sending message so we receive the broadcast

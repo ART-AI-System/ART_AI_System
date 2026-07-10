@@ -57,7 +57,7 @@ const AdminSubjects = () => {
       code: subject.code,
       name: subject.name,
       description: subject.description || '',
-      defaultSlots: subject.defaultSlots || 10
+      defaultSlots: (subject as any).defaultSlots || 10
     });
     setShowEditModal(true);
   };

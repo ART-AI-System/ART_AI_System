@@ -69,7 +69,7 @@ const StudentSubmissionPanel: React.FC<StudentSubmissionPanelProps> = ({ assignm
     }
   };
 
-  const handleFinalize = async (formData: any) => {
+  const handleFinalize = async (formData: any[]) => {
     setIsFinalizing(true);
     setError('');
     
@@ -87,13 +87,29 @@ const StudentSubmissionPanel: React.FC<StudentSubmissionPanelProps> = ({ assignm
         }
       }
       
-      // 2. Finalize
-      if (currentSubmissionId) {
-        await submissionService.finalizeSubmission(currentSubmissionId);
-        onRefresh();
-      } else {
+      if (!currentSubmissionId) {
         throw new Error("No submission found to finalize. Please upload a file.");
       }
+
+      // 2. Save AI Interactions
+      if (formData && formData.length > 0) {
+        await Promise.all(
+          formData.map((interaction: any) => 
+            submissionService.createAiInteractions(currentSubmissionId, {
+              aiTool: interaction.aiTool,
+              usagePurpose: interaction.usagePurpose,
+              promptContent: interaction.promptContent,
+              aiResponseSummary: interaction.aiResponseSummary,
+              studentDecision: interaction.studentDecision,
+              reflectionText: interaction.reflectionText
+            })
+          )
+        );
+      }
+
+      // 3. Finalize
+      await submissionService.finalizeSubmission(currentSubmissionId);
+      onRefresh();
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.message || err.message || 'Failed to finalize submission.');

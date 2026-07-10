@@ -31,14 +31,9 @@ const LecturerTopbar: React.FC<LecturerTopbarProps> = ({ setMobileSidebarOpen, b
           <h1 className="text-xl md:text-2xl font-extrabold text-[#1B2559]">{title}</h1>
         </div>
       </div>
-      
+      {/* Header Actions (Empty for now, can be populated by context or generic actions) */}
       <div className="flex items-center space-x-3">
-        <button className="hidden sm:flex bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-gray-50 transition-all items-center">
-          <Download className="w-4 h-4 mr-2" /> Download All
-        </button>
-        <button className="bg-[#1B2559] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-[#2A3673] transition-all flex items-center">
-          <FileSpreadsheet className="w-4 h-4 mr-2 text-green-400" /> Export Scores
-        </button>
+        {/* Actions could go here */}
       </div>
     </header>
   );

@@ -176,18 +176,7 @@ const LecturerCreateAssignmentPage = () => {
                     </label>
                   </div>
 
-                  {formData.aiDeclarationRequired && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/10 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-                        <label className="block text-sm font-bold text-white mb-2">Min Interactions</label>
-                        <input name="minAiInteractions" value={formData.minAiInteractions} onChange={handleChange} type="number" min="0" className="w-full bg-white/20 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-[#F26F21] transition-all" />
-                      </div>
-                      <div className="bg-white/10 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-                        <label className="block text-sm font-bold text-white mb-2">Max Interactions</label>
-                        <input name="maxAiInteractions" value={formData.maxAiInteractions} onChange={handleChange} type="number" min="1" className="w-full bg-white/20 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-[#F26F21] transition-all" />
-                      </div>
-                    </div>
-                  )}
+
                 </div>
               </div>
             </div>

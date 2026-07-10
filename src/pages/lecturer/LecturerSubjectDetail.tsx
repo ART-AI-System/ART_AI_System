@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, BookOpen, ClipboardList, HelpCircle, Plus, RefreshCw, FileText, Calendar, Copy, Edit2, UploadCloud, ChevronRight, Check } from 'lucide-react';
+import { Users, BookOpen, ClipboardList, HelpCircle, Plus, RefreshCw, FileText, Calendar, Copy, Edit2, UploadCloud, ChevronRight, Check, Trash2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 
@@ -38,7 +38,8 @@ const LecturerSubjectDetail = () => {
     const fetchSessions = async () => {
       try {
         const res: any = await axiosClient.get(`/classes/${subjectId}/sessions?limit=100`);
-        setSessions(res.result?.docs || []);
+        const sortedDocs = (res.result?.docs || []).sort((a: any, b: any) => a.sessionNo - b.sessionNo);
+        setSessions(sortedDocs);
       } catch (error) {
         console.error('Failed to load sessions:', error);
       }
@@ -194,7 +195,37 @@ const LecturerSubjectDetail = () => {
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <Link to={`/lecturer/assignments/${assignment._id}/edit`} className="p-1.5 text-gray-400 hover:text-[#4318FF] transition-colors"><Edit2 className="w-4 h-4" /></Link>
+                                  <Link 
+                                    to={`/lecturer/grading/${subjectId}`} 
+                                    state={{ selectedGradeItemId: assignment._id }} 
+                                    className="px-3 py-1.5 bg-indigo-50 text-[#4318FF] text-xs font-bold rounded-lg hover:bg-[#4318FF] hover:text-white transition-colors flex items-center"
+                                  >
+                                    Grade
+                                  </Link>
+                                  <Link 
+                                    to={`/lecturer/assignments/${assignment._id}/edit`} 
+                                    className="p-1.5 text-gray-400 hover:text-[#4318FF] rounded-lg transition-colors"
+                                    title="Edit Assignment"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </Link>
+                                  <button 
+                                    onClick={async () => {
+                                      if (window.confirm('Are you sure you want to delete this assignment?')) {
+                                        try {
+                                          await axiosClient.delete(`/grade-items/standalone/${assignment._id}`);
+                                          setAssignments(prev => prev.filter(a => a._id !== assignment._id));
+                                        } catch (error) {
+                                          console.error('Failed to delete assignment:', error);
+                                          alert('Failed to delete assignment');
+                                        }
+                                      }
+                                    }}
+                                    className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+                                    title="Delete Assignment"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
                               </div>
                             </div>
                           ))}
@@ -258,6 +289,23 @@ const LecturerSubjectDetail = () => {
                   </div>
                   <div className="flex items-center space-x-3">
                     <Link to={`/lecturer/assignments/${assignment._id}/edit`} className="p-2 text-gray-400 hover:text-[#4318FF] transition-colors"><Edit2 className="w-5 h-5" /></Link>
+                    <button 
+                      onClick={async () => {
+                        if (window.confirm('Are you sure you want to delete this global assignment?')) {
+                          try {
+                            await axiosClient.delete(`/grade-items/standalone/${assignment._id}`);
+                            setAssignments(prev => prev.filter(a => a._id !== assignment._id));
+                          } catch (error) {
+                            console.error('Failed to delete assignment:', error);
+                            alert('Failed to delete assignment');
+                          }
+                        }
+                      }}
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                      title="Delete Assignment"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
               )) : (

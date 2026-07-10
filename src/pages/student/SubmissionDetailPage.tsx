@@ -4,12 +4,12 @@ import { Link } from 'react-router-dom';
 import { ROUTES } from '../../config/routes';
 import { Card } from '../../components/common/Card';
 import { FileUpload } from '../../components/common/FileUpload';
-import { AiDeclarationForm } from '../../components/student/AiDeclarationForm';
+import AiDeclarationForm from '../../components/student/AiDeclarationForm';
 import type { AiInteractionData } from '../../components/student/AiDeclarationForm';
 
 const SubmissionDetailPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [aiData, setAiData] = useState<Record<string, AiInteractionData>>({});
+  const [aiData, setAiData] = useState<AiInteractionData[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleFinishDeclaration = () => {
@@ -22,7 +22,7 @@ const SubmissionDetailPage = () => {
       alert("Please upload your assignment file before submitting.");
       return;
     }
-    const categoriesCount = Object.keys(aiData).length;
+    const categoriesCount = aiData.length;
     if (categoriesCount < tabs.length) {
       const confirmSubmit = window.confirm(`You have only filled ${categoriesCount}/${tabs.length} AI declaration sections. Do you want to submit anyway?`);
       if (!confirmSubmit) return;
@@ -153,7 +153,7 @@ const SubmissionDetailPage = () => {
                 </span>
               </div>
               
-              <AiDeclarationForm categories={tabs} data={aiData} onChange={setAiData} onFinish={handleFinishDeclaration} />
+              <AiDeclarationForm data={aiData} onChange={setAiData} />
             </div>
 
             {/* Submit Button */}

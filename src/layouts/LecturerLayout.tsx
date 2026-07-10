@@ -12,14 +12,14 @@ const LecturerLayout = () => {
   const generateBreadcrumbs = () => {
     const paths = location.pathname.split('/').filter(p => p);
     if (paths.includes('grading')) {
-      return ['Grading', 'PRJ301 (SE20A09)', 'Practical Exam 1'];
+      return ['Grading'];
     }
     return ['Dashboard'];
   };
 
   const getTitle = () => {
     if (location.pathname.includes('grading')) {
-      return 'Submissions: Practical Exam';
+      return 'Manage Grading';
     }
     return 'Lecturer Dashboard';
   };

@@ -87,7 +87,7 @@ export const ROUTES = {
   GRADING_DETAIL: '/grading/:submissionId',
   GRADING_SUBJECTS: '/grading',
   GRADING_ASSIGNMENTS: '/grading/subjects/:subjectId',
-  CREATE_ASSIGNMENT: '/assignments/create',
+  LECTURER_CREATE_ASSIGNMENT: '/assignments/create',
   CREATE_TEST: '/tests/create',
   TEST_ANALYTICS: '/tests/analytics',
   EDIT_SLOT: '/schedule/:slotId/edit',

@@ -21,7 +21,13 @@ const ClassDetailPage = () => {
           axiosClient.get(`/classes/${id}`).catch(() => ({ result: null })),
           axiosClient.get(`/classes/${id}/grade-items`).catch(() => ({ result: [] }))
         ]);
-        setSessions(sessionRes.result?.docs || []);
+        
+        let fetchedSessions = sessionRes.result?.docs || [];
+        // Sort sessions ascending by sessionNo
+        fetchedSessions.sort((a: any, b: any) => (a.sessionNo || 0) - (b.sessionNo || 0));
+        
+        setSessions(fetchedSessions);
+        
         if (classRes?.result) {
           setClassOverview(classRes.result);
         }

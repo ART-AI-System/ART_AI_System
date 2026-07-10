@@ -109,5 +109,39 @@ export const submissionService = {
       responseType: 'blob'
     });
     return handleFileDownload(promise);
+  },
+
+  // --- AI Interactions Methods ---
+  
+  createAiInteractions: async (submissionId: string, payload: any) => {
+    return await axiosClient.post(`/submissions/${submissionId}/ai-interactions`, payload);
+  },
+
+  getAiInteractions: async (submissionId: string) => {
+    return await axiosClient.get(`/submissions/${submissionId}/ai-interactions`);
+  },
+
+  // --- Grading Methods ---
+
+  gradeSubmission: async (submissionId: string, payload: { score: number, feedback: string }) => {
+    return await axiosClient.post(`/submissions/${submissionId}/grade`, payload);
+  },
+
+  getGrade: async (submissionId: string) => {
+    return await axiosClient.get(`/submissions/${submissionId}/grade`);
+  },
+
+  // --- Lecturer Dashboard Methods ---
+
+  getGradeItemsByClass: async (classId: string) => {
+    return await axiosClient.get(`/classes/${classId}/grade-items`);
+  },
+
+  getSubmissionsByGradeItem: async (gradeItemId: string) => {
+    return await axiosClient.get(`/grade-items/${gradeItemId}/submissions`);
+  },
+
+  getGradesByGradeItem: async (gradeItemId: string) => {
+    return await axiosClient.get(`/grade-items/${gradeItemId}/grades`);
   }
 };

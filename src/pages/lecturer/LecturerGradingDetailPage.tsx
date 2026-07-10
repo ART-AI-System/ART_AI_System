@@ -1,56 +1,126 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { 
-  ArrowLeft, AlertTriangle, Save, Send, Folder, ChevronRight, 
-  FileCode2, Download, Sidebar as SidebarIcon, ChevronDown, FileCode,
-  AlertOctagon, RefreshCcw, FileText
+  ArrowLeft, Save, Send, ChevronRight, 
+  Download, FileText, AlertOctagon, CheckCircle2
 } from 'lucide-react';
-import { ROUTES } from '../../config/routes';
-import { ReviewStatusBadge } from '../../components/common/StatusBadge';
-import type { ReviewStatus } from '../../components/common/StatusBadge';
+import { submissionService } from '../../services/submission.service';
 
 type Tab = 'ai' | 'grade';
 
 const LecturerGradingDetailPage = () => {
+  const { id } = useParams<{ id: string }>();
+  
   const [activeTab, setActiveTab] = useState<Tab>('ai');
-  const [showFileTree, setShowFileTree] = useState(false);
-  const [reviewStatus, setReviewStatus] = useState<ReviewStatus>('PENDING');
+  const [loading, setLoading] = useState(true);
+  const [submission, setSubmission] = useState<any>(null);
+  const [aiInteractions, setAiInteractions] = useState<any[]>([]);
+  
+  const [score, setScore] = useState<number | ''>('');
+  const [feedback, setFeedback] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [gradeSaved, setGradeSaved] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+      setLoading(true);
+      try {
+        const [subRes, aiRes, gradeRes] = await Promise.all([
+          submissionService.getSubmissionById(id).catch(() => null),
+          submissionService.getAiInteractions(id).catch(() => null),
+          submissionService.getGrade(id).catch(() => null)
+        ]);
+
+        if (subRes) setSubmission((subRes as any).data?.result || (subRes as any).result || (subRes as any).data || subRes);
+        if (aiRes) setAiInteractions((aiRes as any).data?.result || (aiRes as any).result || (aiRes as any).data || []);
+        
+        const gradeData = (gradeRes as any)?.data?.result || (gradeRes as any)?.result || (gradeRes as any)?.data;
+        if (gradeData) {
+          setScore(gradeData.score);
+          setFeedback(gradeData.feedback || '');
+          setGradeSaved(true);
+        }
+      } catch (err) {
+        console.error('Failed to load grading details', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  const handlePublishGrade = async () => {
+    if (!id || score === '') return;
+    setIsSubmitting(true);
+    try {
+      await submissionService.gradeSubmission(id, { score: Number(score), feedback });
+      setGradeSaved(true);
+      alert('Grade published successfully!');
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to publish grade.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDownload = () => {
+    if (id) {
+      submissionService.downloadSubmissionLatest(id).catch(console.error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center p-12 h-full items-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4318FF]"></div>
+      </div>
+    );
+  }
+
+  if (!submission) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 h-full bg-gray-50">
+        <h2 className="text-xl font-bold text-gray-700">Submission not found</h2>
+        <Link to="/lecturer/dashboard" className="text-[#4318FF] mt-4 font-bold hover:underline">Return to Dashboard</Link>
+      </div>
+    );
+  }
+
+  const studentName = submission.studentId?.fullName || 'Unknown Student';
+  const studentRoll = submission.studentId?.rollNumber || '';
+  const assignmentTitle = submission.gradeItemId?.title || 'Assignment';
+  const className = submission.classId?.classCode || 'Unknown Class';
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      {/* TOP HEADER (Compact) */}
+      {/* TOP HEADER */}
       <header className="h-16 bg-[#1B2559] text-white flex items-center justify-between px-6 shrink-0 shadow-md relative z-20">
         <div className="flex items-center">
-          <Link to={ROUTES.CLASS_GRADING.replace(':classId', '1')} className="p-2 mr-4 hover:bg-white/10 rounded-lg transition-colors text-gray-300 hover:text-white">
+          <Link to={`/lecturer/classes/${submission.classId?._id || 'unknown'}/submissions`} className="p-2 mr-4 hover:bg-white/10 rounded-lg transition-colors text-gray-300 hover:text-white">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           
           <div>
             <div className="flex items-center text-[10px] font-bold text-gray-400 mb-0.5 uppercase tracking-wider">
-              <Link to={ROUTES.CLASSES} className="hover:text-white transition-colors">Grading</Link>
+              <Link to="/classes" className="hover:text-white transition-colors">Grading</Link>
               <ChevronRight className="w-3 h-3 mx-1" />
-              <Link to="#" className="hover:text-white transition-colors">PRJ301</Link>
+              <Link to="#" className="hover:text-white transition-colors">{className}</Link>
               <ChevronRight className="w-3 h-3 mx-1" />
-              <Link to="#" className="hover:text-white transition-colors">SE18D01 (PE 1)</Link>
+              <Link to="#" className="hover:text-white transition-colors">{assignmentTitle}</Link>
             </div>
-            <h1 className="text-sm font-bold">Nguyen Van Duc (HE150001)</h1>
-          </div>
-          
-          <div className="hidden md:flex ml-6 px-3 py-1 bg-red-500/20 border border-red-500/50 rounded-full items-center">
-            <AlertTriangle className="w-3 h-3 text-red-400 mr-2" />
-            <span className="text-xs font-bold text-red-200">High Discrepancy Detected (95% AI vs 10% Declared)</span>
+            <h1 className="text-sm font-bold">{studentName} {studentRoll ? `(${studentRoll})` : ''}</h1>
           </div>
         </div>
         
         <div className="flex items-center space-x-3">
-          <button className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-lg hover:bg-red-100 transition-all flex items-center hidden sm:flex">
-            <RefreshCcw className="w-4 h-4 mr-2" /> Request Resubmit
-          </button>
-          <button className="px-4 py-2 bg-white/10 text-white border border-white/20 text-xs font-bold rounded-lg hover:bg-white/20 transition-all flex items-center hidden sm:flex">
-            <Save className="w-4 h-4 mr-2" /> Save Draft
-          </button>
-          <button className="px-4 py-2 bg-[#F26F21] text-white text-xs font-bold rounded-lg hover:bg-[#D95D1A] transition-all shadow-lg shadow-orange-500/30 flex items-center">
-            <Send className="w-4 h-4 mr-2" /> Publish Grade
+          <button 
+            onClick={handlePublishGrade}
+            disabled={isSubmitting || score === ''}
+            className={`px-6 py-2 text-white text-sm font-bold rounded-xl transition-all shadow-lg flex items-center ${isSubmitting || score === '' ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-br from-[#F26F21] to-[#F79C65] hover:opacity-90 shadow-orange-500/30'}`}
+          >
+            {isSubmitting ? 'Saving...' : gradeSaved ? 'Update Grade' : 'Publish Grade'} <Send className="w-4 h-4 ml-2" />
           </button>
         </div>
       </header>
@@ -58,32 +128,40 @@ const LecturerGradingDetailPage = () => {
       {/* SPLIT VIEW CONTAINER */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* LEFT PANE: CODE REVIEWER */}
+        {/* LEFT PANE: DOCUMENT VIEWER */}
         <div className="flex-1 flex flex-col border-r border-gray-200 bg-white min-w-0">
           
           {/* Toolbar */}
           <div className="h-12 bg-gray-50 border-b border-gray-200 flex items-center px-4 justify-between shrink-0">
             <div className="flex items-center space-x-2 text-sm text-gray-600 font-medium overflow-hidden whitespace-nowrap">
               <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-              <span className="font-bold text-[#1B2559] truncate">Submission_File.pdf</span>
+              <span className="font-bold text-[#1B2559] truncate">{submission.fileName || 'Document'}</span>
             </div>
             <div className="flex items-center space-x-2 shrink-0 ml-4">
-              <button className="p-1.5 text-gray-500 hover:text-[#1B2559] hover:bg-gray-200 rounded transition-colors" title="Download File"><Download className="w-4 h-4" /></button>
+              <button onClick={handleDownload} className="p-1.5 text-gray-500 hover:text-[#1B2559] hover:bg-gray-200 rounded transition-colors" title="Download File">
+                <Download className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
           {/* Embedded File Viewer */}
-          <div className="flex-1 flex overflow-hidden bg-gray-100">
-            <iframe 
-              src="/placeholder-pdf.pdf" 
-              className="w-full h-full border-none"
-              title="Student Submission Document Viewer"
-            />
+          <div className="flex-1 flex overflow-hidden bg-gray-100 items-center justify-center relative">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 p-8 text-center">
+              <FileText className="w-16 h-16 text-gray-300 mb-4" />
+              <h3 className="text-lg font-bold text-gray-700">Document Viewer Preview</h3>
+              <p className="text-sm text-gray-500 mt-2 max-w-md">The file is securely stored on the server. Please download the file to view its contents, or use a PDF integration.</p>
+              <button 
+                onClick={handleDownload}
+                className="mt-6 px-6 py-2.5 bg-[#4318FF] text-white rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 flex items-center"
+              >
+                <Download className="w-4 h-4 mr-2" /> Download Document
+              </button>
+            </div>
           </div>
         </div>
 
         {/* RIGHT PANE: EVALUATION PANEL */}
-        <div className="w-full md:w-[400px] lg:w-[450px] shrink-0 bg-white flex flex-col shadow-xl z-10 relative border-l border-gray-200 hidden md:flex">
+        <div className="w-full md:w-[450px] lg:w-[500px] shrink-0 bg-white flex flex-col shadow-xl z-10 relative border-l border-gray-200">
           
           {/* Tabs Header */}
           <div className="flex border-b border-gray-200 shrink-0">
@@ -91,179 +169,113 @@ const LecturerGradingDetailPage = () => {
               onClick={() => setActiveTab('ai')}
               className={`flex-1 py-4 text-sm font-bold border-b-2 transition-colors relative ${activeTab === 'ai' ? 'border-[#F26F21] text-[#F26F21]' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
             >
-              {activeTab !== 'ai' && <span className="absolute top-3 right-4 lg:right-8 w-2 h-2 rounded-full bg-red-500"></span>}
-              AI Declaration Review
+              AI Declarations ({aiInteractions.length})
             </button>
             <button 
               onClick={() => setActiveTab('grade')}
               className={`flex-1 py-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'grade' ? 'border-[#4318FF] text-[#4318FF]' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
             >
-              Academic Grading
+              Grading
             </button>
           </div>
 
           {/* Tab Content: AI Declaration */}
           {activeTab === 'ai' && (
             <div className="flex-1 overflow-y-auto hide-scrollbar p-6 bg-gray-50/30">
-              {/* Discrepancy Alert Banner */}
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 shadow-sm">
-                <div className="flex items-start">
-                  <AlertOctagon className="w-6 h-6 text-red-500 mr-3 shrink-0" />
-                  <div>
-                    <h3 className="text-sm font-bold text-red-800">High Discrepancy Found!</h3>
-                    <p className="text-xs text-red-600 mt-1">Student declared only 1 pair of AI interaction (est. 10% usage), but system detected AI signatures in 95% of the codebase.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Scores Summary */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-xl border border-gray-200 text-center shadow-sm">
-                  <p className="text-xs font-bold text-gray-400 uppercase">Transparency</p>
-                  <p className="text-2xl font-black text-[#1B2559]">45%</p>
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-gray-200 text-center shadow-sm">
-                  <p className="text-xs font-bold text-gray-400 uppercase">Prompt Quality</p>
-                  <p className="text-2xl font-black text-[#1B2559]">72%</p>
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-gray-200 text-center shadow-sm">
-                  <p className="text-xs font-bold text-gray-400 uppercase">Reflection</p>
-                  <p className="text-2xl font-black text-[#1B2559]">88%</p>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Student's AI Declaration</h3>
-                <ReviewStatusBadge status={reviewStatus} />
-              </div>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Student's AI Declarations</h3>
               
-              <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">
-                <div className="max-h-[300px] overflow-y-auto">
-                  <table className="w-full text-left text-sm text-gray-600">
-                    <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase sticky top-0 bg-gray-50 z-10">
-                      <tr>
-                        <th className="px-4 py-3 w-1/5">Phase</th>
-                        <th className="px-4 py-3 w-2/5">Prompt/Input</th>
-                        <th className="px-4 py-3 w-2/5">AI Output/Suggestion</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      <tr>
-                        <td className="px-4 py-3 font-bold text-[#1B2559] align-top">Abstraction</td>
-                        <td className="px-4 py-3 text-xs align-top bg-blue-50/50 max-w-[180px]">
-                          <div className="max-h-24 overflow-y-auto break-words pr-1">"How do I abstract the database layer?"</div>
-                        </td>
-                        <td className="px-4 py-3 text-xs align-top max-w-[180px]">
-                          <div className="max-h-24 overflow-y-auto break-words pr-1">Provided a generic repository interface for Java.</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td colSpan={3} className="px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs text-gray-600 italic">
-                          <div className="max-h-20 overflow-y-auto break-words"><strong>Reflection:</strong> I used this interface to create the User and Product repositories, modifying the method signatures to match my entities.</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-3 font-bold text-[#1B2559] align-top">Composition</td>
-                        <td className="px-4 py-3 text-xs align-top bg-blue-50/50 max-w-[180px]">
-                          <div className="max-h-24 overflow-y-auto break-words pr-1">"How to compose multiple services?"</div>
-                        </td>
-                        <td className="px-4 py-3 text-xs align-top max-w-[180px]">
-                          <div className="max-h-24 overflow-y-auto break-words pr-1">Suggested using Dependency Injection and a central Facade.</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td colSpan={3} className="px-4 py-2 bg-gray-50 text-xs text-gray-600 italic">
-                          <div className="max-h-20 overflow-y-auto break-words"><strong>Reflection:</strong> I skipped DI for now to keep it simple, but I used the Facade pattern for the Checkout service.</div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+              {aiInteractions.length === 0 ? (
+                <div className="bg-white p-8 rounded-2xl border border-gray-200 text-center shadow-sm">
+                  <AlertOctagon className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm font-bold text-gray-600">No AI Interactions Declared</p>
+                  <p className="text-xs text-gray-400 mt-1">The student did not submit any AI declarations for this assignment.</p>
                 </div>
-              </div>
-              
-              {/* Lecturer Evaluation */}
-              <div className="border-t border-gray-200 pt-6 mb-6">
-                <label className="block text-sm font-bold text-[#1B2559] mb-2">Lecturer's Verification</label>
-                <div className="flex space-x-4 mb-3">
-                  <label className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer">
-                    <input type="radio" name="overall_verify" className="text-green-500 focus:ring-green-500" /> <span>Accept</span>
-                  </label>
-                  <label className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer">
-                    <input type="radio" name="overall_verify" className="text-red-500 focus:ring-red-500" defaultChecked /> <span>Reject / Invalid</span>
-                  </label>
+              ) : (
+                <div className="space-y-4">
+                  {aiInteractions.map((interaction, idx) => (
+                    <div key={interaction._id || idx} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-50">
+                        <span className="text-xs font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg uppercase tracking-wide">
+                          {interaction.usagePurpose?.replace('_', ' ')}
+                        </span>
+                        <span className="text-xs font-bold text-gray-400 flex items-center">
+                          Tool: <span className="ml-1 text-gray-700 uppercase">{interaction.aiTool}</span>
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-4 text-sm">
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 mb-1">Prompt / Input</p>
+                          <div className="bg-gray-50 p-3 rounded-xl text-gray-700 whitespace-pre-wrap">
+                            {interaction.promptContent}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 mb-1">AI Response Summary</p>
+                          <div className="bg-gray-50 p-3 rounded-xl text-gray-700 whitespace-pre-wrap">
+                            {interaction.aiResponseSummary}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 mb-1 flex justify-between">
+                            <span>Student's Reflection</span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] uppercase ${
+                              interaction.studentDecision === 'accepted' ? 'bg-green-100 text-green-700' : 
+                              interaction.studentDecision === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                            }`}>
+                              {interaction.studentDecision?.replace('_', ' ')}
+                            </span>
+                          </p>
+                          <div className="border border-blue-100 bg-blue-50/30 p-3 rounded-xl text-[#1B2559] italic whitespace-pre-wrap">
+                            "{interaction.reflectionText}"
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <textarea rows={3} className="w-full bg-white border border-red-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500" placeholder="Add comment..." defaultValue="This reflection does not align with the system detection. You used AI for the core logic as well, not just the Session boilerplate."></textarea>
-              </div>
-
-              {/* Overall AI Feedback */}
-              <div>
-                <label className="block text-sm font-bold text-[#1B2559] mb-2">Update Review Status</label>
-                <select 
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-[#1B2559] mb-4 outline-none focus:border-[#4318FF]"
-                  value={reviewStatus}
-                  onChange={(e) => setReviewStatus(e.target.value as ReviewStatus)}
-                >
-                  <option value="PENDING">Pending</option>
-                  <option value="REVIEWED">Reviewed (Acceptable)</option>
-                  <option value="NEEDS_REVISION">Needs Revision</option>
-                  <option value="FLAGGED">Flagged (Dishonesty)</option>
-                </select>
-              </div>
+              )}
             </div>
           )}
 
           {/* Tab Content: Grading */}
           {activeTab === 'grade' && (
             <div className="flex-1 overflow-y-auto hide-scrollbar p-6 bg-gray-50/30">
-              <div className="space-y-6">
-                
-                {/* Score Input */}
-                <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm text-center">
-                  <label className="block text-sm font-bold text-gray-500 mb-4">Final Score (0 - 10)</label>
-                  <div className="flex justify-center items-center">
-                    <input type="number" step="0.5" min="0" max="10" className="w-32 text-center text-4xl font-extrabold text-[#1B2559] bg-gray-50 border-2 border-gray-200 rounded-2xl py-4 focus:border-[#4318FF] focus:bg-white outline-none transition-all" placeholder="-" />
-                  </div>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Evaluation Details</h3>
+              
+              <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6">
+                <label className="block text-sm font-bold text-[#1B2559] mb-3">Overall Score (out of 10)</label>
+                <div className="flex items-center">
+                  <input 
+                    type="number" 
+                    min="0" max="10" step="0.1"
+                    value={score}
+                    onChange={(e) => setScore(e.target.value !== '' ? Number(e.target.value) : '')}
+                    className="w-24 text-center bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-2xl font-black text-[#4318FF] outline-none focus:border-[#4318FF] focus:ring-1 focus:ring-[#4318FF]"
+                    placeholder="0.0"
+                  />
+                  <span className="text-xl font-bold text-gray-400 ml-3">/ 10</span>
                 </div>
-
-                {/* Grading Rubric Mockup */}
-                <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                  <h4 className="text-sm font-bold text-[#1B2559] mb-4">Grading Rubric</h4>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-xs font-bold text-gray-600 mb-1">
-                        <span>Functionality (40%)</span>
-                        <span>0 / 4.0</span>
-                      </div>
-                      <input type="range" className="w-full accent-[#4318FF]" />
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs font-bold text-gray-600 mb-1">
-                        <span>Code Quality (30%)</span>
-                        <span>0 / 3.0</span>
-                      </div>
-                      <input type="range" className="w-full accent-[#4318FF]" />
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs font-bold text-gray-600 mb-1">
-                        <span>Documentation (30%)</span>
-                        <span>0 / 3.0</span>
-                      </div>
-                      <input type="range" className="w-full accent-[#4318FF]" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Overall Feedback */}
-                <div>
-                  <label className="block text-sm font-bold text-[#1B2559] mb-2">Academic Feedback</label>
-                  <textarea rows={6} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#4318FF]" placeholder="Write overall feedback for the student..."></textarea>
-                </div>
-
               </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                <label className="block text-sm font-bold text-[#1B2559] mb-3">Lecturer Feedback</label>
+                <textarea 
+                  rows={8}
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-4 text-sm text-gray-700 outline-none focus:border-[#4318FF] focus:ring-1 focus:ring-[#4318FF]" 
+                  placeholder="Provide detailed feedback for the student here..."
+                ></textarea>
+              </div>
+
+              {gradeSaved && (
+                <div className="mt-6 flex items-center justify-center text-sm font-bold text-green-600 bg-green-50 p-4 rounded-xl border border-green-100">
+                  <CheckCircle2 className="w-5 h-5 mr-2" /> Grade has been successfully published
+                </div>
+              )}
             </div>
           )}
-          
         </div>
       </div>
     </div>

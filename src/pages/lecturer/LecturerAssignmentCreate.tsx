@@ -285,28 +285,7 @@ const LecturerAssignmentCreate = () => {
                     </label>
                   </div>
 
-                  {aiInteractionRequired && (
-                    <div className="bg-white/10 p-4 rounded-xl border border-white/10 backdrop-blur-sm grid grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-bold text-white mb-2">Min Interactions</label>
-                        <input 
-                          type="number" 
-                          value={minAiInteractions}
-                          onChange={(e) => setMinAiInteractions(Number(e.target.value))}
-                          className="w-full bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm text-white focus:outline-none" 
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-white mb-2">Max Interactions</label>
-                        <input 
-                          type="number" 
-                          value={maxAiInteractions}
-                          onChange={(e) => setMaxAiInteractions(Number(e.target.value))}
-                          className="w-full bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm text-white focus:outline-none" 
-                        />
-                      </div>
-                    </div>
-                  )}
+
                 </div>
               </div>
             </div>
