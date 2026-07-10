@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { AlertOctagon } from 'lucide-react';
 import axiosClient from '../../api/axiosClient';
+import { gradeService } from '../../services/grade.service';
+import { reviewService } from '../../services/review.service';
 
 interface EvaluationPanelProps {
   submissionId?: string;
   aiEvaluation?: any;
-  onChange?: (data: { score: number; feedback: string }) => void;
+  onChange?: (data: { score: number; feedback: string; reviewStatus: string; reviewComment: string }) => void;
 }
 
 const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvaluation, onChange }) => {
@@ -14,24 +16,36 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
   const [codeScore, setCodeScore] = useState(0);
   const [docScore, setDocScore] = useState(0);
   const [feedback, setFeedback] = useState('');
+  
+  // Review States
+  const [reviewStatus, setReviewStatus] = useState<string>('pending');
+  const [reviewComment, setReviewComment] = useState<string>('');
+
   const [declarations, setDeclarations] = useState<any[]>([]);
   const [loadingAi, setLoadingAi] = useState(false);
 
   const totalScore = (funcScore + codeScore + docScore).toFixed(1);
 
+  // Expose to parent
   useEffect(() => {
     if (onChange) {
-      onChange({ score: parseFloat(totalScore), feedback });
+      onChange({ score: parseFloat(totalScore), feedback, reviewStatus, reviewComment });
     }
-  }, [totalScore, feedback, onChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalScore, feedback, reviewStatus, reviewComment]);
 
   useEffect(() => {
     if (!submissionId) return;
     const fetchAiData = async () => {
       setLoadingAi(true);
       try {
-        const res: any = await axiosClient.get(`/submissions/${submissionId}/ai-interactions`);
-        const data = res.result || res.data || res;
+        const [res, gradeRes, reviewRes] = await Promise.all([
+          axiosClient.get(`/submissions/${submissionId}/ai-interactions`).catch(() => null),
+          gradeService.getGrade(submissionId).catch(() => null),
+          reviewService.getReview(submissionId).catch(() => null)
+        ]);
+
+        const data = (res as any)?.result || (res as any)?.data || res;
         if (Array.isArray(data)) {
           setDeclarations(data);
         } else if (data && Array.isArray(data.declarations)) {
@@ -39,8 +53,23 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
         } else if (data && data.result && Array.isArray(data.result)) {
           setDeclarations(data.result);
         }
+
+        const gradeData = (gradeRes as any)?.data?.result || (gradeRes as any)?.result || (gradeRes as any)?.data;
+        if (gradeData) {
+          // If grade exists, we can reverse map it to sliders roughly, or just use one for simplicity
+          setFuncScore(Math.min(4, gradeData.score * 0.4));
+          setCodeScore(Math.min(3, gradeData.score * 0.3));
+          setDocScore(Math.min(3, gradeData.score * 0.3));
+          setFeedback(gradeData.feedback || '');
+        }
+
+        const reviewData = (reviewRes as any)?.data?.result || (reviewRes as any)?.result || (reviewRes as any)?.data;
+        if (reviewData) {
+          setReviewStatus(reviewData.reviewStatus);
+          setReviewComment(reviewData.comment || '');
+        }
       } catch (err) {
-        console.error('Failed to fetch AI interactions', err);
+        console.error('Failed to fetch data', err);
       } finally {
         setLoadingAi(false);
       }
@@ -128,32 +157,14 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
                       </tr>
                     ))
                   ) : (
-                    <>
-                      <tr>
-                        <td className="px-4 py-3 font-bold text-[#1B2559] align-top">1. Decomposition</td>
-                        <td className="px-4 py-3 text-xs italic align-top max-w-[150px]">
-                          <div className="max-h-24 overflow-y-auto break-words pr-1">"Break down an e-commerce cart system."</div>
-                        </td>
-                        <td className="px-4 py-3 text-xs align-top max-w-[150px]">
-                          <div className="max-h-24 overflow-y-auto break-words pr-1">Suggested 4 components: Cart, Session, DB, UI.</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-3 font-bold text-[#1B2559] align-top">2. Pattern Recognition</td>
-                        <td className="px-4 py-3 text-xs italic align-top max-w-[150px]">
-                          <div className="max-h-24 overflow-y-auto break-words pr-1">"MVC pattern for cart"</div>
-                        </td>
-                        <td className="px-4 py-3 text-xs align-top max-w-[150px]">
-                          <div className="max-h-24 overflow-y-auto break-words pr-1">Provided MVC file structure for Java Servlet.</div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-3 font-bold text-[#1B2559] align-top">5. Self-Reflection</td>
-                        <td className="px-4 py-3 text-xs italic align-top max-w-[300px]" colSpan={2}>
-                          <div className="max-h-24 overflow-y-auto break-words pr-1">"I used AI to understand how Session works in Servlets, but I implemented the checkout calculation myself to handle edge cases."</div>
-                        </td>
-                      </tr>
-                    </>
+                    <tr>
+                      <td colSpan={3} className="px-4 py-10 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <h4 className="text-sm font-bold text-[#1B2559]">No AI Declarations</h4>
+                          <p className="text-xs text-gray-500 mt-1">This student did not declare any AI interactions for this submission.</p>
+                        </div>
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
@@ -162,30 +173,29 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
           
           {/* Lecturer Evaluation */}
           <div className="border-t border-gray-200 pt-6">
-            <label className="block text-sm font-bold text-[#1B2559] mb-2">Lecturer's Verification</label>
-            <div className="flex space-x-4 mb-3">
-              <label className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer">
-                <input type="radio" name="overall_verify" className="text-green-500 focus:ring-green-500" /> <span>Accept</span>
-              </label>
-              <label className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer">
-                <input type="radio" name="overall_verify" defaultChecked className="text-red-500 focus:ring-red-500" /> <span>Reject / Invalid</span>
-              </label>
-            </div>
-            <textarea 
-              rows={3} 
-              className="w-full bg-white border border-red-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 mb-6" 
-              defaultValue="This reflection does not align with the system detection. You used AI for the core logic as well, not just the Session boilerplate."
-            />
-          </div>
-
-          {/* Overall AI Feedback */}
-          <div>
-            <label className="block text-sm font-bold text-[#1B2559] mb-2">Overall Transparency Assessment</label>
-            <select className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-red-600 mb-4 outline-none">
-              <option>Fail (Severe Plagiarism / Dishonesty)</option>
-              <option>Warning (Inaccurate Declaration)</option>
-              <option>Pass (Transparent)</option>
+            <label className="block text-sm font-bold text-[#1B2559] mb-2">Review Status</label>
+            <select 
+              value={reviewStatus}
+              onChange={(e) => setReviewStatus(e.target.value)}
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-[#1B2559] mb-4 outline-none focus:border-[#4318FF] focus:ring-1 focus:ring-[#4318FF]"
+            >
+              <option value="pending">⏳ Pending</option>
+              <option value="reviewed">✅ Reviewed (Transparent)</option>
+              <option value="needs_revision">🔄 Needs Revision (Inaccurate)</option>
+              <option value="flagged">🚩 Flagged (Severe Plagiarism)</option>
             </select>
+            
+            <label className="block text-sm font-bold text-[#1B2559] mb-2">Review Comment / Verification</label>
+            <textarea 
+              rows={4} 
+              className={`w-full bg-white border rounded-xl px-4 py-3 text-sm outline-none mb-6 ${
+                reviewStatus === 'flagged' ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 
+                'border-gray-200 focus:border-[#4318FF] focus:ring-[#4318FF]'
+              }`}
+              placeholder="Provide context on why this was flagged or approved..."
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+            />
           </div>
         </div>
       )}

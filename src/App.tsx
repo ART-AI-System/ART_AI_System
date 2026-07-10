@@ -11,6 +11,7 @@ import StudentSubmission from './pages/student/StudentSubmission';
 import StudentSubmitSuccess from './pages/student/StudentSubmitSuccess';
 import StudentClassesPage from './pages/student/StudentClassesPage';
 import StudentClassDetailPage from './pages/student/StudentClassDetailPage';
+import StudentResultsView from './pages/student/StudentResultsView';
 import LecturerGradingSubjects from './pages/lecturer/LecturerGradingSubjects';
 import LecturerGradingList from './pages/lecturer/LecturerGradingList';
 import LecturerGradingDetail from './pages/lecturer/LecturerGradingDetail';
@@ -18,6 +19,7 @@ import LecturerAssignmentCreate from './pages/lecturer/LecturerAssignmentCreate'
 import LecturerSubmissionList from './pages/lecturer/LecturerSubmissionList';
 import LecturerCreateTestPage from './pages/lecturer/LecturerCreateTestPage';
 import LecturerEditSlotPage from './pages/lecturer/LecturerEditSlotPage';
+import ClassGradebook from './pages/lecturer/ClassGradebook';
 
 // Admin Pages
 import AdminLayout from './layouts/AdminLayout';
@@ -52,6 +54,7 @@ function AppRoutes() {
         
         <Route path="news" element={<div className="text-xl font-bold">News Page</div>} />
         <Route path="chat" element={<div className="text-xl font-bold">Chat Page</div>} />
+        <Route path="results" element={<StudentResultsView />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       
@@ -66,6 +69,7 @@ function AppRoutes() {
         <Route path="tests/create" element={<LecturerCreateTestPage />} />
         <Route path="slots/:slotId/edit" element={<LecturerEditSlotPage />} />
         <Route path="assignments/:assignmentId/submissions" element={<LecturerSubmissionList />} />
+        <Route path="classes/:classId/gradebook" element={<ClassGradebook />} />
         <Route path="grading" element={<LecturerGradingSubjects />} />
         <Route path="grading/:classId" element={<LecturerGradingList />} />
         <Route path="reports" element={<div className="text-xl font-bold">Reports Page</div>} />

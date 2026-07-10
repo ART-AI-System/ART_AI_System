@@ -4,11 +4,13 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import CodeReviewer from '../../components/lecturer/CodeReviewer';
 import EvaluationPanel from '../../components/lecturer/EvaluationPanel';
 import axiosClient from '../../api/axiosClient';
+import { gradeService } from '../../services/grade.service';
+import { reviewService } from '../../services/review.service';
 
 const LecturerGradingDetail = () => {
   const { id } = useParams(); // submissionId
   const navigate = useNavigate();
-  const [gradeData, setGradeData] = useState({ score: 0, feedback: '' });
+  const [gradeData, setGradeData] = useState({ score: 0, feedback: '', reviewStatus: 'pending', reviewComment: '' });
   const [isPublishing, setIsPublishing] = useState(false);
   const [submission, setSubmission] = useState<any>(null);
   const [aiEvaluation, setAiEvaluation] = useState<any>(null);
@@ -23,11 +25,15 @@ const LecturerGradingDetail = () => {
         setSubmission(subData);
 
         if (subData?.studentId) {
-          try {
-            const stRes: any = await axiosClient.get(`/users/${subData.studentId}`);
-            setStudent(stRes.result || stRes.data || stRes);
-          } catch (e) {
-            console.error('Failed to load student info', e);
+          if (typeof subData.studentId === 'object' && subData.studentId.fullName) {
+            setStudent(subData.studentId);
+          } else {
+            try {
+              const stRes: any = await axiosClient.get(`/users/${subData.studentId}`);
+              setStudent(stRes.result || stRes.data || stRes);
+            } catch (e) {
+              console.error('Failed to load student info', e);
+            }
           }
         }
 
@@ -48,20 +54,23 @@ const LecturerGradingDetail = () => {
     setIsPublishing(true);
     try {
       if (id && submission) {
-        await axiosClient.post(`/submissions/${id}/grade`, {
-          score: Number(gradeData.score),
-          feedback: gradeData.feedback,
-          studentId: submission.studentId,
-          classId: submission.classId,
-          gradeItemId: submission.gradeItemId,
-          maxScore: 10
-        });
+        await Promise.all([
+          gradeService.createGrade(id, { 
+            score: Number(gradeData.score), 
+            maxScore: 10, 
+            feedback: gradeData.feedback 
+          }),
+          reviewService.createReview(id, { 
+            reviewStatus: gradeData.reviewStatus as 'pending' | 'reviewed' | 'needs_revision' | 'flagged', 
+            comment: gradeData.reviewComment 
+          })
+        ]);
       }
-      alert('Grade published successfully');
+      alert('Grade and Review published successfully');
       navigate('/lecturer/grading');
     } catch (err) {
       console.error('Failed to publish grade', err);
-      alert('Failed to publish grade');
+      alert('Failed to publish grade and review');
     } finally {
       setIsPublishing(false);
     }
@@ -83,11 +92,11 @@ const LecturerGradingDetail = () => {
             <div className="flex items-center text-[10px] font-bold text-gray-400 mb-0.5 uppercase tracking-wider">
               <Link to="/lecturer/grading" className="hover:text-white transition-colors">Grading</Link>
               <ChevronRight className="w-3 h-3 mx-1" />
-              <span className="hover:text-white transition-colors">{submission?.courseCode || 'PRJ301'}</span>
+              <span className="hover:text-white transition-colors">{submission?.courseCode || 'Course'}</span>
               <ChevronRight className="w-3 h-3 mx-1" />
-              <span className="hover:text-white transition-colors">{submission?.classCode || 'SE18D01'} ({submission?.gradeItemName || 'PE 1'})</span>
+              <span className="hover:text-white transition-colors">{submission?.classCode || 'Class'} ({submission?.gradeItemName || 'Grade Item'})</span>
             </div>
-            <h1 className="text-sm font-bold">{student?.fullName || student?.username || 'Nguyen Van Duc (HE150001)'}</h1>
+            <h1 className="text-sm font-bold">{student ? `${student.fullName || student.username} (${student.studentCode || student.email || 'N/A'})` : 'Loading Student...'}</h1>
           </div>
           
           {isFlagged ? (
@@ -126,7 +135,7 @@ const LecturerGradingDetail = () => {
         <CodeReviewer submissionId={id} />
 
         {/* RIGHT PANE: EVALUATION PANEL */}
-        <EvaluationPanel submissionId={id} aiEvaluation={aiEvaluation} onChange={setGradeData} />
+        <EvaluationPanel submissionId={id} aiEvaluation={aiEvaluation} onChange={(data) => setGradeData(data)} />
       </div>
     </div>
   );

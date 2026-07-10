@@ -216,7 +216,7 @@ const LecturerGradingListPage = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredData.map((row: any, index: number) => (
-                  <tr key={row.student.studentId} className={`hover:bg-gray-50 transition-colors ${row.grade ? 'bg-gray-50/50 opacity-80' : ''}`}>
+                  <tr key={`${row.student?.studentId || row.submission?._id || 'row'}-${index}`} className={`hover:bg-gray-50 transition-colors ${row.grade ? 'bg-gray-50/50 opacity-80' : ''}`}>
                     <td className="px-6 py-4 font-medium">{index + 1}</td>
                     <td className="px-6 py-4">
                       <p className="font-bold text-[#1B2559]">{row.student.fullName}</p>
@@ -237,10 +237,21 @@ const LecturerGradingListPage = () => {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      {row.submission?.fileUrl ? (
-                        <a href={row.submission.fileUrl} target="_blank" rel="noreferrer" className="text-[#4318FF] font-bold hover:underline flex items-center">
-                          <FileArchive className="w-4 h-4 mr-1" /> {row.submission.fileName || 'View File'}
-                        </a>
+                      {row.submission ? (
+                        <button 
+                          onClick={async () => {
+                            try {
+                              const { submissionService } = await import('../../services/submission.service');
+                              await submissionService.downloadSubmissionLatest(row.submission._id, row.submission.fileName);
+                            } catch (e: any) {
+                              console.error('Download Error:', e);
+                              alert('Could not download file. ' + (e?.response?.data?.message || e.message || ''));
+                            }
+                          }}
+                          className="text-[#4318FF] font-bold hover:underline flex items-center cursor-pointer bg-transparent border-none p-0"
+                        >
+                          <FileArchive className="w-4 h-4 mr-1 shrink-0" /> <span className="truncate max-w-[120px]">{row.submission.fileName || 'Download Zip'}</span>
+                        </button>
                       ) : (
                         <span className="text-gray-400 italic">No file</span>
                       )}
@@ -314,79 +325,88 @@ const LecturerGradingListPage = () => {
           ></div>
           
           {/* Sidebar */}
-          <div className="absolute inset-y-0 right-0 w-full max-w-3xl flex">
+          <div className="absolute inset-y-0 right-0 w-1/2 min-w-[700px] flex">
             <div className="w-full h-full bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out">
               
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50">
+              <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-white">
                 <div className="flex items-center space-x-3">
-                  <div className="bg-blue-100 p-2 rounded-lg text-[#4318FF]">
-                    <Eye className="w-5 h-5" />
+                  <div className="bg-indigo-50 p-2.5 rounded-xl text-[#4318FF]">
+                    <Eye className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl font-bold text-[#1B2559]">AI Declarations</h3>
+                  <div>
+                    <h3 className="text-xl font-black text-[#1B2559]">AI Declarations</h3>
+                    <p className="text-sm font-medium text-gray-500 mt-0.5">Quick view of student's AI usage report</p>
+                  </div>
                 </div>
                 <button 
                   onClick={() => setViewingAiDeclaration(null)}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
+                  className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
               
               {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6 bg-white">
+              <div className="flex-1 overflow-y-auto p-8 bg-gray-50/50">
                 {loadingAi ? (
                   <div className="flex justify-center items-center h-full">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1B2559]"></div>
                   </div>
                 ) : aiInteractionsData.length > 0 ? (
-                  <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-                    <table className="w-full text-left text-sm text-gray-600">
-                      <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-[#1B2559] uppercase">
+                  <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
+                    <table className="w-full text-left text-sm text-gray-600 table-fixed">
+                      <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-[#1B2559] uppercase tracking-wider">
                         <tr>
-                          <th className="px-4 py-4 w-40">Tool & Purpose</th>
-                          <th className="px-4 py-4 w-[35%]">Prompt Content</th>
-                          <th className="px-4 py-4 w-[35%]">Response & Reflection</th>
-                          <th className="px-4 py-4 w-24 text-center">Decision</th>
+                          <th className="px-3 py-4 w-[16%]">Tool & Purpose</th>
+                          <th className="px-3 py-4 w-[35%]">Prompt Content</th>
+                          <th className="px-3 py-4 w-[35%]">Response & Reflection</th>
+                          <th className="px-3 py-4 w-[14%] text-center">Decision</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {aiInteractionsData.map((interaction: any, idx: number) => (
-                          <tr key={interaction._id || idx} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-4 align-top">
-                              <div className="font-extrabold text-[#4318FF] uppercase text-xs mb-1">
+                          <tr key={`${interaction._id || 'ai'}-${idx}`} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-3 py-5 align-top">
+                              <div className="font-black text-[#4318FF] uppercase text-sm mb-2 break-all">
                                 {interaction.aiTool}
                               </div>
-                              <div className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 text-[10px] font-bold rounded-md">
+                              <div className="inline-flex items-center px-2 py-1.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg border border-gray-200 text-center break-words max-w-full">
                                 {interaction.usagePurpose.replace(/_/g, ' ')}
                               </div>
                             </td>
-                            <td className="px-4 py-4 align-top">
-                              <div className="text-xs bg-gray-50 p-3 rounded-lg border border-gray-100 max-h-48 overflow-y-auto whitespace-pre-wrap font-medium">
+                            <td className="px-3 py-5 align-top">
+                              <div className="text-sm bg-gray-50/80 p-3 rounded-xl border border-gray-200 h-40 overflow-y-auto whitespace-pre-wrap break-all font-medium text-gray-700 leading-relaxed shadow-sm">
                                 {interaction.promptContent}
                               </div>
                             </td>
-                            <td className="px-4 py-4 align-top">
-                              <div className="text-xs space-y-3">
+                            <td className="px-3 py-5 align-top">
+                              <div className="text-sm space-y-3">
                                 <div>
-                                  <div className="font-bold text-[#1B2559] mb-1">AI Response:</div>
-                                  <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100/50 max-h-24 overflow-y-auto whitespace-pre-wrap">
+                                  <div className="font-bold text-[#1B2559] mb-1.5 flex items-center">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 shrink-0"></div>
+                                    AI Response:
+                                  </div>
+                                  <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100 h-20 overflow-y-auto whitespace-pre-wrap break-all text-gray-700 leading-relaxed shadow-sm">
                                     {interaction.aiResponseSummary}
                                   </div>
                                 </div>
                                 <div>
-                                  <div className="font-bold text-[#1B2559] mb-1">Student Reflection:</div>
-                                  <div className="bg-green-50/50 p-3 rounded-lg border border-green-100/50 max-h-24 overflow-y-auto whitespace-pre-wrap">
+                                  <div className="font-bold text-[#1B2559] mb-1.5 flex items-center">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 mr-2 shrink-0"></div>
+                                    Student Reflection:
+                                  </div>
+                                  <div className="bg-green-50/50 p-3 rounded-xl border border-green-100 h-20 overflow-y-auto whitespace-pre-wrap break-all text-gray-700 italic leading-relaxed shadow-sm">
                                     {interaction.reflectionText}
                                   </div>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-4 align-top text-center">
-                              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                                interaction.studentDecision === 'accepted' ? 'bg-green-100 text-green-800' :
-                                interaction.studentDecision === 'rejected' ? 'bg-red-100 text-red-800' :
-                                'bg-orange-100 text-orange-800'
+                            <td className="px-3 py-5 align-top text-center">
+                              <span className={`inline-flex items-center justify-center px-2 py-1.5 rounded-lg text-[11px] font-bold shadow-sm border w-full max-w-full break-words ${
+                                interaction.studentDecision === 'accepted' ? 'bg-green-50 text-green-700 border-green-200' :
+                                interaction.studentDecision === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
+                                'bg-orange-50 text-orange-700 border-orange-200'
                               }`}>
                                 {interaction.studentDecision.replace(/_/g, ' ')}
                               </span>

@@ -8,11 +8,11 @@ export interface AiInteraction {
 }
 
 // Helper function to extract filename and trigger download
-const handleFileDownload = async (promise: Promise<any>) => {
+const handleFileDownload = async (promise: Promise<any>, fallbackFileName?: string) => {
   const response = await promise;
   
   // Extract filename from Content-Disposition header if available
-  let fileName = 'downloaded_file';
+  let fileName = fallbackFileName || 'downloaded_file';
   const disposition = response.headers && response.headers['content-disposition'];
   if (disposition && disposition.indexOf('attachment') !== -1) {
     const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
@@ -97,11 +97,11 @@ export const submissionService = {
     return await axiosClient.get(`/submission-versions/${versionId}`);
   },
 
-  downloadSubmissionLatest: async (submissionId: string) => {
+  downloadSubmissionLatest: async (submissionId: string, expectedFileName?: string) => {
     const promise = axiosClient.get(`/submissions/${submissionId}/download`, {
       responseType: 'blob'
     });
-    return handleFileDownload(promise);
+    return handleFileDownload(promise, expectedFileName);
   },
 
   downloadSubmissionVersion: async (versionId: string) => {

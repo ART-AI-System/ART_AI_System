@@ -136,14 +136,7 @@ const CodeReviewer: React.FC<CodeReviewerProps> = ({ submissionId }) => {
     );
   };
 
-  // Mock code for fallback if no zip is loaded
-  const mockCode = `package controllers;
-
-import java.io.IOException;
-
-public class CartServlet extends HttpServlet {
-    // Boilerplate code generated
-}`;
+  // Removed mock code
 
   return (
     <div className="flex-1 flex flex-col border-r border-gray-200 bg-white">
@@ -195,12 +188,8 @@ public class CartServlet extends HttpServlet {
             ) : (
                <div className="px-2 text-sm text-gray-500">
                  {error ? <span className="text-red-500">{error}</span> : 'No files found.'}
-                 <div className="mt-4 text-xs">
-                   <p className="font-bold mb-1">Mock Fallback Structure:</p>
-                   <ul className="pl-2 space-y-1">
-                     <li>src/CartServlet.java</li>
-                     <li>web/index.jsp</li>
-                   </ul>
+                 <div className="mt-4 text-xs text-gray-400">
+                   <p>No valid zip file was found for this submission.</p>
                  </div>
                </div>
             )}
@@ -212,7 +201,9 @@ public class CartServlet extends HttpServlet {
           {viewMode === 'code' ? (
             <div className="flex-1 overflow-auto bg-white p-4" style={{ scrollbarWidth: 'thin' }}>
               <pre className="text-sm font-mono leading-relaxed text-gray-800 whitespace-pre-wrap">
-                {Object.keys(fileTree).length > 0 ? fileContent : mockCode}
+                {Object.keys(fileTree).length > 0 
+                  ? fileContent || 'Select a file to view its content.'
+                  : 'No file selected or no submission file available.'}
               </pre>
             </div>
           ) : (

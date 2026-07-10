@@ -5,6 +5,8 @@ import {
   Download, FileText, AlertOctagon, CheckCircle2
 } from 'lucide-react';
 import { submissionService } from '../../services/submission.service';
+import { gradeService } from '../../services/grade.service';
+import { reviewService } from '../../services/review.service';
 
 type Tab = 'ai' | 'grade';
 
@@ -18,6 +20,8 @@ const LecturerGradingDetailPage = () => {
   
   const [score, setScore] = useState<number | ''>('');
   const [feedback, setFeedback] = useState<string>('');
+  const [reviewStatus, setReviewStatus] = useState<any>('pending');
+  const [comment, setComment] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [gradeSaved, setGradeSaved] = useState(false);
 
@@ -26,10 +30,11 @@ const LecturerGradingDetailPage = () => {
       if (!id) return;
       setLoading(true);
       try {
-        const [subRes, aiRes, gradeRes] = await Promise.all([
+        const [subRes, aiRes, gradeRes, reviewRes] = await Promise.all([
           submissionService.getSubmissionById(id).catch(() => null),
           submissionService.getAiInteractions(id).catch(() => null),
-          submissionService.getGrade(id).catch(() => null)
+          gradeService.getGrade(id).catch(() => null),
+          reviewService.getReview(id).catch(() => null)
         ]);
 
         if (subRes) setSubmission((subRes as any).data?.result || (subRes as any).result || (subRes as any).data || subRes);
@@ -40,6 +45,12 @@ const LecturerGradingDetailPage = () => {
           setScore(gradeData.score);
           setFeedback(gradeData.feedback || '');
           setGradeSaved(true);
+        }
+
+        const reviewData = (reviewRes as any)?.data?.result || (reviewRes as any)?.result || (reviewRes as any)?.data;
+        if (reviewData) {
+          setReviewStatus(reviewData.reviewStatus);
+          setComment(reviewData.comment || '');
         }
       } catch (err) {
         console.error('Failed to load grading details', err);
@@ -54,12 +65,16 @@ const LecturerGradingDetailPage = () => {
     if (!id || score === '') return;
     setIsSubmitting(true);
     try {
-      await submissionService.gradeSubmission(id, { score: Number(score), feedback });
+      // Create/Update Grade and Review concurrently
+      await Promise.all([
+        gradeService.createGrade(id, { score: Number(score), maxScore: 10, feedback }),
+        reviewService.createReview(id, { reviewStatus, comment })
+      ]);
       setGradeSaved(true);
-      alert('Grade published successfully!');
+      alert('Grade and Review saved successfully!');
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to publish grade.');
+      alert(err.response?.data?.message || 'Failed to save grade and review.');
     } finally {
       setIsSubmitting(false);
     }
@@ -120,7 +135,7 @@ const LecturerGradingDetailPage = () => {
             disabled={isSubmitting || score === ''}
             className={`px-6 py-2 text-white text-sm font-bold rounded-xl transition-all shadow-lg flex items-center ${isSubmitting || score === '' ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-br from-[#F26F21] to-[#F79C65] hover:opacity-90 shadow-orange-500/30'}`}
           >
-            {isSubmitting ? 'Saving...' : gradeSaved ? 'Update Grade' : 'Publish Grade'} <Send className="w-4 h-4 ml-2" />
+            {isSubmitting ? 'Saving...' : gradeSaved ? 'Update Grade & Review' : 'Save Grade & Review'} <Send className="w-4 h-4 ml-2" />
           </button>
         </div>
       </header>
@@ -256,6 +271,31 @@ const LecturerGradingDetailPage = () => {
                   />
                   <span className="text-xl font-bold text-gray-400 ml-3">/ 10</span>
                 </div>
+              </div>
+              
+              <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6">
+                <label className="block text-sm font-bold text-[#1B2559] mb-3">Review Status</label>
+                <select
+                  value={reviewStatus}
+                  onChange={(e) => setReviewStatus(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold text-gray-700 outline-none focus:border-[#4318FF] focus:ring-1 focus:ring-[#4318FF]"
+                >
+                  <option value="pending">⏳ Pending</option>
+                  <option value="reviewed">✅ Reviewed</option>
+                  <option value="needs_revision">🔄 Needs Revision</option>
+                  <option value="flagged">🚩 Flagged</option>
+                </select>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6">
+                <label className="block text-sm font-bold text-[#1B2559] mb-3">Review Comment</label>
+                <textarea 
+                  rows={4}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-4 text-sm text-gray-700 outline-none focus:border-[#4318FF] focus:ring-1 focus:ring-[#4318FF]" 
+                  placeholder="Provide review comments regarding AI declaration..."
+                ></textarea>
               </div>
 
               <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
