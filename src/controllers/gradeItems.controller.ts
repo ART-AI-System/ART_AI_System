@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import gradeItemsService from '~/services/gradeItems.service'
+import { UploadedAssignmentMaterialFile } from '~/models/requests/assignments.request'
 
 export const createGradeItemController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -71,6 +72,57 @@ export const deleteGradeItemController = async (req: Request, res: Response, nex
     }
     res.json({
       message: 'Delete grade item successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const listGradeItemMaterialsController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await gradeItemsService.listMaterials(req.params.id as string, req.user)
+    res.json({
+      message: 'Get grade item materials successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const uploadGradeItemMaterialController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const materialFile = req.assignmentMaterialFile as UploadedAssignmentMaterialFile | undefined
+    const result = await gradeItemsService.uploadMaterial(
+      req.params.id as string,
+      materialFile as UploadedAssignmentMaterialFile,
+      req.body,
+      req.user
+    )
+    res.status(201).json({
+      message: 'Upload grade item material successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const downloadGradeItemMaterialController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const material = await gradeItemsService.getMaterialForDownload(req.params.materialId as string, req.user)
+    res.download(material.filepath, material.originalFilename)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const deleteGradeItemMaterialController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await gradeItemsService.deleteMaterial(req.params.materialId as string, req.user)
+    res.json({
+      message: 'Delete grade item material successfully',
       result
     })
   } catch (error) {

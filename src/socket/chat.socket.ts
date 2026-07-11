@@ -34,7 +34,7 @@ export const initChatSocket = (httpServer: HttpServer) => {
   io.on('connection', (socket: Socket) => {
     const userId = socket.data.userId
 
-    console.log(`User connected to chat socket: ${userId}`)
+    // console.log(`User connected to chat socket: ${userId}`)
 
     // Join personal room so user can receive events across all their conversations
     socket.join(userId)
@@ -95,7 +95,7 @@ export const initChatSocket = (httpServer: HttpServer) => {
     })
 
     socket.on('disconnect', () => {
-      console.log(`User disconnected from chat socket: ${userId}`)
+      // console.log(`User disconnected from chat socket: ${userId}`)
     })
   })
 }

@@ -4,7 +4,8 @@ import gradesService from '~/services/grades.service'
 export const gradeSubmissionController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id: submissionId } = req.params
-    const result = await gradesService.gradeSubmission(submissionId as string, req.body)
+    const userId = (req as any).decoded_auth.user_id
+    const result = await gradesService.gradeSubmission(submissionId as string, req.body, userId)
     res.status(200).json({
       message: 'Grade submitted successfully',
       result
