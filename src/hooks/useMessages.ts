@@ -4,7 +4,7 @@ import type { ChatMessage } from '../types/chat';
 import { useChatSocket } from './useChatSocket';
 import { useAuth } from '../context/AuthContext';
 
-export const useMessages = (roomId: string | null) => {
+export const useMessages = (roomId: string | null, options?: { onMessageSent?: (msg: ChatMessage) => void }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -19,7 +19,7 @@ export const useMessages = (roomId: string | null) => {
     if (!roomId) return;
     try {
       setLoading(true);
-      const limit = 30;
+      const limit = 10;
       const data = await chatService.getMessages(roomId, pageNum, limit);
       // Backend returns sorted by createdAt DESC (newest first)
       // So we want to reverse them if we append them at the top
@@ -123,23 +123,15 @@ export const useMessages = (roomId: string | null) => {
     setMessages(prev => [...prev, tempMessage]);
 
     try {
-      if (socket && socket.connected) {
-        socket.emit('chat:send_message', { roomId: targetRoomId, content, messageType: 'text' }, (response: any) => {
-          if (response.status === 'ok') {
-            setMessages(prev => prev.map(m => m._id === tempId ? response.data : m));
-          } else {
-            // Failed, rollback
-            setMessages(prev => prev.filter(m => m._id !== tempId));
-            console.error('Socket send message failed:', response.message);
-          }
-        });
-      } else {
-        // Fallback to REST API if socket is disconnected? Or just wait for socket reconnect?
-        // Socket.io queues events automatically while disconnected, but optimistic UI needs handling.
-        // Let's use the REST API as fallback just in case or throw error.
-        const msg = await chatService.sendMessage(targetRoomId, content);
-        setMessages(prev => prev.map(m => m._id === tempId ? msg : m));
-      }
+      const msg = await chatService.sendMessage(targetRoomId, content);
+      setMessages(prev => {
+        const alreadyExists = prev.some(m => m._id === msg._id);
+        if (alreadyExists) {
+          return prev.filter(m => m._id !== tempId);
+        }
+        return prev.map(m => m._id === tempId ? msg : m);
+      });
+      options?.onMessageSent?.(msg);
     } catch (err) {
       console.error('Failed to send message:', err);
       // Rollback

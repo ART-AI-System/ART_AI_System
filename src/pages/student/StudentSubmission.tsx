@@ -5,12 +5,14 @@ import AssignmentDetails from '../../components/student/AssignmentDetails';
 import StudentSubmissionPanel from '../../components/student/StudentSubmissionPanel';
 import { assignmentService } from '../../services/assignment.service';
 import { submissionService } from '../../services/submission.service';
+import axiosClient from '../../api/axiosClient';
 
 const StudentSubmission = () => {
   const navigate = useNavigate();
   const { assignmentId } = useParams<{ assignmentId: string }>();
-  const [assignment, setAssignment] = useState<unknown>(null);
-  const [submission, setSubmission] = useState<unknown>(null);
+  const [assignment, setAssignment] = useState<any>(null);
+  const [submission, setSubmission] = useState<any>(null);
+  const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -18,9 +20,10 @@ const StudentSubmission = () => {
     const fetchAssignmentAndSubmission = async () => {
       if (!assignmentId) return;
       try {
-        const [assignmentRes, submissionRes] = await Promise.all([
+        const [assignmentRes, submissionRes, materialsRes] = await Promise.all([
           assignmentService.getAssignmentDetail(assignmentId),
-          submissionService.getMySubmission(assignmentId).catch(() => null)
+          submissionService.getMySubmission(assignmentId).catch(() => null),
+          axiosClient.get(`/grade-items/standalone/${assignmentId}/materials`).catch(() => ({ result: [] }))
         ]);
         
         const assignData: any = assignmentRes;
@@ -31,6 +34,9 @@ const StudentSubmission = () => {
           const extractedSub = subData.data?.result || subData.result || subData;
           setSubmission(extractedSub);
         }
+
+        const matData: any = materialsRes;
+        setMaterials(matData.data?.result || matData.result || matData || []);
       } catch (err) {
         console.error('Failed to load assignment details', err);
         setError('Failed to load assignment details.');
@@ -55,7 +61,7 @@ const StudentSubmission = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4318FF]"></div>
             </div>
           ) : (
-            <AssignmentDetails assignment={assignment} />
+            <AssignmentDetails assignment={assignment} materials={materials} />
           )}
         </div>
 

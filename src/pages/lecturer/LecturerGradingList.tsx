@@ -365,14 +365,22 @@ const LecturerGradingListPage = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {aiInteractionsData.map((interaction: any, idx: number) => (
+                        {aiInteractionsData.map((interaction: any, idx: number) => {
+                          const phaseLabels = [
+                            "AI Reflection",
+                            "Decomposition",
+                            "Pattern Recognition",
+                            "Abstraction",
+                            "Algorithmic Thinking"
+                          ];
+                          return (
                           <tr key={`${interaction._id || 'ai'}-${idx}`} className="hover:bg-gray-50/50 transition-colors">
                             <td className="px-3 py-5 align-top">
                               <div className="font-black text-[#4318FF] uppercase text-sm mb-2 break-all">
                                 {interaction.aiTool}
                               </div>
                               <div className="inline-flex items-center px-2 py-1.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg border border-gray-200 text-center break-words max-w-full">
-                                {interaction.usagePurpose.replace(/_/g, ' ')}
+                                {phaseLabels[idx] || interaction.usagePurpose?.replace(/_/g, ' ')}
                               </div>
                             </td>
                             <td className="px-3 py-5 align-top">
@@ -412,7 +420,8 @@ const LecturerGradingListPage = () => {
                               </span>
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

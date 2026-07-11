@@ -19,7 +19,7 @@ class ChatSocketService {
 
   public connect(): Socket {
     if (!this.socket) {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('access_token');
       this.socket = io(SOCKET_URL, {
         auth: {
           token
@@ -41,7 +41,7 @@ class ChatSocketService {
       });
     } else if (!this.socket.connected) {
       // Re-update token just in case
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('access_token');
       if (token) {
         this.socket.auth = { token };
       }

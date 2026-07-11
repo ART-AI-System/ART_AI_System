@@ -146,7 +146,7 @@ export const AdminSidebar = () => {
         </div>
 
         <NavLink
-          to="/dashboard/admin/messages"
+          to="/admin/messages"
           className={({ isActive }) =>
             `flex items-center px-4 py-3.5 font-medium rounded-xl transition-all relative ${
               isActive

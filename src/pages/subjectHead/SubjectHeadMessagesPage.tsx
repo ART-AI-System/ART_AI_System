@@ -6,7 +6,7 @@ import { useMessages } from '../../hooks/useMessages';
 import { chatService } from '../../services/chat.service';
 import { chatSocketService } from '../../services/chat.socket';
 
-const LecturerMessagesPage = () => {
+const SubjectHeadMessagesPage = () => {
   const { user } = useAuth();
   const { conversations, setConversations, contacts, loading: loadingConversations } = useConversations();
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
@@ -417,4 +417,4 @@ const LecturerMessagesPage = () => {
   );
 };
 
-export default LecturerMessagesPage;
+export default SubjectHeadMessagesPage;

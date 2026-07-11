@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Search, Edit, Phone, Video, MoreVertical, CheckCheck, Paperclip, Smile, Send } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useConversations } from '../../hooks/useConversations';
@@ -14,20 +14,41 @@ const StudentMessagesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [globalSearchResults, setGlobalSearchResults] = useState<any[]>([]);
   
-  const { messages, loading: loadingMessages, hasMore, loadMore, sendMessage, page } = useMessages(activeRoomId);
+  const handleMessageSent = useCallback((msg: any) => {
+    setConversations(prev => {
+      const idx = prev.findIndex(r => r._id === msg.roomId);
+      if (idx > -1) {
+        const updatedRoom = { ...prev[idx], lastMessage: msg.content, lastMessageAt: msg.createdAt };
+        const newConversations = [...prev];
+        newConversations.splice(idx, 1);
+        newConversations.unshift(updatedRoom);
+        return newConversations;
+      }
+      return prev;
+    });
+  }, [setConversations]);
+
+  const { messages, loading: loadingMessages, hasMore, loadMore, sendMessage, page } = useMessages(activeRoomId, { onMessageSent: handleMessageSent });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto scroll to bottom conditionally
+  const prevRoomId = useRef<string | null>(null);
+
+  // Auto scroll logic
   useEffect(() => {
-    if (messagesContainerRef.current) {
+    if (messagesContainerRef.current && messages.length > 0) {
       const container = messagesContainerRef.current;
-      if (container.scrollHeight - container.scrollTop <= container.clientHeight + 150) {
+      const isNewRoom = prevRoomId.current !== activeRoomId;
+      
+      if (isNewRoom) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+        prevRoomId.current = activeRoomId;
+      } else if (container.scrollHeight - container.scrollTop <= container.clientHeight + 150) {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }
     }
-  }, [messages]);
+  }, [messages, activeRoomId]);
 
   // Global search
   useEffect(() => {
@@ -68,17 +89,19 @@ const StudentMessagesPage = () => {
         try {
           // Create real room
           const newRoom = await chatService.createRoom([contactId], 'direct');
+          
+          // Join room immediately and send message so it saves to DB
+          chatSocketService.getSocket()?.emit('chat:join_room', { roomId: newRoom._id });
+          const sentMsg = await chatService.sendMessage(newRoom._id, content);
+          newRoom.lastMessage = sentMsg.content;
+          newRoom.lastMessageAt = sentMsg.createdAt;
+          
+          // Update UI state - this will trigger useMessages to fetch the newly created message
           setConversations(prev => {
             if (prev.some(c => c._id === newRoom._id)) return prev;
             return [newRoom, ...prev];
           });
           setActiveRoomId(newRoom._id);
-          
-          // Join room immediately before sending message so we receive the broadcast
-          chatSocketService.getSocket()?.emit('chat:join_room', { roomId: newRoom._id });
-
-          // Send message
-          await sendMessage(content, newRoom._id);
         } catch (error: any) {
           const errMsg = error.response?.data?.message || 'Failed to create room and send message. You may not have permission to chat with this user.';
           alert(errMsg);
@@ -94,19 +117,22 @@ const StudentMessagesPage = () => {
     }
   };
 
-  const activeConversation = conversations.find(c => c._id === activeRoomId);
+  const activeConversation = useMemo(() => conversations.find(c => c._id === activeRoomId), [conversations, activeRoomId]);
   
   // Find other member details
-  let otherMember = null;
-  if (activeRoomId?.startsWith('temp_')) {
-    const contactId = activeRoomId.replace('temp_', '');
-    otherMember = contacts.find(c => c._id === contactId) || globalSearchResults.find(c => c._id === contactId);
-  } else if (activeConversation && activeConversation.type === 'direct') {
-    const otherMemberId = activeConversation.memberIds.find(id => id !== user?.id);
-    otherMember = contacts.find(c => c._id === otherMemberId);
-  }
+  const otherMember = useMemo(() => {
+    let member = null;
+    if (activeRoomId?.startsWith('temp_')) {
+      const contactId = activeRoomId.replace('temp_', '');
+      member = contacts.find(c => c._id === contactId) || globalSearchResults.find(c => c._id === contactId);
+    } else if (activeConversation && activeConversation.type === 'direct') {
+      const otherMemberId = activeConversation.memberIds.find(id => id !== user?.id);
+      member = contacts.find(c => c._id === otherMemberId);
+    }
+    return member;
+  }, [activeRoomId, activeConversation, contacts, globalSearchResults, user?.id]);
 
-  const filteredConversations = conversations.filter(conv => {
+  const filteredConversations = useMemo(() => conversations.filter(conv => {
     if (!searchQuery.trim()) return true;
     
     if (conv.type === 'group') {
@@ -123,9 +149,9 @@ const StudentMessagesPage = () => {
     const userMatch = contact.username?.toLowerCase().includes(query) || false;
     
     return nameMatch || codeMatch || userMatch;
-  });
+  }), [conversations, searchQuery, contacts, user?.id]);
 
-  const searchResultContacts = searchQuery.trim() ? contacts.filter(contact => {
+  const searchResultContacts = useMemo(() => searchQuery.trim() ? contacts.filter(contact => {
     const hasExistingConv = conversations.some(conv => conv.type === 'direct' && conv.memberIds.includes(contact._id));
     if (hasExistingConv) return false;
 
@@ -135,11 +161,11 @@ const StudentMessagesPage = () => {
     const userMatch = contact.username?.toLowerCase().includes(query) || false;
     
     return nameMatch || codeMatch || userMatch;
-  }) : [];
+  }) : [], [searchQuery, contacts, conversations]);
 
-  const combinedNewContacts = Array.from(new Map([...searchResultContacts, ...globalSearchResults].map(c => [c._id, c])).values()).filter(contact => {
+  const combinedNewContacts = useMemo(() => Array.from(new Map([...searchResultContacts, ...globalSearchResults].map(c => [c._id, c])).values()).filter(contact => {
     return !conversations.some(conv => conv.type === 'direct' && conv.memberIds.includes(contact._id));
-  });
+  }), [searchResultContacts, globalSearchResults, conversations]);
 
   return (
     <div className="flex-1 overflow-hidden p-6 h-[calc(100vh-6rem)]">
@@ -255,7 +281,10 @@ const StudentMessagesPage = () => {
                 })}
 
                 {filteredConversations.length === 0 && combinedNewContacts.length === 0 && (
-                   <div className="p-4 text-center text-gray-500 text-sm">No results found.</div>
+                  <div className="p-8 text-center">
+                    <p className="text-sm font-bold text-gray-500 mb-1">No conversations found</p>
+                    <p className="text-xs text-gray-400">Search for a student code, name or email to start a new chat.</p>
+                  </div>
                 )}
               </>
             )}

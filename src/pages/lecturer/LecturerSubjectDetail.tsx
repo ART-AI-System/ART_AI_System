@@ -233,12 +233,12 @@ const LecturerSubjectDetail = () => {
                       )}
 
                       <div className="flex space-x-3 mt-4 pt-4 border-t border-gray-200/50">
-                        <Link to={`/lecturer/assignments/create?sessionId=${session._id}`} className="bg-white border border-gray-200 hover:border-orange-200 hover:text-[#F26F21] px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center shadow-sm">
+                        <Link to={`/lecturer/assignments/create?sessionId=${session._id}&classId=${subjectId}`} className="bg-white border border-gray-200 hover:border-orange-200 hover:text-[#F26F21] px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center shadow-sm">
                           <Plus className="w-4 h-4 mr-2" /> Add Assignment
                         </Link>
-                        <button className="bg-white border border-gray-200 hover:border-blue-200 hover:text-[#4318FF] px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center shadow-sm">
+                        <Link to={`/lecturer/tests/create?sessionId=${session._id}&classId=${subjectId}`} className="bg-white border border-gray-200 hover:border-blue-200 hover:text-[#4318FF] px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center shadow-sm">
                           <Plus className="w-4 h-4 mr-2" /> Add Test
-                        </button>
+                        </Link>
                         <button className="bg-white border border-gray-200 hover:border-green-200 hover:text-green-600 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center shadow-sm">
                           <UploadCloud className="w-4 h-4 mr-2" /> Upload Material
                         </button>
@@ -266,7 +266,7 @@ const LecturerSubjectDetail = () => {
                 <p className="text-sm font-medium text-gray-500 mt-1">Create an assignment and push it to multiple classes simultaneously.</p>
               </div>
               {/* HERE IS THE CREATE ASSIGNMENT BUTTON FROM THE MOCKUP */}
-              <Link to="/lecturer/assignments/create" className="bg-[#F26F21] hover:bg-[#E86115] text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-orange-500/20 transition-all flex items-center">
+              <Link to={`/lecturer/assignments/create?classId=${subjectId}`} className="bg-[#F26F21] hover:bg-[#E86115] text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-orange-500/20 transition-all flex items-center">
                 <Plus className="w-5 h-5 mr-2" /> Create Global Assignment
               </Link>
             </div>

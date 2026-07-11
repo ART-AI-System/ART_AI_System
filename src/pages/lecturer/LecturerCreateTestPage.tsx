@@ -7,8 +7,14 @@ import {
 import { ROUTES } from '../../config/routes';
 import axiosClient from '../../api/axiosClient';
 
+import { useSearchParams } from 'react-router-dom';
+
 const LecturerCreateTestPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const classId = searchParams.get('classId');
+  const sessionId = searchParams.get('sessionId');
+
   const [title, setTitle] = useState('Midterm Exam - Spring 2026');
   const [duration, setDuration] = useState(60);
   const [totalPoints, setTotalPoints] = useState(100);
@@ -16,8 +22,13 @@ const LecturerCreateTestPage = () => {
   const [saving, setSaving] = useState(false);
 
   const handleSaveTest = async () => {
+    if (!classId) {
+      alert('Error: No class specified for this test.');
+      return;
+    }
+
     setSaving(true);
-    const payload = {
+    const payload: any = {
       title,
       duration: Number(duration),
       totalPoints: Number(totalPoints),
@@ -44,8 +55,12 @@ const LecturerCreateTestPage = () => {
       ]
     };
 
+    if (sessionId) {
+      payload.sessionId = sessionId;
+    }
+
     try {
-      await axiosClient.post('/classes/661122334455667788990021/tests', payload);
+      await axiosClient.post(`/classes/${classId}/grade-items`, payload);
       alert('Test created and published successfully!');
       navigate(-1);
     } catch (err) {

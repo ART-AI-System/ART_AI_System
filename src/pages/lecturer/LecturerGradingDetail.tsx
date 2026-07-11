@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, AlertTriangle, RefreshCcw, Save, Send, ChevronRight } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import CodeReviewer from '../../components/lecturer/CodeReviewer';
+import SubmissionFileViewer from '../../components/lecturer/SubmissionFileViewer';
 import EvaluationPanel from '../../components/lecturer/EvaluationPanel';
 import axiosClient from '../../api/axiosClient';
 import { gradeService } from '../../services/grade.service';
 import { reviewService } from '../../services/review.service';
 
-const LecturerGradingDetail = () => {
-  const { id } = useParams(); // submissionId
+const LecturerGradingDetail: React.FC = () => {
+  const { submissionId: id } = useParams<{ submissionId: string }>();
   const navigate = useNavigate();
   const [gradeData, setGradeData] = useState({ score: 0, feedback: '', reviewStatus: 'pending', reviewComment: '' });
   const [isPublishing, setIsPublishing] = useState(false);
@@ -67,7 +67,7 @@ const LecturerGradingDetail = () => {
         ]);
       }
       alert('Grade and Review published successfully');
-      navigate('/lecturer/grading');
+      navigate(-1);
     } catch (err) {
       console.error('Failed to publish grade', err);
       alert('Failed to publish grade and review');
@@ -84,9 +84,9 @@ const LecturerGradingDetail = () => {
       {/* TOP HEADER (Compact) */}
       <header className="h-16 bg-[#1B2559] text-white flex items-center justify-between px-6 shrink-0 shadow-md relative z-20">
         <div className="flex items-center">
-          <Link to="/lecturer/grading" className="p-2 mr-4 hover:bg-white/10 rounded-lg transition-colors text-gray-300 hover:text-white">
+          <button onClick={() => navigate(-1)} className="p-2 mr-4 hover:bg-white/10 rounded-lg transition-colors text-gray-300 hover:text-white">
             <ArrowLeft className="w-5 h-5" />
-          </Link>
+          </button>
 
           <div>
             <div className="flex items-center text-[10px] font-bold text-gray-400 mb-0.5 uppercase tracking-wider">
@@ -131,11 +131,11 @@ const LecturerGradingDetail = () => {
 
       {/* SPLIT VIEW CONTAINER */}
       <div className="flex-1 flex overflow-hidden">
-        {/* LEFT PANE: CODE REVIEWER */}
-        <CodeReviewer submissionId={id} />
+        {/* LEFT PANE: FILE VIEWER */}
+        <SubmissionFileViewer submissionId={id || ''} submissionInfo={submission} />
 
         {/* RIGHT PANE: EVALUATION PANEL */}
-        <EvaluationPanel submissionId={id} aiEvaluation={aiEvaluation} onChange={(data) => setGradeData(data)} />
+        <EvaluationPanel submissionId={id || ''} aiEvaluation={aiEvaluation} onChange={(data) => setGradeData(data)} />
       </div>
     </div>
   );

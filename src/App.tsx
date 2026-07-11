@@ -20,12 +20,15 @@ import LecturerSubmissionList from './pages/lecturer/LecturerSubmissionList';
 import LecturerCreateTestPage from './pages/lecturer/LecturerCreateTestPage';
 import LecturerEditSlotPage from './pages/lecturer/LecturerEditSlotPage';
 import ClassGradebook from './pages/lecturer/ClassGradebook';
+import StudentMessagesPage from './pages/student/StudentMessagesPage';
+import LecturerMessagesPage from './pages/lecturer/LecturerMessagesPage';
 
 // Admin Pages
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminSemesters from './pages/admin/AdminSemesters';
 import AdminSubjects from './pages/admin/AdminSubjects';
+import AdminMessagesPage from './pages/admin/AdminMessagesPage';
 import AdminTeachers from './pages/admin/AdminTeachers';
 import AdminClasses from './pages/admin/AdminClasses';
 
@@ -53,7 +56,7 @@ function AppRoutes() {
         </Route>
         
         <Route path="news" element={<div className="text-xl font-bold">News Page</div>} />
-        <Route path="chat" element={<div className="text-xl font-bold">Chat Page</div>} />
+        <Route path="messages" element={<StudentMessagesPage />} />
         <Route path="results" element={<StudentResultsView />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
@@ -74,7 +77,7 @@ function AppRoutes() {
         <Route path="grading/:classId" element={<LecturerGradingList />} />
         <Route path="reports" element={<div className="text-xl font-bold">Reports Page</div>} />
         <Route path="news" element={<div className="text-xl font-bold">News Page</div>} />
-        <Route path="messages" element={<div className="text-xl font-bold">Messages Page</div>} />
+        <Route path="messages" element={<LecturerMessagesPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 
@@ -91,6 +94,7 @@ function AppRoutes() {
         <Route path="semesters" element={<AdminSemesters />} />
         <Route path="subjects" element={<AdminSubjects />} />
         <Route path="classes" element={<AdminClasses />} />
+        <Route path="messages" element={<AdminMessagesPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>

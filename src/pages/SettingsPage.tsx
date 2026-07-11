@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { User, Bell, Shield, Monitor, LogOut, ArrowRight, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('account');
+  const { user, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState('general');
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
+    logout();
     navigate('/login');
   };
 
@@ -70,7 +70,7 @@ const SettingsPage = () => {
                 <div className="p-8">
                   {/* Avatar Upload */}
                   <div className="flex items-center mb-8 pb-8 border-b border-gray-100">
-                    <img src="https://ui-avatars.com/api/?name=Viet+Khoa&background=F26F21&color=fff" className="w-24 h-24 rounded-full shadow-md object-cover" alt="Avatar" />
+                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || user?.name || 'User')}&background=F26F21&color=fff`} className="w-24 h-24 rounded-full shadow-md object-cover" alt="Avatar" />
                     <div className="ml-6">
                       <div className="flex space-x-3 mb-2">
                         <button className="bg-[#4318FF] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-blue-200 hover:opacity-90">Upload New</button>
@@ -84,23 +84,23 @@ const SettingsPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
-                        <input type="text" defaultValue="Viet" className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-[#4318FF] focus:border-[#4318FF] transition-colors font-medium outline-none" />
+                        <input type="text" defaultValue={(user?.fullName || user?.name || '').split(' ')[0] || ''} className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-[#4318FF] focus:border-[#4318FF] transition-colors font-medium outline-none" />
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
-                        <input type="text" defaultValue="Khoa" className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-[#4318FF] focus:border-[#4318FF] transition-colors font-medium outline-none" />
+                        <input type="text" defaultValue={(user?.fullName || user?.name || '').split(' ').slice(1).join(' ') || ''} className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-[#4318FF] focus:border-[#4318FF] transition-colors font-medium outline-none" />
                       </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">FPT Email Address</label>
-                      <input type="email" disabled defaultValue="khoavse18d01@fpt.edu.vn" className="block w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium cursor-not-allowed" />
+                      <input type="email" disabled value={user?.email || ''} className="block w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium cursor-not-allowed" />
                       <p className="text-xs text-gray-400 font-medium mt-1">Email is managed by FPT University IT Department.</p>
                     </div>
 
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">Student Code</label>
-                      <input type="text" disabled defaultValue="SE18D01" className="block w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium cursor-not-allowed" />
+                      <input type="text" disabled value={user?.username || user?.studentCode || ''} className="block w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium cursor-not-allowed" />
                     </div>
 
                     <div>
