@@ -22,6 +22,7 @@ import testsRouter from '~/routes/tests.routes'
 import aiDeclarationRouter from '~/routes/aiDeclaration.routes'
 import aiEvaluationRouter from '~/routes/aiEvaluation.routes'
 import notificationsRouter from '~/routes/notifications.routes'
+import sessionsRouter from '~/routes/sessions.routes'
 import databaseService from '~/services/database.service'
 import { defaultErrorHandler } from '~/middlewares/error.middleware'
 import { config } from 'dotenv'
@@ -44,9 +45,11 @@ databaseService.connect().then(async () => {
   databaseService.indexTestAttempts()
 })
 
+import cors from 'cors'
 const app = express()
 const port = 4000
 
+app.use(cors())
 app.use(express.json())
 
 app.use('/api/auth', authRouter)
@@ -67,6 +70,7 @@ app.use('/api', testsRouter)
 app.use('/api', aiDeclarationRouter)
 app.use('/api', aiEvaluationRouter)
 app.use('/api', notificationsRouter)
+app.use('/api/sessions', sessionsRouter)
 
 app.use('/api/reports', reportRouter)
 

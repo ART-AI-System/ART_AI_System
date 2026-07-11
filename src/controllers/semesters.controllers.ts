@@ -7,7 +7,7 @@ export const createSemesterController = async (req: Request, res: Response) => {
   const result = await semestersService.createSemester(req.body as SemesterType)
   res.status(HTTP_STATUS.CREATED).json({
     message: 'Create semester successfully',
-    data: result
+    result
   })
 }
 
@@ -15,7 +15,7 @@ export const getSemestersController = async (req: Request, res: Response) => {
   const result = await semestersService.getSemesters()
   res.json({
     message: 'Get semesters successfully',
-    data: result
+    result
   })
 }
 
@@ -23,7 +23,7 @@ export const getCurrentSemesterController = async (req: Request, res: Response) 
   const result = await semestersService.getCurrentSemester()
   res.json({
     message: 'Get current semester successfully',
-    data: result
+    result
   })
 }
 
@@ -32,7 +32,7 @@ export const getSemesterByIdController = async (req: Request, res: Response) => 
   const result = await semestersService.getSemesterById(id as string)
   res.json({
     message: 'Get semester successfully',
-    data: result
+    result
   })
 }
 
@@ -41,7 +41,7 @@ export const updateSemesterController = async (req: Request, res: Response) => {
   const result = await semestersService.updateSemester(id as string, req.body)
   res.json({
     message: 'Update semester successfully',
-    data: result
+    result
   })
 }
 
@@ -50,7 +50,7 @@ export const setCurrentSemesterController = async (req: Request, res: Response) 
   const result = await semestersService.setCurrentSemester(id as string)
   res.json({
     message: 'Set current semester successfully',
-    data: result
+    result
   })
 }
 
@@ -60,6 +60,6 @@ export const toggleSemesterStatusController = async (req: Request, res: Response
   const result = await semestersService.toggleSemesterStatus(id as string, isActive)
   res.json({
     message: 'Toggle semester status successfully',
-    data: result
+    result
   })
 }

@@ -265,21 +265,8 @@ class SubmissionsService {
     const minInteractions = gradeItem.minAiInteractions ?? 5
     const maxInteractions = gradeItem.maxAiInteractions ?? 10
 
-    if (declarationRequired) {
-      if (interactionCount < minInteractions) {
-        throw new ErrorWithStatus({
-          message: `Minimum AI interaction requirement not met. Required: ${minInteractions}, Found: ${interactionCount}`,
-          status: HTTP_STATUS.BAD_REQUEST
-        })
-      }
-      if (interactionCount > maxInteractions) {
-        throw new ErrorWithStatus({
-          message: `Maximum AI interaction limit exceeded. Allowed: ${maxInteractions}, Found: ${interactionCount}`,
-          status: HTTP_STATUS.BAD_REQUEST
-        })
-      }
-    }
-
+    // Bỏ qua validate số lượng tối thiểu/tối đa theo yêu cầu
+    
     const now = new Date()
     const deadline = new Date(gradeItem.deadline)
     const status = now <= deadline ? 'submitted' : 'late'

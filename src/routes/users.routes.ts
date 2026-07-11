@@ -169,7 +169,7 @@ usersRouter
  * Flow:
  *   requireAuth → requireRole('ADMIN') → Controller → Service → DB → Response
  */
-usersRouter.get('/:id', requireAuth, requireRole('ADMIN'), wrapRequestHandler(getUserByIdController))
+usersRouter.get('/:id', requireAuth, requireRole('ADMIN', 'LECTURER'), wrapRequestHandler(getUserByIdController))
 
 /**
  * PUT /api/users/:id — Admin updates a user's general info.

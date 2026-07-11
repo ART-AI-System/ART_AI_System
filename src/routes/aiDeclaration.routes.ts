@@ -31,16 +31,13 @@ const validateAiInteractionBody = validate({
         .run(req),
       body('usagePurpose')
         .isIn([
-          'brainstorming',
-          'topic_research',
-          'summarization',
-          'writing_improvement',
-          'critical_feedback',
-          'methodology_review',
-          'data_analysis',
-          'other'
+          'decomposition',
+          'pattern_recognition',
+          'abstraction',
+          'algorithmic_thinking',
+          'reflection'
         ])
-        .withMessage('Invalid usagePurpose type')
+        .withMessage('Invalid usage purpose')
         .run(req),
       body('promptContent')
         .notEmpty()

@@ -93,3 +93,49 @@ export const importStudentsController = async (req: Request, res: Response, next
     next(error)
   }
 }
+
+export const addStudentToClassController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params
+    const { studentId } = req.body
+    if (!studentId) {
+      res.status(400).json({ message: 'studentId is required' })
+      return
+    }
+    const result = await classesService.addStudentToClass(id as string, studentId as string)
+    res.json(result)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const removeStudentFromClassController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id, studentId } = req.params
+    if (!studentId) {
+      res.status(400).json({ message: 'studentId is required' })
+      return
+    }
+    const result = await classesService.removeStudentFromClass(id as string, studentId as string)
+    res.json(result)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const promoteCohortController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params
+    const { targetSemesterId, assignments } = req.body
+    
+    if (!targetSemesterId || !assignments || !Array.isArray(assignments) || assignments.length === 0) {
+      res.status(400).json({ message: 'targetSemesterId and assignments array are required' })
+      return
+    }
+    
+    const result = await classesService.promoteCohort(id as string, targetSemesterId, assignments)
+    res.json(result)
+  } catch (error) {
+    next(error)
+  }
+}

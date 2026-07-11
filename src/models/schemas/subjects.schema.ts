@@ -5,6 +5,7 @@ export interface SubjectType {
   code: string
   name: string
   description?: string
+  defaultSlots?: number
   departmentId?: ObjectId
   isActive?: boolean
   createdAt?: Date
@@ -16,6 +17,7 @@ export default class Subject {
   code: string
   name: string
   description: string
+  defaultSlots: number
   departmentId?: ObjectId
   isActive: boolean
   createdAt: Date
@@ -27,6 +29,7 @@ export default class Subject {
     this.code = subjectData.code
     this.name = subjectData.name
     this.description = subjectData.description || ''
+    this.defaultSlots = subjectData.defaultSlots || 10
     this.departmentId = subjectData.departmentId
     this.isActive = subjectData.isActive ?? true
     this.createdAt = subjectData.createdAt || date

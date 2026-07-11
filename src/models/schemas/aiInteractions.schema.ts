@@ -3,14 +3,11 @@ import { ObjectId } from 'mongodb'
 export type AiToolType = 'chatgpt' | 'gemini' | 'claude' | 'copilot' | 'other'
 
 export type UsagePurposeType =
-  | 'brainstorming'
-  | 'topic_research'
-  | 'summarization'
-  | 'writing_improvement'
-  | 'critical_feedback'
-  | 'methodology_review'
-  | 'data_analysis'
-  | 'other'
+  | 'decomposition'
+  | 'pattern_recognition'
+  | 'abstraction'
+  | 'algorithmic_thinking'
+  | 'reflection'
 
 export type StudentDecisionType = 'accepted' | 'partially_accepted' | 'rejected' | 'reference_only'
 

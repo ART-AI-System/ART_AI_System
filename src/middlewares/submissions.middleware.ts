@@ -8,7 +8,7 @@ import { ErrorWithStatus } from '~/models/Errors'
 import { SubmissionUploadFields, UploadedSubmissionFile } from '~/models/requests/submissions.request'
 
 const MAX_SUBMISSION_FILE_SIZE = 10 * 1024 * 1024
-const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.xlsx', '.pptx', '.zip']
+const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.xlsx', '.pptx', '.zip', '.txt']
 const UPLOAD_TEMP_DIR = path.join(process.cwd(), 'uploads', 'submissions', 'temp')
 
 function getFileHash(filePath: string) {
@@ -67,7 +67,7 @@ export const parseSubmissionFile = async (req: Request, res: Response, next: Nex
           removeFileIfExists(file.filepath)
           return reject(
             new ErrorWithStatus({
-              message: 'Submission file must be PDF, DOCX, XLSX, PPTX, or ZIP',
+              message: 'Submission file must be PDF, DOCX, XLSX, PPTX, ZIP, or TXT',
               status: HTTP_STATUS.BAD_REQUEST
             })
           )

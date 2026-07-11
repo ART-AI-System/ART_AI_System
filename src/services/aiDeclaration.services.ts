@@ -90,6 +90,7 @@ class AiDeclarationService {
     await this.assertCanViewSubmission(submission, userOid, role)
 
     const result = await databaseService.aiInteractions.find({ submissionId: submissionOid }).toArray()
+    // console.log('AI Interactions found for submission:', submissionOid, result.length)
     return result
   }
 

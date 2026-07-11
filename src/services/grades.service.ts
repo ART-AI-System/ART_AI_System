@@ -4,7 +4,12 @@ import Grade, { GradeType } from '~/models/schemas/grades.schema'
 import FinalResult from '~/models/schemas/finalResults.schema'
 
 class GradesService {
-  async gradeSubmission(submissionId: string, payload: Omit<GradeType, 'submissionId'>) {
+  async gradeSubmission(submissionId: string, payload: Omit<GradeType, 'submissionId'>, userId: string) {
+    const submission = await databaseService.submissions.findOne({ _id: new ObjectId(submissionId) })
+    if (!submission) {
+      throw new Error('Submission not found')
+    }
+
     const existingGrade = await databaseService.grades.findOne({ submissionId: new ObjectId(submissionId) })
     
     if (existingGrade) {
@@ -12,11 +17,13 @@ class GradesService {
         { submissionId: new ObjectId(submissionId) },
         {
           $set: {
-            ...payload,
-            studentId: new ObjectId(payload.studentId),
-            classId: new ObjectId(payload.classId),
-            gradeItemId: new ObjectId(payload.gradeItemId),
-            gradedBy: new ObjectId(payload.gradedBy),
+            score: payload.score,
+            maxScore: payload.maxScore,
+            feedback: payload.feedback,
+            studentId: submission.studentId, // restore in case it was corrupted
+            classId: submission.classId,
+            gradeItemId: submission.gradeItemId,
+            gradedBy: new ObjectId(userId),
             updatedAt: new Date()
           }
         },
@@ -28,10 +35,10 @@ class GradesService {
     const newGrade = new Grade({
       ...payload,
       submissionId: new ObjectId(submissionId),
-      studentId: new ObjectId(payload.studentId),
-      classId: new ObjectId(payload.classId),
-      gradeItemId: new ObjectId(payload.gradeItemId),
-      gradedBy: new ObjectId(payload.gradedBy)
+      studentId: submission.studentId,
+      classId: submission.classId,
+      gradeItemId: submission.gradeItemId,
+      gradedBy: new ObjectId(userId)
     })
     const result = await databaseService.grades.insertOne(newGrade)
     return { ...newGrade, _id: result.insertedId }
