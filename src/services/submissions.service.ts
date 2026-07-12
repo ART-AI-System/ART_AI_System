@@ -18,6 +18,15 @@ type SubmissionHeatmapQuery = {
   semesterId?: string
 }
 
+type SubmissionTreeNode = {
+  name: string
+  path: string
+  type: 'file' | 'folder'
+  size?: number
+  mimeType?: string
+  children?: SubmissionTreeNode[]
+}
+
 function toObjectId(id: string, entityName: string) {
   if (!ObjectId.isValid(id)) {
     throw new ErrorWithStatus({
@@ -68,6 +77,106 @@ function addUtcDays(date: Date, days: number) {
   const nextDate = new Date(date)
   nextDate.setUTCDate(nextDate.getUTCDate() + days)
   return nextDate
+}
+
+function sanitizeZipEntryPath(entryPath: string) {
+  return entryPath
+    .replace(/\\/g, '/')
+    .split('/')
+    .filter((part) => part && part !== '.' && part !== '..')
+    .join('/')
+}
+
+function sortTreeNodes(nodes: SubmissionTreeNode[]) {
+  nodes.sort((a, b) => {
+    if (a.type !== b.type) return a.type === 'folder' ? -1 : 1
+    return a.name.localeCompare(b.name)
+  })
+
+  for (const node of nodes) {
+    if (node.children) {
+      sortTreeNodes(node.children)
+    }
+  }
+}
+
+function addPathToTree(root: SubmissionTreeNode, entryPath: string, size: number, isDirectory: boolean) {
+  const safePath = sanitizeZipEntryPath(entryPath)
+  if (!safePath || safePath.startsWith('__MACOSX/')) return
+
+  const parts = safePath.split('/')
+  let current = root
+  let currentPath = ''
+
+  for (let index = 0; index < parts.length; index++) {
+    const part = parts[index]
+    const isLast = index === parts.length - 1
+    currentPath = currentPath ? `${currentPath}/${part}` : part
+
+    if (!current.children) current.children = []
+
+    let existing = current.children.find((child) => child.name === part)
+    if (!existing) {
+      existing = {
+        name: part,
+        path: currentPath,
+        type: isLast && !isDirectory ? 'file' : 'folder',
+        ...(isLast && !isDirectory ? { size } : { children: [] })
+      }
+      current.children.push(existing)
+    }
+
+    current = existing
+  }
+}
+
+function readZipFileTree(filePath: string, rootName: string): SubmissionTreeNode {
+  const buffer = fs.readFileSync(filePath)
+  const root: SubmissionTreeNode = {
+    name: rootName,
+    path: '',
+    type: 'folder',
+    children: []
+  }
+
+  let eocdOffset = -1
+  for (let index = buffer.length - 22; index >= 0; index--) {
+    if (buffer.readUInt32LE(index) === 0x06054b50) {
+      eocdOffset = index
+      break
+    }
+  }
+
+  if (eocdOffset === -1) {
+    throw new ErrorWithStatus({
+      message: 'Invalid ZIP submission file',
+      status: HTTP_STATUS.BAD_REQUEST
+    })
+  }
+
+  const centralDirectorySize = buffer.readUInt32LE(eocdOffset + 12)
+  const centralDirectoryOffset = buffer.readUInt32LE(eocdOffset + 16)
+  const centralDirectoryEnd = centralDirectoryOffset + centralDirectorySize
+  let offset = centralDirectoryOffset
+
+  while (offset < centralDirectoryEnd) {
+    if (buffer.readUInt32LE(offset) !== 0x02014b50) break
+
+    const compressedSize = buffer.readUInt32LE(offset + 20)
+    const uncompressedSize = buffer.readUInt32LE(offset + 24)
+    const fileNameLength = buffer.readUInt16LE(offset + 28)
+    const extraFieldLength = buffer.readUInt16LE(offset + 30)
+    const fileCommentLength = buffer.readUInt16LE(offset + 32)
+    const fileName = buffer.toString('utf8', offset + 46, offset + 46 + fileNameLength)
+    const isDirectory = fileName.endsWith('/')
+
+    addPathToTree(root, fileName, uncompressedSize || compressedSize, isDirectory)
+
+    offset += 46 + fileNameLength + extraFieldLength + fileCommentLength
+  }
+
+  sortTreeNodes(root.children || [])
+  return root
 }
 
 class SubmissionsService {
@@ -403,6 +512,38 @@ class SubmissionsService {
 
   getSubmissionFilePath(submission: Pick<Submission, 'fileStorageKey'>) {
     return path.join(process.cwd(), submission.fileStorageKey)
+  }
+
+  async getSubmissionFileTree(submissionId: string, user: User) {
+    const submission = await this.getSubmissionById(submissionId, user)
+    const filePath = this.getSubmissionFilePath(submission)
+
+    if (!fs.existsSync(filePath)) {
+      throw new ErrorWithStatus({
+        message: 'Submission file not found',
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+
+    const isZip = path.extname(submission.fileName).toLowerCase() === '.zip' || submission.mimeType.includes('zip')
+    const tree = isZip
+      ? readZipFileTree(filePath, submission.fileName)
+      : {
+          name: submission.fileName,
+          path: submission.fileName,
+          type: 'file' as const,
+          size: submission.fileSize,
+          mimeType: submission.mimeType
+        }
+
+    return {
+      submissionId,
+      fileName: submission.fileName,
+      fileSize: submission.fileSize,
+      mimeType: submission.mimeType,
+      isArchive: isZip,
+      tree
+    }
   }
 
   async finalizeSubmission(id: string, studentId: string) {

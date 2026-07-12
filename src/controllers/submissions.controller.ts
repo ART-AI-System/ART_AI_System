@@ -111,6 +111,21 @@ export const downloadSubmissionController = async (req: Request, res: Response, 
   }
 }
 
+export const getSubmissionFileTreeController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { submissionId } = req.params
+    const user = req.user as User
+    const result = await submissionsService.getSubmissionFileTree(submissionId as string, user)
+
+    res.json({
+      message: 'Get submission file tree successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const getSubmissionVersionsController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { submissionId } = req.params
