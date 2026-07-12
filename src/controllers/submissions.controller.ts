@@ -95,17 +95,18 @@ export const downloadSubmissionController = async (req: Request, res: Response, 
   try {
     const { id } = req.params
     const user = req.user as User
-    const submission = await submissionsService.getSubmissionById(id as string, user)
-    const filePath = submissionsService.getSubmissionFilePath(submission)
+    const downloadFile = await submissionsService.getSubmissionDownloadFile(id as string, user, {
+      path: req.query.path as string | undefined
+    })
 
-    if (!fs.existsSync(filePath)) {
-      throw new ErrorWithStatus({
-        message: 'Submission file not found',
-        status: HTTP_STATUS.NOT_FOUND
-      })
+    if ('buffer' in downloadFile) {
+      res.setHeader('Content-Type', downloadFile.mimeType)
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadFile.fileName.replace(/"/g, '')}"`)
+      res.send(downloadFile.buffer)
+      return
     }
 
-    res.download(filePath, submission.fileName)
+    res.download(downloadFile.filePath, downloadFile.fileName)
   } catch (error) {
     next(error)
   }

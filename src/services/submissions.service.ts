@@ -777,6 +777,63 @@ class SubmissionsService {
     }
   }
 
+  async getSubmissionDownloadFile(submissionId: string, user: User, query: SubmissionFileContentQuery = {}) {
+    const submission = await this.getSubmissionById(submissionId, user)
+    const filePath = this.getSubmissionFilePath(submission)
+
+    if (!fs.existsSync(filePath)) {
+      throw new ErrorWithStatus({
+        message: 'Submission file not found',
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+
+    const isZip = path.extname(submission.fileName).toLowerCase() === '.zip' || submission.mimeType.includes('zip')
+    const requestedPath = query.path ? sanitizeZipEntryPath(query.path) : ''
+
+    if (!requestedPath) {
+      return {
+        filePath,
+        fileName: submission.fileName,
+        mimeType: submission.mimeType
+      }
+    }
+
+    if (!isZip) {
+      if (requestedPath !== submission.fileName) {
+        throw new ErrorWithStatus({
+          message: 'File path not found in submission',
+          status: HTTP_STATUS.NOT_FOUND
+        })
+      }
+
+      return {
+        filePath,
+        fileName: submission.fileName,
+        mimeType: submission.mimeType
+      }
+    }
+
+    const zipBuffer = fs.readFileSync(filePath)
+    const entries = readZipEntries(zipBuffer)
+    const entry = entries.find((zipEntry) => zipEntry.path === requestedPath)
+
+    if (!entry) {
+      throw new ErrorWithStatus({
+        message: 'File path not found in submission',
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+
+    const buffer = readZipEntryData(zipBuffer, entry)
+
+    return {
+      buffer,
+      fileName: path.basename(entry.path),
+      mimeType: isTextFile(entry.path) ? 'text/plain' : 'application/octet-stream'
+    }
+  }
+
   async finalizeSubmission(id: string, studentId: string) {
     const submissionObjectId = toObjectId(id, 'Submission')
     const studentObjectId = toObjectId(studentId, 'Student')
