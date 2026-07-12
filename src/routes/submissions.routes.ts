@@ -3,6 +3,7 @@ import {
   createSubmissionController,
   downloadSubmissionController,
   downloadSubmissionVersionController,
+  getSubmissionFileContentController,
   getSubmissionFileTreeController,
   getMySubmissionByGradeItemController,
   getMySubmissionsController,
@@ -71,6 +72,12 @@ submissionsRouter.get(
   '/submissions/:submissionId/tree',
   requireAuth,
   wrapRequestHandler(getSubmissionFileTreeController)
+)
+
+submissionsRouter.get(
+  '/submissions/:submissionId/file',
+  requireAuth,
+  wrapRequestHandler(getSubmissionFileContentController)
 )
 
 submissionsRouter.get(

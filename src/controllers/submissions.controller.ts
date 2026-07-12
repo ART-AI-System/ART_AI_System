@@ -126,6 +126,23 @@ export const getSubmissionFileTreeController = async (req: Request, res: Respons
   }
 }
 
+export const getSubmissionFileContentController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { submissionId } = req.params
+    const user = req.user as User
+    const result = await submissionsService.getSubmissionFileContent(submissionId as string, user, {
+      path: req.query.path as string | undefined
+    })
+
+    res.json({
+      message: 'Get submission file content successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const getSubmissionVersionsController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { submissionId } = req.params

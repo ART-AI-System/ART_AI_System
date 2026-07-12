@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { randomUUID } from 'crypto'
+import { inflateRawSync } from 'zlib'
 import { ObjectId } from 'mongodb'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { ErrorWithStatus } from '~/models/Errors'
@@ -11,11 +12,45 @@ import databaseService from '~/services/database.service'
 
 const SUBMISSION_UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'submissions')
 const HEATMAP_VALID_STATUSES = ['submitted', 'late', 'evaluated', 'reviewed', 'graded', 'flagged']
+const MAX_TEXT_PREVIEW_SIZE = 1024 * 1024
+const TEXT_FILE_EXTENSIONS = new Set([
+  '.txt',
+  '.md',
+  '.json',
+  '.xml',
+  '.html',
+  '.htm',
+  '.css',
+  '.js',
+  '.jsx',
+  '.ts',
+  '.tsx',
+  '.java',
+  '.cs',
+  '.cpp',
+  '.c',
+  '.h',
+  '.py',
+  '.php',
+  '.rb',
+  '.go',
+  '.rs',
+  '.sql',
+  '.yaml',
+  '.yml',
+  '.csv',
+  '.env',
+  '.gitignore'
+])
 
 type SubmissionHeatmapQuery = {
   startDate?: string
   endDate?: string
   semesterId?: string
+}
+
+type SubmissionFileContentQuery = {
+  path?: string
 }
 
 type SubmissionTreeNode = {
@@ -25,6 +60,15 @@ type SubmissionTreeNode = {
   size?: number
   mimeType?: string
   children?: SubmissionTreeNode[]
+}
+
+type ZipEntry = {
+  path: string
+  compressedSize: number
+  uncompressedSize: number
+  compressionMethod: number
+  localHeaderOffset: number
+  isDirectory: boolean
 }
 
 function toObjectId(id: string, entityName: string) {
@@ -130,15 +174,8 @@ function addPathToTree(root: SubmissionTreeNode, entryPath: string, size: number
   }
 }
 
-function readZipFileTree(filePath: string, rootName: string): SubmissionTreeNode {
-  const buffer = fs.readFileSync(filePath)
-  const root: SubmissionTreeNode = {
-    name: rootName,
-    path: '',
-    type: 'folder',
-    children: []
-  }
-
+function readZipEntries(buffer: Buffer) {
+  const entries: ZipEntry[] = []
   let eocdOffset = -1
   for (let index = buffer.length - 22; index >= 0; index--) {
     if (buffer.readUInt32LE(index) === 0x06054b50) {
@@ -162,21 +199,97 @@ function readZipFileTree(filePath: string, rootName: string): SubmissionTreeNode
   while (offset < centralDirectoryEnd) {
     if (buffer.readUInt32LE(offset) !== 0x02014b50) break
 
+    const compressionMethod = buffer.readUInt16LE(offset + 10)
     const compressedSize = buffer.readUInt32LE(offset + 20)
     const uncompressedSize = buffer.readUInt32LE(offset + 24)
     const fileNameLength = buffer.readUInt16LE(offset + 28)
     const extraFieldLength = buffer.readUInt16LE(offset + 30)
     const fileCommentLength = buffer.readUInt16LE(offset + 32)
+    const localHeaderOffset = buffer.readUInt32LE(offset + 42)
     const fileName = buffer.toString('utf8', offset + 46, offset + 46 + fileNameLength)
     const isDirectory = fileName.endsWith('/')
 
-    addPathToTree(root, fileName, uncompressedSize || compressedSize, isDirectory)
+    const safePath = sanitizeZipEntryPath(fileName)
+    if (safePath && !safePath.startsWith('__MACOSX/')) {
+      entries.push({
+        path: safePath,
+        compressedSize,
+        uncompressedSize,
+        compressionMethod,
+        localHeaderOffset,
+        isDirectory
+      })
+    }
 
     offset += 46 + fileNameLength + extraFieldLength + fileCommentLength
   }
 
+  return entries
+}
+
+function readZipFileTree(filePath: string, rootName: string): SubmissionTreeNode {
+  const buffer = fs.readFileSync(filePath)
+  const entries = readZipEntries(buffer)
+  const root: SubmissionTreeNode = {
+    name: rootName,
+    path: '',
+    type: 'folder',
+    children: []
+  }
+
+  for (const entry of entries) {
+    addPathToTree(root, entry.path, entry.uncompressedSize || entry.compressedSize, entry.isDirectory)
+  }
+
   sortTreeNodes(root.children || [])
   return root
+}
+
+function isTextFile(fileName: string, mimeType = '') {
+  const ext = path.extname(fileName).toLowerCase()
+  return mimeType.startsWith('text/') || mimeType.includes('json') || mimeType.includes('xml') || TEXT_FILE_EXTENSIONS.has(ext)
+}
+
+function looksBinary(buffer: Buffer) {
+  const sampleSize = Math.min(buffer.length, 1024)
+  for (let index = 0; index < sampleSize; index++) {
+    if (buffer[index] === 0) return true
+  }
+  return false
+}
+
+function readZipEntryData(buffer: Buffer, entry: ZipEntry) {
+  if (entry.isDirectory) {
+    throw new ErrorWithStatus({
+      message: 'Selected path is a folder',
+      status: HTTP_STATUS.BAD_REQUEST
+    })
+  }
+
+  if (buffer.readUInt32LE(entry.localHeaderOffset) !== 0x04034b50) {
+    throw new ErrorWithStatus({
+      message: 'Invalid ZIP entry header',
+      status: HTTP_STATUS.BAD_REQUEST
+    })
+  }
+
+  const fileNameLength = buffer.readUInt16LE(entry.localHeaderOffset + 26)
+  const extraFieldLength = buffer.readUInt16LE(entry.localHeaderOffset + 28)
+  const dataStart = entry.localHeaderOffset + 30 + fileNameLength + extraFieldLength
+  const compressedData = buffer.subarray(dataStart, dataStart + entry.compressedSize)
+
+  if (entry.compressionMethod === 0) {
+    return compressedData
+  }
+
+  if (entry.compressionMethod === 8) {
+    return inflateRawSync(compressedData)
+  }
+
+  throw new ErrorWithStatus({
+    message: 'Unsupported ZIP compression method',
+    status: HTTP_STATUS.BAD_REQUEST
+  })
 }
 
 class SubmissionsService {
@@ -543,6 +656,124 @@ class SubmissionsService {
       mimeType: submission.mimeType,
       isArchive: isZip,
       tree
+    }
+  }
+
+  async getSubmissionFileContent(submissionId: string, user: User, query: SubmissionFileContentQuery = {}) {
+    const submission = await this.getSubmissionById(submissionId, user)
+    const filePath = this.getSubmissionFilePath(submission)
+
+    if (!fs.existsSync(filePath)) {
+      throw new ErrorWithStatus({
+        message: 'Submission file not found',
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+
+    const isZip = path.extname(submission.fileName).toLowerCase() === '.zip' || submission.mimeType.includes('zip')
+
+    if (!isZip) {
+      const requestedPath = query.path ? sanitizeZipEntryPath(query.path) : submission.fileName
+      if (requestedPath !== submission.fileName) {
+        throw new ErrorWithStatus({
+          message: 'File path not found in submission',
+          status: HTTP_STATUS.NOT_FOUND
+        })
+      }
+
+      const isText = isTextFile(submission.fileName, submission.mimeType)
+      const isTooLarge = submission.fileSize > MAX_TEXT_PREVIEW_SIZE
+
+      if (!isText || isTooLarge) {
+        return {
+          submissionId,
+          path: submission.fileName,
+          fileName: submission.fileName,
+          size: submission.fileSize,
+          mimeType: submission.mimeType,
+          type: isText ? 'text' : 'binary',
+          isText,
+          content: null,
+          truncated: false,
+          downloadUrl: `/api/submissions/${submissionId}/download`
+        }
+      }
+
+      const contentBuffer = fs.readFileSync(filePath)
+      const isBinary = looksBinary(contentBuffer)
+
+      return {
+        submissionId,
+        path: submission.fileName,
+        fileName: submission.fileName,
+        size: submission.fileSize,
+        mimeType: submission.mimeType,
+        type: isBinary ? 'binary' : 'text',
+        isText: !isBinary,
+        content: isBinary ? null : contentBuffer.toString('utf8'),
+        truncated: false,
+        downloadUrl: `/api/submissions/${submissionId}/download`
+      }
+    }
+
+    const requestedPath = sanitizeZipEntryPath(query.path || '')
+    if (!requestedPath) {
+      throw new ErrorWithStatus({
+        message: 'File path is required for ZIP submissions',
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    const zipBuffer = fs.readFileSync(filePath)
+    const entries = readZipEntries(zipBuffer)
+    const entry = entries.find((zipEntry) => zipEntry.path === requestedPath)
+
+    if (!entry) {
+      throw new ErrorWithStatus({
+        message: 'File path not found in submission',
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+
+    if (entry.isDirectory) {
+      throw new ErrorWithStatus({
+        message: 'Selected path is a folder',
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    const isText = isTextFile(entry.path)
+    const isTooLarge = entry.uncompressedSize > MAX_TEXT_PREVIEW_SIZE
+
+    if (!isText || isTooLarge) {
+      return {
+        submissionId,
+        path: entry.path,
+        fileName: path.basename(entry.path),
+        size: entry.uncompressedSize,
+        mimeType: 'application/octet-stream',
+        type: isText ? 'text' : 'binary',
+        isText,
+        content: null,
+        truncated: false,
+        downloadUrl: `/api/submissions/${submissionId}/download`
+      }
+    }
+
+    const contentBuffer = readZipEntryData(zipBuffer, entry)
+    const isBinary = looksBinary(contentBuffer)
+
+    return {
+      submissionId,
+      path: entry.path,
+      fileName: path.basename(entry.path),
+      size: entry.uncompressedSize,
+      mimeType: 'text/plain',
+      type: isBinary ? 'binary' : 'text',
+      isText: !isBinary,
+      content: isBinary ? null : contentBuffer.toString('utf8'),
+      truncated: false,
+      downloadUrl: `/api/submissions/${submissionId}/download`
     }
   }
 
