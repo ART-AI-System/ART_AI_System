@@ -9,6 +9,7 @@ import {
   getSubmissionVersionByIdController,
   getSubmissionVersionsController,
   getSubmissionsByGradeItemController,
+  getSubmissionHeatmapController,
   finalizeSubmissionController,
   resubmitSubmissionVersionController,
   withdrawSubmissionController
@@ -52,14 +53,12 @@ submissionsRouter.get(
 submissionsRouter.get(
   '/grade-items/:gradeItemId/submissions',
   requireAuth,
-  requireRole('LECTURER', 'SUBJECT_HEAD'),
   wrapRequestHandler(getSubmissionsByGradeItemController)
 )
 
 submissionsRouter.get(
   '/assignments/:assignmentId/submissions',
   requireAuth,
-  requireRole('LECTURER', 'SUBJECT_HEAD'),
   wrapRequestHandler(getSubmissionsByGradeItemController)
 )
 
@@ -105,6 +104,12 @@ submissionsRouter.get(
   requireAuth,
   requireRole('STUDENT'),
   wrapRequestHandler(getMySubmissionsController)
+)
+
+submissionsRouter.get(
+  '/students/:studentId/submission-heatmap',
+  requireAuth,
+  wrapRequestHandler(getSubmissionHeatmapController)
 )
 
 submissionsRouter.delete(

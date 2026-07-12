@@ -62,10 +62,13 @@ export const getSubmissionsByGradeItemController = async (req: Request, res: Res
     const { gradeItemId, assignmentId } = req.params
     const targetGradeItemId = (gradeItemId || assignmentId) as string
     const user = req.user as User
-    const result = await submissionsService.getSubmissionsByGradeItem(targetGradeItemId, user)
+    const isHistoryRequest = req.query.history === 'true' || req.query.includeHistory === 'true'
+    const result = isHistoryRequest
+      ? await submissionsService.getSubmissionHistoryByGradeItem(targetGradeItemId, user)
+      : await submissionsService.getSubmissionsByGradeItem(targetGradeItemId, user)
 
     res.json({
-      message: 'Get submissions successfully',
+      message: isHistoryRequest ? 'Get submission history successfully' : 'Get submissions successfully',
       result
     })
   } catch (error) {
@@ -194,6 +197,25 @@ export const getMySubmissionsController = async (req: Request, res: Response, ne
 
     res.json({
       message: 'Get my submissions successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getSubmissionHeatmapController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { studentId } = req.params
+    const user = req.user as User
+    const result = await submissionsService.getSubmissionHeatmap(studentId as string, user, {
+      startDate: req.query.startDate as string | undefined,
+      endDate: req.query.endDate as string | undefined,
+      semesterId: req.query.semesterId as string | undefined
+    })
+
+    res.json({
+      message: 'Get submission heatmap successfully',
       result
     })
   } catch (error) {
