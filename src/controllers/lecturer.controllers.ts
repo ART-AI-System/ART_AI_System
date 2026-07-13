@@ -48,3 +48,16 @@ export const getAiStatisticsController = wrapRequestHandler(
     })
   }
 )
+
+export const submitGradeReportController = wrapRequestHandler(
+  async (req: Request, res: Response, _next: NextFunction) => {
+    const lecturerId = (req.user!._id as any).toHexString()
+    const classId = req.params['classId'] as string
+    const note = req.body?.note as string | undefined
+    const result = await lecturerService.submitGradeReport(lecturerId, classId, note)
+    res.json({
+      message: 'Grade report submitted to subject head successfully',
+      result
+    })
+  }
+)

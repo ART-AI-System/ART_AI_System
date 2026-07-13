@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { param } from 'express-validator'
+import { param, query, body } from 'express-validator'
 import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import { validate } from '~/utils/validation'
 import {
@@ -8,7 +8,9 @@ import {
   getClassAnalyticsController,
   getSubjectAnalyticsController,
   getStudentDetailController,
-  getLecturerAnalyticsController
+  getLecturerAnalyticsController,
+  getGradeReportsController,
+  reviewGradeReportController
 } from '~/controllers/subjectHead.controllers'
 
 const validateObjectIdParam = (paramName: string) =>
@@ -52,6 +54,46 @@ subjectHeadRouter.get(
   '/lecturers/:lecturerId/analytics',
   validateObjectIdParam('lecturerId'),
   getLecturerAnalyticsController
+)
+
+subjectHeadRouter.get(
+  '/grade-reports',
+  validate(
+    {
+      run: async (req: any) => {
+        await query('status')
+          .optional()
+          .isIn(['pending', 'approved', 'rejected'])
+          .withMessage('status must be pending, approved, or rejected')
+          .run(req)
+      }
+    } as any
+  ),
+  getGradeReportsController
+)
+
+subjectHeadRouter.patch(
+  '/grade-reports/:reportId/approve',
+  validateObjectIdParam('reportId'),
+  reviewGradeReportController('approve')
+)
+
+subjectHeadRouter.patch(
+  '/grade-reports/:reportId/reject',
+  validateObjectIdParam('reportId'),
+  validate(
+    {
+      run: async (req: any) => {
+        await body('reviewNote')
+          .notEmpty()
+          .withMessage('reviewNote is required when rejecting')
+          .isString()
+          .trim()
+          .run(req)
+      }
+    } as any
+  ),
+  reviewGradeReportController('reject')
 )
 
 export default subjectHeadRouter

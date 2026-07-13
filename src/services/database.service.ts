@@ -20,16 +20,23 @@ import { Test } from '~/models/schemas/tests.schema'
 import { TestAttempt } from '~/models/schemas/testAttempts.schema'
 import Assignment from '~/models/schemas/assignments.schema'
 import Session from '~/models/schemas/sessions.schema'
+import GradeReportSubmission from '~/models/schemas/gradeReportSubmissions.schema'
 dotenv.config()
 
-const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USERNAME as string)}:${encodeURIComponent(process.env.DB_PASSWORD as string)}@art-ai-system.rpdlfxc.mongodb.net/`
+const dbUsername = process.env.DB_USERNAME
+const dbPassword = process.env.DB_PASSWORD
+const dbName = process.env.DB_NAME || 'art-ai'
+
+const uri = dbUsername && dbPassword
+  ? `mongodb+srv://${encodeURIComponent(dbUsername)}:${encodeURIComponent(dbPassword)}@art-ai-system.rpdlfxc.mongodb.net/`
+  : `mongodb://localhost:27017`
 
 class DatabaseService {
   private client: MongoClient
   private db: Db
   constructor() {
     this.client = new MongoClient(uri)
-    this.db = this.client.db(process.env.DB_NAME)
+    this.db = this.client.db(dbName)
   }
 
   async connect() {
@@ -153,7 +160,8 @@ class DatabaseService {
         process.env.DB_ASSIGNMENTS_COLLECTION || 'assignments',
         process.env.DB_ASSIGNMENT_MATERIALS_COLLECTION || 'assignment_materials',
         process.env.DB_CHAT_ROOMS_COLLECTION || 'chat_rooms',
-        process.env.DB_CHAT_MESSAGES_COLLECTION || 'chat_messages'
+        process.env.DB_CHAT_MESSAGES_COLLECTION || 'chat_messages',
+        process.env.DB_GRADE_REPORT_SUBMISSIONS_COLLECTION || 'grade_report_submissions'
       ]
 
       for (const colName of requiredCollections) {
@@ -479,6 +487,12 @@ class DatabaseService {
 
   get testAttempts(): Collection<TestAttempt> {
     return this.db.collection(process.env.DB_TEST_ATTEMPTS_COLLECTION || 'test_attempts')
+  }
+
+  get gradeReportSubmissions(): Collection<GradeReportSubmission> {
+    return this.db.collection(
+      process.env.DB_GRADE_REPORT_SUBMISSIONS_COLLECTION || 'grade_report_submissions'
+    )
   }
 }
 

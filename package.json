@@ -15,6 +15,7 @@
     "prettier:fix": "prettier --write .",
     "test:users": "ts-node -r tsconfig-paths/register src/tests/user-management.test.ts",
     "seed:test-users": "ts-node -r tsconfig-paths/register src/scripts/seed-auth-test-users.ts",
+    "seed:headsubject": "ts-node -r tsconfig-paths/register src/scripts/seed-headsubject-demo.ts",
     "test:chat": "ts-node -r tsconfig-paths/register src/tests/chat.test.ts"
   },
   "repository": {

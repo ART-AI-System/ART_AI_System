@@ -1,12 +1,13 @@
 import { Router } from 'express'
-import { param } from 'express-validator'
+import { param, body } from 'express-validator'
 import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import { validate } from '~/utils/validation'
 import {
   getLecturerHomeController,
   getClassOverviewController,
   getSubmissionStatisticsController,
-  getAiStatisticsController
+  getAiStatisticsController,
+  submitGradeReportController
 } from '~/controllers/lecturer.controllers'
 
 const validateObjectIdParam = (paramName: string) =>
@@ -43,6 +44,19 @@ lecturerRouter.get(
   '/classes/:classId/ai-statistics',
   validateObjectIdParam('classId'),
   getAiStatisticsController
+)
+
+lecturerRouter.post(
+  '/classes/:classId/grade-report/submit',
+  validateObjectIdParam('classId'),
+  validate(
+    {
+      run: async (req: any) => {
+        await body('note').optional().isString().trim().run(req)
+      }
+    } as any
+  ),
+  submitGradeReportController
 )
 
 export default lecturerRouter

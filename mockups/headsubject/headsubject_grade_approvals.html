@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ART-AI Head Subject - Review grade reports from lecturers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F4F7FE; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    </style>
+    <script src="api.js"></script>
+</head>
+<body class="flex h-screen overflow-hidden">
+    <div id="sidebarOverlay" class="fixed inset-0 bg-gray-900/50 z-20 hidden lg:hidden opacity-0 transition-opacity"></div>
+    
+    <aside id="sidebar" class="w-[280px] bg-[#1B2559] fixed h-full shadow-[4px_0_24px_rgba(0,0,0,0.2)] border-r border-white/5 z-30 flex flex-col transition-all duration-300 -translate-x-full lg:translate-x-0">
+        <div class="h-24 flex items-center px-6 border-b border-white/10 shrink-0">
+            <a href="headsubject_dashboard.html" class="flex items-center">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#EAB308] to-[#FACC15] flex items-center justify-center text-[#1B2559] mr-3 shadow-lg shadow-yellow-500/30">
+                    <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+                </div>
+                <span class="sidebar-text text-2xl font-extrabold text-white tracking-tight">ART-AI<span class="text-[#EAB308] text-[10px] align-top ml-1 block leading-none">HEAD SUBJECT</span></span>
+            </a>
+            <button id="mobileCloseSidebar" class="lg:hidden absolute right-4 text-white/50 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            <a href="headsubject_dashboard.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text whitespace-nowrap">Dashboard</span>
+            </a>
+            <a href="headsubject_classes.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
+                <i data-lucide="book-open" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text whitespace-nowrap">Classes</span>
+            </a>
+            <a href="headsubject_grade_approvals.html" class="flex items-center px-4 py-3.5 bg-white/10 text-white font-bold rounded-xl transition-all relative">
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#EAB308] rounded-r-full"></div>
+                <i data-lucide="clipboard-check" class="w-5 h-5 mr-4 text-[#EAB308]"></i>
+                <span class="sidebar-text whitespace-nowrap">Grade Approvals</span>
+                <span class="sidebar-text ml-auto bg-[#EAB308] text-[#1B2559] text-xs font-bold px-2 py-0.5 rounded-full">3</span>
+            </a>
+            <a href="headsubject_flags.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
+                <i data-lucide="shield-alert" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text whitespace-nowrap">AI Flags</span>
+            </a>
+            <a href="headsubject_reports.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
+                <i data-lucide="bar-chart-2" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text whitespace-nowrap">Reports</span>
+            </a>
+            <a href="headsubject_messages.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
+                <i data-lucide="message-circle" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text whitespace-nowrap">Messages</span>
+            </a>
+            <a href="headsubject_settings.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
+                <i data-lucide="settings" class="w-5 h-5 mr-4 opacity-70"></i>
+                <span class="sidebar-text whitespace-nowrap">Settings</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-white/10 shrink-0">
+            <a href="../auth/login.html" class="flex items-center px-4 py-3 text-red-300 hover:text-white hover:bg-white/5 rounded-xl transition-all text-sm font-bold">
+                <i data-lucide="log-out" class="w-5 h-5 mr-3"></i>
+                <span class="sidebar-text">Logout</span>
+            </a>
+        </div>
+    </aside>
+    <main id="mainContent" class="flex-1 ml-0 lg:ml-[280px] flex flex-col h-screen overflow-hidden">
+        
+        <header class="h-24 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-4 lg:px-10 sticky top-0 z-10 shrink-0">
+            <div class="flex items-center">
+                <button id="sidebarToggle" class="mr-4 p-2 text-gray-500 hover:text-[#EAB308] rounded-lg hover:bg-yellow-50 lg:hidden">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                
+                <div>
+                    <h1 class="text-xl lg:text-2xl font-extrabold text-[#1B2559]">Grade Approvals</h1>
+                    <p class="text-sm font-medium text-gray-500 mt-0.5">Review grade reports from lecturers</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <select class="hidden sm:block appearance-none bg-gray-50 border border-gray-200 text-[#1B2559] text-sm font-bold rounded-xl px-4 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-[#EAB308]/30 cursor-pointer">
+                    <option>Spring 2026</option>
+                    <option>Fall 2025</option>
+                </select>
+                <button class="relative p-2.5 text-gray-400 hover:text-[#EAB308] hover:bg-yellow-50 rounded-xl">
+                    <i data-lucide="bell" class="w-6 h-6"></i>
+                    <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+                <div class="flex items-center pl-4 border-l border-gray-200 gap-3">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-bold text-[#1B2559]">Dr. Tran Minh Hoang</p>
+                        <p class="text-xs text-gray-500">Software Engineering Dept.</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Head+Subject&background=EAB308&color=1B2559" class="w-10 h-10 rounded-full border-2 border-white shadow-md">
+                </div>
+            </div>
+        </header>
+        <div class="flex-1 overflow-y-auto p-6 lg:p-10">
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex gap-3">
+        <button id="btn-pending" class="bg-[#1B2559] text-white px-5 py-2 rounded-xl text-sm font-bold">Pending</button>
+        <button id="btn-approved" class="bg-white border border-gray-200 text-gray-500 px-5 py-2 rounded-xl text-sm font-bold hover:bg-gray-50">Approved</button>
+        <button id="btn-rejected" class="bg-white border border-gray-200 text-gray-500 px-5 py-2 rounded-xl text-sm font-bold hover:bg-gray-50">Rejected</button>
+    </div>
+    <div id="reports-container" class="space-y-4">
+        <p class="text-gray-400 text-sm py-4 text-center">Loading grade reports...</p>
+    </div>
+</div>
+<div id="approveModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-[24px] p-8 max-w-md w-full shadow-2xl">
+        <h3 class="text-xl font-extrabold text-[#1B2559] mb-2">Approve Grade Report?</h3>
+        <p class="text-sm text-gray-500 mb-6">This will lock the gradebook for this class and notify the lecturer.</p>
+        <div class="flex gap-3 justify-end">
+            <button onclick="document.getElementById('approveModal').classList.add('hidden')" class="px-5 py-2 rounded-xl text-sm font-bold text-gray-500">Cancel</button>
+            <button id="confirm-approve-btn" class="bg-[#EAB308] text-[#1B2559] px-5 py-2 rounded-xl text-sm font-bold">Confirm Approve</button>
+        </div>
+    </div>
+</div>
+<div id="rejectModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-[24px] p-8 max-w-md w-full shadow-2xl">
+        <h3 class="text-xl font-extrabold text-[#1B2559] mb-2">Reject Grade Report</h3>
+        <p class="text-sm text-gray-500 mb-4">Please provide a reason for rejection (required).</p>
+        <textarea id="reject-reason" class="w-full border border-gray-200 rounded-xl p-3 text-sm mb-4" rows="3" placeholder="Reason for rejection..."></textarea>
+        <div class="flex gap-3 justify-end">
+            <button onclick="document.getElementById('rejectModal').classList.add('hidden')" class="px-5 py-2 rounded-xl text-sm font-bold text-gray-500">Cancel</button>
+            <button id="confirm-reject-btn" class="bg-red-500 text-white px-5 py-2 rounded-xl text-sm font-bold">Confirm Reject</button>
+        </div>
+    </div>
+</div></div>
+    </main>
+    
+    <script>lucide.createIcons();</script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!checkAuth()) return;
+
+            // Display user profile info
+            const userName = localStorage.getItem('user_name') || 'Subject Head';
+            const profileContainers = document.querySelectorAll('.flex.items-center.pl-4');
+            profileContainers.forEach(container => {
+                const nameNode = container.querySelector('.text-sm.font-bold');
+                if (nameNode) nameNode.textContent = userName;
+            });
+
+            let currentFilter = 'pending';
+            let activeReportId = null;
+
+            async function loadReports() {
+                const container = document.getElementById('reports-container');
+                container.innerHTML = '<p class="text-gray-400 text-sm py-4 text-center">Loading grade reports...</p>';
+                
+                try {
+                    const response = await api.getGradeReports(currentFilter);
+                    const reports = response.result || [];
+
+                    container.innerHTML = '';
+                    if (reports.length === 0) {
+                        container.innerHTML = `<p class="text-gray-400 text-sm py-4 text-center">No ${currentFilter} grade reports found</p>`;
+                        return;
+                    }
+
+                    reports.forEach(report => {
+                        const date = new Date(report.submittedAt).toLocaleDateString('vi-VN');
+                        const status = report.status;
+                        
+                        let borderClass = 'border-yellow-200';
+                        let statusText = 'Pending Review';
+                        let statusBadge = 'bg-yellow-100 text-yellow-800';
+                        let actionButtons = `
+                            <button class="reject-btn border border-red-200 text-red-600 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-red-50" data-id="${report.reportId}">Reject</button>
+                            <button class="approve-btn bg-[#EAB308] hover:bg-[#CA8A04] text-[#1B2559] px-5 py-2.5 rounded-xl text-sm font-bold shadow-md" data-id="${report.reportId}">Approve</button>
+                        `;
+
+                        if (status === 'approved') {
+                            borderClass = 'border-green-200';
+                            statusText = 'Approved';
+                            statusBadge = 'bg-green-100 text-green-800';
+                            actionButtons = `<span class="text-green-600 text-sm font-bold">Approved at ${new Date(report.reviewedAt).toLocaleDateString('vi-VN')}</span>`;
+                        } else if (status === 'rejected') {
+                            borderClass = 'border-red-200';
+                            statusText = 'Rejected';
+                            statusBadge = 'bg-red-100 text-red-800';
+                            actionButtons = `
+                                <div class="text-right">
+                                    <span class="text-red-600 text-sm font-bold block">Rejected</span>
+                                    <p class="text-xs text-gray-500 mt-1">Reason: "${report.reviewNote || ''}"</p>
+                                </div>
+                            `;
+                        }
+
+                        container.innerHTML += `
+                            <div class="bg-white rounded-[24px] border ${borderClass} shadow-sm p-6">
+                                <div class="flex flex-wrap justify-between gap-4">
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="px-3 py-1 ${statusBadge} text-xs font-bold rounded-full">${statusText}</span>
+                                            <span class="text-xs text-gray-400">Submitted ${date}</span>
+                                        </div>
+                                        <h3 class="text-lg font-extrabold text-[#1B2559]">${report.classCode || 'Class'} — Final Grade Report</h3>
+                                        <p class="text-sm text-gray-500 mt-1">Lecturer: ${report.lecturerName || 'Unknown'} • ${report.totalStudents || 0} students • Avg score: ${report.averageScore || 0}</p>
+                                        ${report.note ? `<p class="text-xs text-gray-400 mt-2 italic">Note: "${report.note}"</p>` : ''}
+                                    </div>
+                                    <div class="flex gap-3 items-start">
+                                        ${actionButtons}
+                                    </div>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-gray-100 flex gap-4">
+                                    <a href="headsubject_class_detail.html?classId=${report.classId}" class="text-sm font-bold text-[#4318FF] flex items-center"><i data-lucide="table" class="w-4 h-4 mr-1"></i> Preview Gradebook</a>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    lucide.createIcons();
+
+                    // Attach action triggers
+                    document.querySelectorAll('.approve-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            activeReportId = e.currentTarget.getAttribute('data-id');
+                            document.getElementById('approveModal').classList.remove('hidden');
+                        });
+                    });
+
+                    document.querySelectorAll('.reject-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            activeReportId = e.currentTarget.getAttribute('data-id');
+                            document.getElementById('reject-reason').value = '';
+                            document.getElementById('rejectModal').classList.remove('hidden');
+                        });
+                    });
+
+                } catch (err) {
+                    console.error(err);
+                    container.innerHTML = `<p class="text-red-500 text-sm py-4 text-center">Error loading grade reports: ${err.message}</p>`;
+                }
+            }
+
+            // Tabs handlers
+            const tabs = [
+                { id: 'btn-pending', filter: 'pending' },
+                { id: 'btn-approved', filter: 'approved' },
+                { id: 'btn-rejected', filter: 'rejected' }
+            ];
+
+            tabs.forEach(tab => {
+                document.getElementById(tab.id).addEventListener('click', (e) => {
+                    // Update active tab style
+                    tabs.forEach(t => {
+                        const el = document.getElementById(t.id);
+                        el.className = 'bg-white border border-gray-200 text-gray-500 px-5 py-2 rounded-xl text-sm font-bold hover:bg-gray-50';
+                    });
+                    e.currentTarget.className = 'bg-[#1B2559] text-white px-5 py-2 rounded-xl text-sm font-bold';
+                    currentFilter = tab.filter;
+                    loadReports();
+                });
+            });
+
+            // Confirm approval
+            document.getElementById('confirm-approve-btn').addEventListener('click', async () => {
+                document.getElementById('approveModal').classList.add('hidden');
+                if (!activeReportId) return;
+
+                try {
+                    await api.approveGradeReport(activeReportId);
+                    alert('Grade report approved successfully');
+                    loadReports();
+                } catch (err) {
+                    alert(`Error: ${err.message}`);
+                }
+            });
+
+            // Confirm rejection
+            document.getElementById('confirm-reject-btn').addEventListener('click', async () => {
+                const reason = document.getElementById('reject-reason').value.trim();
+                if (!reason) {
+                    alert('Rejection reason is required');
+                    return;
+                }
+
+                document.getElementById('rejectModal').classList.add('hidden');
+                if (!activeReportId) return;
+
+                try {
+                    await api.rejectGradeReport(activeReportId, reason);
+                    alert('Grade report rejected');
+                    loadReports();
+                } catch (err) {
+                    alert(`Error: ${err.message}`);
+                }
+            });
+
+            // Initial load
+            loadReports();
+
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const overlay = document.getElementById('sidebarOverlay');
+            const open = () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.remove('opacity-0'), 10); };
+            const close = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('opacity-0'); setTimeout(() => overlay.classList.add('hidden'), 300); };
+            document.getElementById('sidebarToggle')?.addEventListener('click', open);
+            document.getElementById('mobileCloseSidebar')?.addEventListener('click', close);
+            overlay?.addEventListener('click', close);
+        });
+    </script>
+</body>
+</html>
