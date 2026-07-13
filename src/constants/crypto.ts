@@ -7,7 +7,8 @@ export function sha256(data: string): string {
 }
 
 export function hashPassword(password: string): string {
-  return sha256(password + process.env.PASSWORD_SECRET)
+  const secret = process.env.PASSWORD_SECRET || 'default_password_secret_key'
+  return sha256(password + secret)
 }
 
 /**
@@ -16,5 +17,6 @@ export function hashPassword(password: string): string {
  * Token gốc (raw) dùng để giao tiếp với client; tokenHash lưu DB.
  */
 export function hashToken(rawToken: string): string {
-  return sha256(rawToken + (process.env.TOKEN_HASH_SECRET || process.env.PASSWORD_SECRET))
+  const secret = process.env.TOKEN_HASH_SECRET || process.env.PASSWORD_SECRET || 'default_password_secret_key'
+  return sha256(rawToken + secret)
 }

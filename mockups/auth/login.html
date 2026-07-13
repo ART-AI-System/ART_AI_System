@@ -152,7 +152,7 @@
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="lock" class="w-5 h-5 text-gray-400"></i>
                             </div>
-                            <input type="password" value="password" class="block w-full pl-11 pr-10 py-3 bg-white/50 backdrop-blur-sm border border-gray-200 rounded-xl text-sm font-medium text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#4318FF]/20 focus:border-[#4318FF] transition-all" placeholder="••••••••">
+                            <input type="password" id="password-input" value="Password123!" class="block w-full pl-11 pr-10 py-3 bg-white/50 backdrop-blur-sm border border-gray-200 rounded-xl text-sm font-medium text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#4318FF]/20 focus:border-[#4318FF] transition-all" placeholder="••••••••">
                             <button type="button" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600">
                                 <i data-lucide="eye" class="w-5 h-5"></i>
                             </button>
@@ -221,7 +221,7 @@
             if (role === 'lecturer') {
                 title.innerText = 'Lecturer Sign In';
                 submitBtn.className = 'w-full bg-[#F26F21] hover:bg-[#D95D1A] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-orange-500/30 transition-all flex items-center justify-center mt-6';
-                emailInput.value = "lecturer@fpt.edu.vn";
+                emailInput.value = "lecturer.a@fpt.edu.vn";
             } else if (role === 'headsubject') {
                 title.innerText = 'Head Subject Sign In';
                 submitBtn.className = 'w-full bg-[#EAB308] hover:bg-[#CA8A04] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-yellow-500/30 transition-all flex items-center justify-center mt-6';
@@ -233,7 +233,7 @@
             } else {
                 title.innerText = 'Student Sign In';
                 submitBtn.className = 'w-full bg-[#4318FF] hover:bg-[#3311CC] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center mt-6';
-                emailInput.value = "student@fpt.edu.vn";
+                emailInput.value = "se123456@fpt.edu.vn";
             }
             
             // Move to Form
@@ -250,15 +250,60 @@
             switchView('login-form-view', 'role-selection-view');
         }
 
-        document.getElementById('auth-form').addEventListener('submit', function(e) {
+        document.getElementById('auth-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            // Redirect based on role
-            if (selectedRole === 'lecturer') {
-                window.location.href = '../lecturer/lecturer_dashboard.html';
-            } else if (selectedRole === 'admin') {
-                window.location.href = '../admin/admin_dashboard.html';
-            } else {
-                window.location.href = '../student/home.html';
+            const email = document.getElementById('email-input').value;
+            const password = document.getElementById('password-input').value;
+
+            try {
+                const payload = {};
+                if (selectedRole === 'student') {
+                    // Check if it's studentCode or email
+                    if (email.includes('@')) {
+                        payload.email = email;
+                    } else {
+                        payload.studentCode = email;
+                    }
+                } else {
+                    if (email.includes('@')) {
+                        payload.email = email;
+                    } else {
+                        payload.username = email;
+                    }
+                }
+                payload.password = password;
+
+                const response = await fetch('http://localhost:4000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Login failed');
+                }
+
+                // Save tokens
+                localStorage.setItem('access_token', data.result.access_token);
+                localStorage.setItem('refresh_token', data.result.refresh_token);
+                localStorage.setItem('user_role', data.result.user.role);
+                localStorage.setItem('user_name', data.result.user.fullName);
+
+                // Redirect based on role
+                if (selectedRole === 'lecturer') {
+                    window.location.href = '../lecturer/lecturer_dashboard.html';
+                } else if (selectedRole === 'headsubject') {
+                    window.location.href = '../headsubject/headsubject_dashboard.html';
+                } else if (selectedRole === 'admin') {
+                    window.location.href = '../admin/admin_dashboard.html';
+                } else {
+                    window.location.href = '../student/home.html';
+                }
+            } catch (err) {
+                alert(err.message);
             }
         });
     </script>

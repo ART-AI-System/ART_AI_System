@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb'
 import databaseService from './database.service'
+import GradeReportSubmission from '~/models/schemas/gradeReportSubmissions.schema'
 import { ErrorWithStatus } from '~/models/Errors'
 import HTTP_STATUS from '~/constants/httpStatus'
 
@@ -197,6 +198,49 @@ class LecturerService {
     return {
       patternDistribution,
       riskLevelDistribution
+    }
+  }
+
+  async submitGradeReport(lecturerId: string, classId: string, note?: string) {
+    const lecturerOid = new ObjectId(lecturerId)
+    const classOid = new ObjectId(classId)
+    const cls = await this.verifyClassOwnership(lecturerOid, classOid)
+
+    const existingPending = await databaseService.gradeReportSubmissions.findOne({
+      classId: classOid,
+      status: 'pending'
+    })
+    if (existingPending) {
+      throw new ErrorWithStatus({
+        message: 'A pending grade report already exists for this class',
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    const finalResults = await databaseService.finalResults.find({ classId: classOid }).toArray()
+    const avg =
+      finalResults.length > 0
+        ? finalResults.reduce((sum, r) => sum + r.finalScore, 0) / finalResults.length
+        : 0
+
+    const report = new GradeReportSubmission({
+      classId: classOid,
+      lecturerId: lecturerOid,
+      status: 'pending',
+      note: note?.trim(),
+      averageScore: Number(avg.toFixed(2)),
+      totalStudents: cls.students?.length || finalResults.length,
+      submittedAt: new Date()
+    })
+
+    await databaseService.gradeReportSubmissions.insertOne(report)
+    return {
+      reportId: report._id,
+      classId: classOid,
+      status: 'pending',
+      averageScore: report.averageScore,
+      totalStudents: report.totalStudents,
+      submittedAt: report.submittedAt
     }
   }
 }

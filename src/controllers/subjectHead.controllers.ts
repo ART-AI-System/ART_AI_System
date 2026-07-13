@@ -73,3 +73,32 @@ export const getLecturerAnalyticsController = wrapRequestHandler(
     })
   }
 )
+
+export const getGradeReportsController = wrapRequestHandler(
+  async (req: Request, res: Response, _next: NextFunction) => {
+    const subjectHeadId = (req.user!._id as any).toHexString()
+    const status = req.query['status'] as string | undefined
+    const result = await subjectHeadService.getGradeReports(subjectHeadId, status)
+    res.json({
+      message: 'Get grade reports successfully',
+      result
+    })
+  }
+)
+
+export const reviewGradeReportController = (action: 'approve' | 'reject') =>
+  wrapRequestHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const subjectHeadId = (req.user!._id as any).toHexString()
+    const reportId = req.params['reportId'] as string
+    const reviewNote = req.body?.reviewNote as string | undefined
+    const result = await subjectHeadService.reviewGradeReport(
+      subjectHeadId,
+      reportId,
+      action,
+      reviewNote
+    )
+    res.json({
+      message: `Grade report ${action}d successfully`,
+      result
+    })
+  })
