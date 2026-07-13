@@ -95,17 +95,50 @@ export const downloadSubmissionController = async (req: Request, res: Response, 
   try {
     const { id } = req.params
     const user = req.user as User
-    const submission = await submissionsService.getSubmissionById(id as string, user)
-    const filePath = submissionsService.getSubmissionFilePath(submission)
+    const downloadFile = await submissionsService.getSubmissionDownloadFile(id as string, user, {
+      path: req.query.path as string | undefined
+    })
 
-    if (!fs.existsSync(filePath)) {
-      throw new ErrorWithStatus({
-        message: 'Submission file not found',
-        status: HTTP_STATUS.NOT_FOUND
-      })
+    if ('buffer' in downloadFile) {
+      res.setHeader('Content-Type', downloadFile.mimeType)
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadFile.fileName.replace(/"/g, '')}"`)
+      res.send(downloadFile.buffer)
+      return
     }
 
-    res.download(filePath, submission.fileName)
+    res.download(downloadFile.filePath, downloadFile.fileName)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getSubmissionFileTreeController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { submissionId } = req.params
+    const user = req.user as User
+    const result = await submissionsService.getSubmissionFileTree(submissionId as string, user)
+
+    res.json({
+      message: 'Get submission file tree successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getSubmissionFileContentController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { submissionId } = req.params
+    const user = req.user as User
+    const result = await submissionsService.getSubmissionFileContent(submissionId as string, user, {
+      path: req.query.path as string | undefined
+    })
+
+    res.json({
+      message: 'Get submission file content successfully',
+      result
+    })
   } catch (error) {
     next(error)
   }

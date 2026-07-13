@@ -3,6 +3,8 @@ import {
   createSubmissionController,
   downloadSubmissionController,
   downloadSubmissionVersionController,
+  getSubmissionFileContentController,
+  getSubmissionFileTreeController,
   getMySubmissionByGradeItemController,
   getMySubmissionsController,
   getSubmissionByIdController,
@@ -65,6 +67,18 @@ submissionsRouter.get(
 submissionsRouter.get('/submissions/:id', requireAuth, wrapRequestHandler(getSubmissionByIdController))
 
 submissionsRouter.get('/submissions/:id/download', requireAuth, wrapRequestHandler(downloadSubmissionController))
+
+submissionsRouter.get(
+  '/submissions/:submissionId/tree',
+  requireAuth,
+  wrapRequestHandler(getSubmissionFileTreeController)
+)
+
+submissionsRouter.get(
+  '/submissions/:submissionId/file',
+  requireAuth,
+  wrapRequestHandler(getSubmissionFileContentController)
+)
 
 submissionsRouter.get(
   '/submissions/:submissionId/versions',
