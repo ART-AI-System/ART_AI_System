@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, Save, Send, ChevronRight, 
   Download, FileText, AlertOctagon, CheckCircle2
@@ -7,11 +7,14 @@ import {
 import { submissionService } from '../../services/submission.service';
 import { gradeService } from '../../services/grade.service';
 import { reviewService } from '../../services/review.service';
+import axiosClient from '../../api/axiosClient';
 
 type Tab = 'ai' | 'grade';
 
 const LecturerGradingDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { submissionId: id } = useParams<{ submissionId: string }>();
+  const [searchParams] = useSearchParams();
+  const targetStudentId = searchParams.get('studentId');
   
   const [activeTab, setActiveTab] = useState<Tab>('ai');
   const [loading, setLoading] = useState(true);
@@ -33,7 +36,7 @@ const LecturerGradingDetailPage = () => {
         const [subRes, aiRes, gradeRes, reviewRes] = await Promise.all([
           submissionService.getSubmissionById(id).catch(() => null),
           submissionService.getAiInteractions(id).catch(() => null),
-          gradeService.getGrade(id).catch(() => null),
+          targetStudentId ? axiosClient.get(`/submissions/${id}/grade?studentId=${targetStudentId}`).catch(() => null) : gradeService.getGrade(id).catch(() => null),
           reviewService.getReview(id).catch(() => null)
         ]);
 
@@ -45,6 +48,10 @@ const LecturerGradingDetailPage = () => {
           setScore(gradeData.score);
           setFeedback(gradeData.feedback || '');
           setGradeSaved(true);
+        } else {
+          setScore('');
+          setFeedback('');
+          setGradeSaved(false);
         }
 
         const reviewData = (reviewRes as any)?.data?.result || (reviewRes as any)?.result || (reviewRes as any)?.data;
@@ -67,7 +74,7 @@ const LecturerGradingDetailPage = () => {
     try {
       // Create/Update Grade and Review concurrently
       await Promise.all([
-        gradeService.createGrade(id, { score: Number(score), maxScore: 10, feedback }),
+        gradeService.createGrade(id, { score: Number(score), maxScore: 10, feedback, studentId: targetStudentId || undefined }),
         reviewService.createReview(id, { reviewStatus, comment })
       ]);
       setGradeSaved(true);

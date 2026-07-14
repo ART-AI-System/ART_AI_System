@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, AlertTriangle, RefreshCcw, Save, Send, ChevronRight } from 'lucide-react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import SubmissionFileViewer from '../../components/lecturer/SubmissionFileViewer';
 import EvaluationPanel from '../../components/lecturer/EvaluationPanel';
 import axiosClient from '../../api/axiosClient';
@@ -10,6 +10,10 @@ import { reviewService } from '../../services/review.service';
 const LecturerGradingDetail: React.FC = () => {
   const { submissionId: id } = useParams<{ submissionId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const targetStudentId = searchParams.get('studentId') || undefined;
+  
   const [gradeData, setGradeData] = useState({ score: 0, feedback: '', reviewStatus: 'pending', reviewComment: '' });
   const [isPublishing, setIsPublishing] = useState(false);
   const [submission, setSubmission] = useState<any>(null);
@@ -24,7 +28,14 @@ const LecturerGradingDetail: React.FC = () => {
         const subData = subRes.result || subRes.data || subRes;
         setSubmission(subData);
 
-        if (subData?.studentId) {
+        if (targetStudentId) {
+          try {
+            const stRes: any = await axiosClient.get(`/users/${targetStudentId}`);
+            setStudent(stRes.result || stRes.data || stRes);
+          } catch (e) {
+            console.error('Failed to load specific student info', e);
+          }
+        } else if (subData?.studentId) {
           if (typeof subData.studentId === 'object' && subData.studentId.fullName) {
             setStudent(subData.studentId);
           } else {
@@ -58,7 +69,8 @@ const LecturerGradingDetail: React.FC = () => {
           gradeService.createGrade(id, { 
             score: Number(gradeData.score), 
             maxScore: 10, 
-            feedback: gradeData.feedback 
+            feedback: gradeData.feedback,
+            studentId: targetStudentId
           }),
           reviewService.createReview(id, { 
             reviewStatus: gradeData.reviewStatus as 'pending' | 'reviewed' | 'needs_revision' | 'flagged', 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Menu, Search, CalendarDays, ChevronDown, Bell, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NotificationDropdown } from '../common/NotificationDropdown';
+import { useAuth } from '../../context/AuthContext';
 
 interface StudentTopbarProps {
   setMobileSidebarOpen: (val: boolean) => void;
@@ -10,6 +11,7 @@ interface StudentTopbarProps {
 const StudentTopbar: React.FC<StudentTopbarProps> = ({ setMobileSidebarOpen }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
@@ -50,12 +52,12 @@ const StudentTopbar: React.FC<StudentTopbarProps> = ({ setMobileSidebarOpen }) =
         </div>
         <div className="flex items-center pl-4 border-l border-gray-300 gap-3">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-[#1B2559]">Nguyen Van Duc</p>
+            <p className="text-sm font-bold text-[#1B2559]">{user?.fullName || 'Student'}</p>
             <p className="text-xs font-medium text-gray-500">Student</p>
           </div>
           <div className="relative">
             <img 
-              src="https://ui-avatars.com/api/?name=Nguyen+Van+Duc&background=F26F21&color=fff" 
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Student')}&background=F26F21&color=fff`} 
               className="w-10 h-10 rounded-full shadow-md cursor-pointer hover:ring-2 hover:ring-[#4318FF] transition-all" 
               alt="Avatar" 
               onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -63,7 +65,7 @@ const StudentTopbar: React.FC<StudentTopbarProps> = ({ setMobileSidebarOpen }) =
             {isProfileOpen && (
               <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in">
                 <div className="px-4 py-3 border-b border-gray-50 mb-1 sm:hidden">
-                  <p className="text-sm font-bold text-[#1B2559]">Nguyen Van Duc</p>
+                  <p className="text-sm font-bold text-[#1B2559]">{user?.fullName || 'Student'}</p>
                   <p className="text-xs font-medium text-gray-500">Student</p>
                 </div>
                 <button 

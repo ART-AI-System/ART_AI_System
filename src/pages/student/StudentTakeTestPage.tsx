@@ -145,7 +145,7 @@ const StudentTakeTestPage = () => {
                 </label>
                 <label className="flex items-center p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-orange-50 hover:border-[#F26F21] transition-all group">
                   <input type="checkbox" name="q2" className="w-5 h-5 text-[#F26F21] focus:ring-[#F26F21] rounded" />
-                  <span className="ml-4 font-medium text-gray-700 group-hover:text-[#1B2559]">session</span>
+                  <span className="ml-4 font-medium text-gray-700 group-hover:text-[#1B2559]">slot</span>
                 </label>
               </div>
             </div>

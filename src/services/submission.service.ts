@@ -51,21 +51,27 @@ export const submissionService = {
     return await axiosClient.get(`/students/me/submissions`);
   },
 
-  createSubmission: async (assignmentId: string, file: File, note?: string) => {
+  createSubmission: async (assignmentId: string, file: File, note?: string, groupMembers?: string[]) => {
     const formData = new FormData();
     formData.append('file', file);
     if (note) {
       formData.append('note', note);
     }
+    if (groupMembers && groupMembers.length > 0) {
+      formData.append('groupMembers', JSON.stringify(groupMembers));
+    }
     
     return await axiosClient.post(`/assignments/${assignmentId}/submissions`, formData);
   },
 
-  resubmitVersion: async (submissionId: string, file: File, note?: string) => {
+  resubmitVersion: async (submissionId: string, file: File, note?: string, groupMembers?: string[]) => {
     const formData = new FormData();
     formData.append('file', file);
     if (note) {
       formData.append('note', note);
+    }
+    if (groupMembers && groupMembers.length > 0) {
+      formData.append('groupMembers', JSON.stringify(groupMembers));
     }
     
     return await axiosClient.post(`/submissions/${submissionId}/versions`, formData);
@@ -73,6 +79,10 @@ export const submissionService = {
 
   finalizeSubmission: async (submissionId: string) => {
     return await axiosClient.post(`/submissions/${submissionId}/finalize`);
+  },
+
+  updateGroupMembers: async (submissionId: string, groupMembers: string[]) => {
+    return await axiosClient.put(`/submissions/${submissionId}/group-members`, { groupMembers });
   },
 
   withdrawSubmission: async (submissionId: string) => {
@@ -123,7 +133,7 @@ export const submissionService = {
 
   // --- Grading Methods ---
 
-  gradeSubmission: async (submissionId: string, payload: { score: number, feedback: string }) => {
+  gradeSubmission: async (submissionId: string, payload: { score: number, feedback: string, studentId?: string }) => {
     return await axiosClient.post(`/submissions/${submissionId}/grade`, payload);
   },
 

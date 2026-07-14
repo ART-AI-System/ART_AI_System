@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Download, CheckCircle2, Clock, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { submissionService, type AiInteraction } from '../../services/submission.service';
+import { classService } from '../../services/class.service';
 import FileUploadSection from './FileUploadSection';
 import AiDeclarationForm from './AiDeclarationForm';
 
@@ -24,6 +26,10 @@ const StudentSubmissionPanel: React.FC<StudentSubmissionPanelProps> = ({ assignm
   const [error, setError] = useState('');
   const [versions, setVersions] = useState<Version[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
+  const [classData, setClassData] = useState<any>(null);
+  const { user } = useAuth();
+  const currentStudentId = user?.id || user?.studentId || user?._id || '';
+  const [groupMembers, setGroupMembers] = useState<string[]>([]);
   
   // AI Interaction state from the form
   const [aiData, setAiData] = useState<any>({});
@@ -39,8 +45,22 @@ const StudentSubmissionPanel: React.FC<StudentSubmissionPanelProps> = ({ assignm
       submissionService.getSubmissionVersions(submission._id)
         .then((res: any) => setVersions(res.result || []))
         .catch(console.error);
+        
+      if (submission.groupMembers && submission.groupMembers.length > 0) {
+        setGroupMembers(submission.groupMembers.map((id: any) => typeof id === 'object' ? id._id || id : id));
+      } else if (currentStudentId) {
+        setGroupMembers(prev => prev.includes(currentStudentId) ? prev : [...prev, currentStudentId]);
+      }
+    } else if (currentStudentId) {
+      setGroupMembers(prev => prev.includes(currentStudentId) ? prev : [...prev, currentStudentId]);
     }
-  }, [submission]);
+  }, [submission, currentStudentId]);
+
+  useEffect(() => {
+    if (assignment?.classId) {
+      classService.getClassById(assignment.classId).then((res) => setClassData(res)).catch(console.error);
+    }
+  }, [assignment]);
 
   // If status becomes submitted/late, stop resubmitting mode
   useEffect(() => {
@@ -55,9 +75,11 @@ const StudentSubmissionPanel: React.FC<StudentSubmissionPanelProps> = ({ assignm
     setError('');
     try {
       if (file && !submission) {
-        await submissionService.createSubmission(assignment._id, file);
+        await submissionService.createSubmission(assignment._id, file, '', groupMembers);
       } else if (file && submission) {
-        await submissionService.resubmitVersion(submission._id, file);
+        await submissionService.resubmitVersion(submission._id, file, '', groupMembers);
+      } else if (!file && submission) {
+        await submissionService.updateGroupMembers(submission._id, groupMembers);
       }
       onRefresh(); // Trigger parent to refetch
       alert('Draft saved successfully!');
@@ -79,12 +101,15 @@ const StudentSubmissionPanel: React.FC<StudentSubmissionPanelProps> = ({ assignm
       // 1. If there's a new file, upload it first to create/update draft
       if (file) {
         if (!submission) {
-          const res: any = await submissionService.createSubmission(assignment._id, file);
+          const res: any = await submissionService.createSubmission(assignment._id, file, '', groupMembers);
           currentSubmissionId = res?.result?._id || res?.data?.result?._id;
         } else {
-          const res: any = await submissionService.resubmitVersion(submission._id, file);
+          const res: any = await submissionService.resubmitVersion(submission._id, file, '', groupMembers);
           currentSubmissionId = res?.result?._id || res?.data?.result?._id || currentSubmissionId;
         }
+      } else if (!file && submission) {
+        // If no file but submission exists, update group members before finalizing
+        await submissionService.updateGroupMembers(submission._id, groupMembers);
       }
       
       if (!currentSubmissionId) {
@@ -153,7 +178,17 @@ const StudentSubmissionPanel: React.FC<StudentSubmissionPanelProps> = ({ assignm
           </button>
           <div className={`w-10 h-0.5 ${currentStep === 2 ? 'bg-green-400' : 'bg-gray-200'}`}></div>
           <button 
-            onClick={() => (file || submission) ? setCurrentStep(2) : alert('Please upload a file first!')}
+            onClick={() => {
+              if (isResubmitting && !file) {
+                alert('You must upload a new file to update your submission!');
+                return;
+              }
+              if (!file && !submission) {
+                alert('Please upload a file first!');
+                return;
+              }
+              setCurrentStep(2);
+            }}
             className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${currentStep === 2 ? 'bg-[#4318FF] text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
             2
           </button>
@@ -172,16 +207,53 @@ const StudentSubmissionPanel: React.FC<StudentSubmissionPanelProps> = ({ assignm
           <div className={currentStep === 1 ? 'block animate-fade-in' : 'hidden'}>
             <FileUploadSection onFileSelect={setFile} />
             
+            {assignment?.isGroupAssignment && classData && classData.students && (
+              <div className="mt-6 p-4 border border-gray-100 rounded-xl bg-gray-50/80">
+                <h4 className="text-sm font-bold text-[#1B2559] mb-3">Group Members</h4>
+                <p className="text-xs text-gray-500 mb-3">Select your group members. You are automatically selected as the representative submitter.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-48 overflow-y-auto pr-2">
+                  {Array.from(new Map(classData.students.map((s: any) => [s.studentId, s])).values()).map((student: any) => {
+                    const isCurrentUser = student.studentId === currentStudentId;
+                    return (
+                    <label key={student.studentId} className={`flex items-center space-x-3 bg-white p-3 rounded-lg border cursor-pointer transition-colors ${isCurrentUser ? 'border-[#4318FF] bg-blue-50/30' : 'border-gray-200 hover:border-[#4318FF]'}`}>
+                      <input 
+                        type="checkbox" 
+                        className="rounded text-[#4318FF] focus:ring-[#4318FF] w-4 h-4 disabled:opacity-50"
+                        checked={isCurrentUser || groupMembers.includes(student.studentId)}
+                        disabled={isCurrentUser}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setGroupMembers([...groupMembers, student.studentId]);
+                          } else {
+                            setGroupMembers(groupMembers.filter(id => id !== student.studentId));
+                          }
+                        }}
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-gray-800">{student.fullName} {isCurrentUser && '(You)'}</span>
+                        <span className="text-xs text-gray-500">{student.studentCode}</span>
+                      </div>
+                    </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
             <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
               <button 
                 onClick={handleSaveDraft}
-                disabled={isUploading || (!file && !submission)}
+                disabled={isUploading || (!file && !submission) || (isResubmitting && !file)}
                 className="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl text-sm font-bold hover:bg-gray-200 mr-4 disabled:opacity-50"
               >
                 {isUploading ? 'Saving...' : 'Save as Draft'}
               </button>
               <button 
                 onClick={() => {
+                  if (isResubmitting && !file) {
+                    alert('You must upload a new file to update your submission!');
+                    return;
+                  }
                   if (!file && !submission) {
                     alert('Please upload a file first!');
                     return;

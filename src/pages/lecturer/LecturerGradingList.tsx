@@ -101,17 +101,35 @@ const LecturerGradingListPage = () => {
   }
 
   const selectedItemName = gradeItems.find(i => i._id === selectedGradeItemId)?.title || 'No Assignment Selected';
-  const students = classData?.students || [];
+  const rawStudents = classData?.students || [];
+  const students = Array.from(new Map(rawStudents.map((s: any) => [s.studentId, s])).values());
+
+  const selectedAssignment = gradeItems.find(i => i._id === selectedGradeItemId);
+  const isGroupAssignment = selectedAssignment?.isGroupAssignment || false;
 
   // Merge students with submissions and grades
   const mergedData = students.map((student: any) => {
-    const submission = submissions.find(s => s.studentId?._id === student.studentId || s.studentId === student.studentId);
-    const grade = grades.find(g => g.submissionId === submission?._id);
+    const submission = submissions.find(s => 
+      s.studentId?._id === student.studentId || 
+      s.studentId === student.studentId ||
+      s.groupMembers?.includes(student.studentId)
+    );
+    const grade = grades.find(g => 
+      g.submissionId === submission?._id && 
+      (g.studentId?._id === student.studentId || g.studentId === student.studentId)
+    );
+    
+    const isRepresentative = submission ? (
+      submission.studentId?._id === student.studentId || 
+      submission.studentId === student.studentId
+    ) : false;
     
     return {
       student,
       submission,
-      grade
+      grade,
+      isRepresentative,
+      isGroupAssignment
     };
   });
 
@@ -121,7 +139,7 @@ const LecturerGradingListPage = () => {
     return item.student.fullName.toLowerCase().includes(term) || item.student.studentCode.toLowerCase().includes(term);
   });
 
-  const submittedCount = submissions.length;
+  const submittedCount = mergedData.filter((item: any) => item.submission).length;
   const pendingCount = students.length - submittedCount;
 
   return (
@@ -292,16 +310,22 @@ const LecturerGradingListPage = () => {
                     </td>
                     <td className="px-6 py-4 text-center">
                       {row.submission ? (
-                        <Link 
-                          to={`/lecturer/grading/detail/${row.submission._id}`} 
-                          className={`inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
-                            row.grade 
-                              ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' 
-                              : 'bg-[#F26F21] text-white hover:bg-[#D95D1A] shadow-orange-500/20'
-                          }`}
-                        >
-                          {row.grade ? 'View' : 'Evaluate'}
-                        </Link>
+                        row.isGroupAssignment && !row.isRepresentative && !row.grade ? (
+                          <button disabled className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed border border-gray-200">
+                            Wait for Rep
+                          </button>
+                        ) : (
+                          <Link 
+                            to={`/lecturer/grading/detail/${row.submission._id}?studentId=${row.student.studentId}`} 
+                            className={`inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg transition-colors shadow-sm ${
+                              row.grade 
+                                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200' 
+                                : 'bg-[#F26F21] text-white hover:bg-[#D95D1A] shadow-orange-500/20'
+                            }`}
+                          >
+                            {row.grade ? (row.isGroupAssignment && !row.isRepresentative ? 'Adjust' : 'View') : 'Evaluate'}
+                          </Link>
+                        )
                       ) : (
                         <button disabled className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed">
                           Evaluate

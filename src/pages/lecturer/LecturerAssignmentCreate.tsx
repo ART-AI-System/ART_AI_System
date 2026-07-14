@@ -27,6 +27,7 @@ const LecturerAssignmentCreate = () => {
   const [aiInteractionRequired, setAiInteractionRequired] = useState(true);
   const [minAiInteractions, setMinAiInteractions] = useState(5);
   const [maxAiInteractions, setMaxAiInteractions] = useState(10);
+  const [isGroupAssignment, setIsGroupAssignment] = useState(false);
   
   // Materials state
   const [materials, setMaterials] = useState<any[]>([]);
@@ -61,6 +62,7 @@ const LecturerAssignmentCreate = () => {
             setAiInteractionRequired(item.aiInteractionRequired !== false);
             setMinAiInteractions(item.minAiInteractions || 5);
             setMaxAiInteractions(item.maxAiInteractions || 10);
+            setIsGroupAssignment(item.isGroupAssignment || false);
             
             await fetchMaterials(assignmentId);
           }
@@ -161,7 +163,8 @@ const LecturerAssignmentCreate = () => {
         deadline: new Date(deadline).toISOString(),
         aiInteractionRequired,
         minAiInteractions,
-        maxAiInteractions
+        maxAiInteractions,
+        isGroupAssignment
       };
       
       if (sessionId) {
@@ -280,6 +283,19 @@ const LecturerAssignmentCreate = () => {
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4318FF]/20 focus:border-[#4318FF] transition-all" 
                   />
                 </div>
+              </div>
+
+              <div className="mt-6 flex items-center">
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input 
+                    type="checkbox" 
+                    checked={isGroupAssignment} 
+                    onChange={(e) => setIsGroupAssignment(e.target.checked)} 
+                    className="sr-only peer" 
+                  />
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F26F21]"></div>
+                </label>
+                <span className="ml-3 text-sm font-bold text-gray-700">Project (Group Assignment)</span>
               </div>
             </div>
 

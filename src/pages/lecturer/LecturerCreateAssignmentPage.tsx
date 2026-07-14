@@ -21,7 +21,8 @@ const LecturerCreateAssignmentPage = () => {
     aiDeclarationRequired: true,
     minAiInteractions: 5,
     maxAiInteractions: 10,
-    allowResubmission: true
+    allowResubmission: true,
+    isGroupAssignment: false
   });
   
   const [loading, setLoading] = useState(false);
@@ -143,12 +144,22 @@ const LecturerCreateAssignmentPage = () => {
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center">
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                  <input type="checkbox" name="allowResubmission" checked={formData.allowResubmission} onChange={handleChange} className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#16A34A]"></div>
-                </label>
-                <span className="ml-3 text-sm font-bold text-gray-700">Allow Resubmission before Deadline</span>
+              <div className="mt-6 flex flex-col sm:flex-row gap-6">
+                <div className="flex items-center">
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input type="checkbox" name="allowResubmission" checked={formData.allowResubmission} onChange={handleChange} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#16A34A]"></div>
+                  </label>
+                  <span className="ml-3 text-sm font-bold text-gray-700">Allow Resubmission before Deadline</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input type="checkbox" name="isGroupAssignment" checked={formData.isGroupAssignment} onChange={handleChange} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F26F21]"></div>
+                  </label>
+                  <span className="ml-3 text-sm font-bold text-gray-700">Project (Group Assignment)</span>
+                </div>
               </div>
             </div>
 

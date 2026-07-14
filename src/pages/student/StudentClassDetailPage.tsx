@@ -72,7 +72,7 @@ const ClassDetailPage = () => {
           {/* Course Sessions Accordion */}
           <Card className="overflow-hidden p-0">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-[#1B2559]">Course Sessions</h3>
+              <h3 className="text-lg font-bold text-[#1B2559]">Course Slots</h3>
               <button 
                 onClick={() => setExpandedSlots(['s1', 's2'])}
                 className="text-sm font-bold text-[#4318FF] hover:underline"
@@ -90,11 +90,11 @@ const ClassDetailPage = () => {
                     onClick={() => toggleSlot(session._id)}
                   >
                     <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-lg bg-blue-100 text-[#4318FF] flex items-center justify-center font-bold mr-4">
-                        S{session.sessionNo}
+                      <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#4318FF] flex items-center justify-center mr-4">
+                        <span className="text-xl font-extrabold">{session.sessionNo.toString().padStart(2, '0')}</span>
                       </div>
                       <div>
-                        <h4 className="font-bold text-[#1B2559] text-base group-hover:text-[#4318FF] transition-colors">{session.title}</h4>
+                        <h4 className="font-bold text-[#1B2559] text-base group-hover:text-[#4318FF] transition-colors">{session.title?.replace(/Session/gi, 'Slot')}</h4>
                         <p className="text-xs font-medium text-gray-500 mt-0.5">
                           {new Date(session.startTime).toLocaleDateString()}
                         </p>
@@ -108,7 +108,7 @@ const ClassDetailPage = () => {
                     <div className="bg-gray-50/50">
                       <div className="p-6 pt-4 border-t border-gray-100">
                         <div className="text-sm text-gray-500">
-                          {session.description || "No specific instructions for this session."}
+                          {session.description || "No specific instructions for this slot."}
                         </div>
                         
                         {assignments.filter((a: any) => a.sessionId === session._id).length > 0 ? (
@@ -136,7 +136,7 @@ const ClassDetailPage = () => {
                           </div>
                         ) : (
                           <div className="mt-4 p-3 bg-white border border-gray-100 rounded-xl shadow-sm text-xs text-gray-400 text-center font-medium">
-                            No assignments or materials for this session yet.
+                            No assignments or materials for this slot yet.
                           </div>
                         )}
                       </div>
@@ -146,7 +146,7 @@ const ClassDetailPage = () => {
               ))}
               {sessions.length === 0 && (
                 <div className="p-6 text-center text-gray-500">
-                  No sessions generated yet.
+                  No slots generated yet.
                 </div>
               )}
 

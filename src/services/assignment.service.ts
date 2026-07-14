@@ -11,6 +11,7 @@ export interface AssignmentPayload {
   minAiInteractions?: number;
   maxAiInteractions?: number;
   allowResubmission?: boolean;
+  isGroupAssignment?: boolean;
 }
 
 export const assignmentService = {

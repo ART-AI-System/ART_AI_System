@@ -4,6 +4,7 @@ export interface GradePayload {
   score: number;
   maxScore: number;
   feedback?: string;
+  studentId?: string;
 }
 
 export const gradeService = {

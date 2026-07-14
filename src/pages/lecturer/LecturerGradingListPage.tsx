@@ -75,7 +75,8 @@ const LecturerGradingListPage = () => {
   }
 
   const selectedItemName = gradeItems.find(i => i._id === selectedGradeItemId)?.title || 'No Assignment Selected';
-  const students = classData?.students || [];
+  const rawStudents = classData?.students || [];
+  const students = Array.from(new Map(rawStudents.map((s: any) => [s.studentId, s])).values());
 
   // Merge students with submissions and grades
   const mergedData = students.map((student: any) => {
@@ -95,7 +96,7 @@ const LecturerGradingListPage = () => {
     return item.student.fullName.toLowerCase().includes(term) || item.student.studentCode.toLowerCase().includes(term);
   });
 
-  const submittedCount = submissions.length;
+  const submittedCount = mergedData.filter((item: any) => item.submission).length;
   const pendingCount = students.length - submittedCount;
 
   return (

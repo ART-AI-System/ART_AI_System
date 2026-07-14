@@ -162,12 +162,11 @@ const LecturerSubjectDetail = () => {
                     onClick={() => setExpandedSession(expandedSession === session._id ? null : session._id)}
                   >
                     <div className="flex items-center">
-                      <div className="w-12 h-12 rounded-xl bg-orange-50 text-[#F26F21] flex flex-col items-center justify-center mr-4">
-                        <span className="text-xs font-bold uppercase leading-none">Slot</span>
-                        <span className="text-lg font-extrabold leading-none mt-0.5">{session.sessionNo}</span>
+                      <div className="w-12 h-12 rounded-xl bg-orange-50 text-[#F26F21] flex items-center justify-center mr-4">
+                        <span className="text-xl font-extrabold">{session.sessionNo.toString().padStart(2, '0')}</span>
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-[#1B2559]">{session.title}</h3>
+                        <h3 className="text-lg font-bold text-[#1B2559]">{session.title?.replace(/Session/gi, 'Slot')}</h3>
                         <p className="text-sm text-gray-500 font-medium">
                           {new Date(session.startTime).toLocaleDateString()}
                         </p>
@@ -181,7 +180,7 @@ const LecturerSubjectDetail = () => {
                   {expandedSession === session._id && (
                     <div className="px-6 pb-6 border-t border-gray-50 pt-4 bg-gray-50/50 rounded-b-[24px]">
                       
-                      {/* List assignments for this session */}
+                      {/* List assignments for this slot */}
                       {assignments.filter((a: any) => a.sessionId === session._id).length > 0 && (
                         <div className="mb-4 space-y-2">
                           <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Assignments & Tasks</h4>
