@@ -293,7 +293,7 @@ function readZipEntryData(buffer: Buffer, entry: ZipEntry) {
 }
 
 class SubmissionsService {
-  async createSubmission(gradeItemId: string, studentId: string, file: UploadedSubmissionFile, note = '') {
+  async createSubmission(gradeItemId: string, studentId: string, file: UploadedSubmissionFile, note = '', groupMembersStr = '') {
     const gradeItemObjectId = toObjectId(gradeItemId, 'Grade item')
     const studentObjectId = toObjectId(studentId, 'Student')
 
@@ -360,6 +360,34 @@ class SubmissionsService {
       }
     )
 
+    let groupMembers: ObjectId[] = []
+    if (groupMembersStr) {
+      try {
+        const parsed = JSON.parse(groupMembersStr)
+        if (Array.isArray(parsed)) {
+          groupMembers = parsed.map((id: string) => toObjectId(id, 'Group member'))
+        }
+      } catch (e) {
+        console.error('Failed to parse groupMembers', e)
+      }
+    }
+
+    const membersToCheck = groupMembers.length > 0 ? groupMembers : [studentObjectId]
+    const otherSubmissions = await databaseService.submissions.find({
+      gradeItemId: gradeItemObjectId,
+      groupMembers: { $in: membersToCheck },
+      isLatest: true,
+      studentId: { $ne: studentObjectId }
+    }).toArray()
+    
+    if (otherSubmissions.length > 0) {
+      removeFileIfExists(file.filepath)
+      throw new ErrorWithStatus({
+        message: 'You or one of the selected members are already part of another group submission.',
+        status: HTTP_STATUS.FORBIDDEN
+      })
+    }
+
     const newSubmission = new Submission({
       uuid,
       gradeItemId: gradeItemObjectId,
@@ -371,7 +399,8 @@ class SubmissionsService {
       fileSize: file.size,
       mimeType: file.mimetype,
       contentHash: file.contentHash,
-      note
+      note,
+      groupMembers
     })
 
     const result = await databaseService.submissions.insertOne(newSubmission)
@@ -382,7 +411,10 @@ class SubmissionsService {
     return await databaseService.submissions.findOne(
       {
         gradeItemId: toObjectId(gradeItemId, 'Grade item'),
-        studentId: toObjectId(studentId, 'Student'),
+        $or: [
+          { studentId: toObjectId(studentId, 'Student') },
+          { groupMembers: toObjectId(studentId, 'Student') }
+        ],
         isLatest: true
       },
       {
@@ -526,7 +558,10 @@ class SubmissionsService {
   async getMySubmissions(studentId: string) {
     return await databaseService.submissions
       .find({
-        studentId: toObjectId(studentId, 'Student'),
+        $or: [
+          { studentId: toObjectId(studentId, 'Student') },
+          { groupMembers: toObjectId(studentId, 'Student') }
+        ],
         isLatest: true
       })
       .sort({ submittedAt: -1 })
@@ -907,7 +942,7 @@ class SubmissionsService {
     return result
   }
 
-  async resubmitSubmissionVersion(submissionId: string, studentId: string, file: UploadedSubmissionFile, note = '') {
+  async resubmitSubmissionVersion(submissionId: string, studentId: string, file: UploadedSubmissionFile, note = '', groupMembersStr = '') {
     const currentSubmission = await this.getSubmissionById(submissionId, {
       _id: toObjectId(studentId, 'Student'),
       role: 'STUDENT'
@@ -925,6 +960,35 @@ class SubmissionsService {
       ensureSubmissionUploadDir()
       fs.renameSync(file.filepath, finalFilePath)
 
+      let groupMembers: ObjectId[] = currentSubmission.groupMembers || []
+      if (groupMembersStr) {
+        try {
+          const parsed = JSON.parse(groupMembersStr)
+          if (Array.isArray(parsed)) {
+            groupMembers = parsed.map((id: string) => toObjectId(id, 'Group member'))
+          }
+        } catch (e) {
+          console.error('Failed to parse groupMembers', e)
+        }
+      }
+
+      const studentObjectId = toObjectId(studentId, 'Student')
+      const membersToCheck = groupMembers.length > 0 ? groupMembers : [studentObjectId]
+      const otherSubmissions = await databaseService.submissions.find({
+        gradeItemId: currentSubmission.gradeItemId,
+        groupMembers: { $in: membersToCheck },
+        isLatest: true,
+        studentId: { $ne: studentObjectId }
+      }).toArray()
+      
+      if (otherSubmissions.length > 0) {
+        removeFileIfExists(finalFilePath)
+        throw new ErrorWithStatus({
+          message: 'You or one of the selected members are already part of another group submission.',
+          status: HTTP_STATUS.FORBIDDEN
+        })
+      }
+
       return await databaseService.submissions.findOneAndUpdate(
         { _id: currentSubmission._id },
         {
@@ -936,6 +1000,7 @@ class SubmissionsService {
             mimeType: file.mimetype,
             contentHash: file.contentHash,
             note,
+            groupMembers,
             submittedAt: new Date(),
             updatedAt: new Date()
           }
@@ -944,7 +1009,57 @@ class SubmissionsService {
       )
     }
 
-    return await this.createSubmission(currentSubmission.gradeItemId.toString(), studentId, file, note)
+    return await this.createSubmission(currentSubmission.gradeItemId.toString(), studentId, file, note, groupMembersStr)
+  }
+
+  async updateSubmissionGroupMembers(id: string, user: User, groupMembersStr: string[]) {
+    const submission = await this.getSubmissionById(id, user)
+    const userId = user._id as ObjectId
+
+    if (submission.studentId.toString() !== userId.toString()) {
+      throw new ErrorWithStatus({
+        message: 'You can only update your own submissions',
+        status: HTTP_STATUS.FORBIDDEN
+      })
+    }
+
+    if (submission.status !== 'draft') {
+      throw new ErrorWithStatus({
+        message: 'Only draft submissions can be updated',
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    const membersToCheck = groupMembersStr.length > 0 ? groupMembersStr.map((id: string) => toObjectId(id, 'Group member')) : [userId]
+    
+    // Check if any of these members are already in another group submission
+    const otherSubmissions = await databaseService.submissions.find({
+      gradeItemId: submission.gradeItemId,
+      groupMembers: { $in: membersToCheck },
+      isLatest: true,
+      studentId: { $ne: userId },
+      _id: { $ne: submission._id }
+    }).toArray()
+    
+    if (otherSubmissions.length > 0) {
+      throw new ErrorWithStatus({
+        message: 'You or one of the selected members are already part of another group submission.',
+        status: HTTP_STATUS.FORBIDDEN
+      })
+    }
+
+    const result = await databaseService.submissions.findOneAndUpdate(
+      { _id: submission._id },
+      {
+        $set: {
+          groupMembers: membersToCheck,
+          updatedAt: new Date()
+        }
+      },
+      { returnDocument: 'after' }
+    )
+
+    return result
   }
 
   async withdrawSubmission(id: string, user: User) {

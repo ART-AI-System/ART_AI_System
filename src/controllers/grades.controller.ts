@@ -18,7 +18,9 @@ export const gradeSubmissionController = async (req: Request, res: Response, nex
 export const getGradeBySubmissionController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id: submissionId } = req.params
-    const result = await gradesService.getGradeBySubmission(submissionId as string)
+    const user = (req as any).user
+    const targetStudentId = req.query.studentId as string | undefined
+    const result = await gradesService.getGradeBySubmission(submissionId as string, user, targetStudentId)
     if (!result) {
       res.status(404).json({ message: 'Grade not found for this submission' })
       return

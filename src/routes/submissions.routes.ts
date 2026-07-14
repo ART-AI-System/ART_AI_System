@@ -14,7 +14,8 @@ import {
   getSubmissionHeatmapController,
   finalizeSubmissionController,
   resubmitSubmissionVersionController,
-  withdrawSubmissionController
+  withdrawSubmissionController,
+  updateSubmissionGroupMembersController
 } from '~/controllers/submissions.controller'
 import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import { parseSubmissionFile } from '~/middlewares/submissions.middleware'
@@ -111,6 +112,13 @@ submissionsRouter.post(
   requireAuth,
   requireRole('STUDENT'),
   wrapRequestHandler(finalizeSubmissionController)
+)
+
+submissionsRouter.put(
+  '/submissions/:id/group-members',
+  requireAuth,
+  requireRole('STUDENT'),
+  wrapRequestHandler(updateSubmissionGroupMembersController)
 )
 
 submissionsRouter.get(

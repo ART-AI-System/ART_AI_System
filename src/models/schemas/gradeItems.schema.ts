@@ -14,6 +14,7 @@ export interface GradeItemType {
   maxAiInteractions?: number
   sequenceOrder?: number
   isActive?: boolean
+  isGroupAssignment?: boolean
   createdAt?: Date
   updatedAt?: Date
 }
@@ -32,6 +33,7 @@ export default class GradeItem {
   maxAiInteractions: number
   sequenceOrder: number
   isActive: boolean
+  isGroupAssignment: boolean
   createdAt: Date
   updatedAt: Date
 
@@ -50,6 +52,7 @@ export default class GradeItem {
     this.maxAiInteractions = gradeItemData.maxAiInteractions || 0
     this.sequenceOrder = gradeItemData.sequenceOrder || 1
     this.isActive = gradeItemData.isActive ?? true
+    this.isGroupAssignment = gradeItemData.isGroupAssignment ?? false
     this.createdAt = gradeItemData.createdAt || date
     this.updatedAt = gradeItemData.updatedAt || date
   }

@@ -15,6 +15,7 @@ export interface SubmissionType {
   mimeType: string
   contentHash?: string | null
   note?: string
+  groupMembers?: ObjectId[]
   status?: SubmissionStatus
   submittedAt?: Date
   finalizedAt?: Date | null
@@ -38,6 +39,7 @@ export default class Submission {
   mimeType: string
   contentHash: string | null
   note: string
+  groupMembers: ObjectId[]
   status: SubmissionStatus
   submittedAt: Date
   finalizedAt: Date | null
@@ -61,6 +63,7 @@ export default class Submission {
     this.mimeType = submission.mimeType
     this.contentHash = submission.contentHash ?? null
     this.note = submission.note ?? ''
+    this.groupMembers = submission.groupMembers || []
     this.status = submission.status ?? 'draft'
     this.submittedAt = submission.submittedAt || date
     this.finalizedAt = submission.finalizedAt ?? null
