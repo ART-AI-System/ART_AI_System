@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { 
   ChevronRight, Download, FileSpreadsheet, Search, 
@@ -26,6 +26,7 @@ const LecturerGradingListPage = () => {
   const [viewingAiDeclaration, setViewingAiDeclaration] = useState<string | null>(null);
   const [aiInteractionsData, setAiInteractionsData] = useState<any[]>([]);
   const [loadingAi, setLoadingAi] = useState(false);
+  const closeTimeoutRef = useRef<any>(null);
 
   const handleViewAiDeclaration = async (submissionId: string) => {
     setViewingAiDeclaration(submissionId);
@@ -263,7 +264,15 @@ const LecturerGradingListPage = () => {
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs font-bold text-gray-500">Declared AI Usage</span>
                             <button 
-                              onClick={() => handleViewAiDeclaration(row.submission._id)}
+                              onMouseEnter={() => {
+                                if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+                                handleViewAiDeclaration(row.submission._id);
+                              }}
+                              onMouseLeave={() => {
+                                closeTimeoutRef.current = setTimeout(() => {
+                                  setViewingAiDeclaration(null);
+                                }, 800);
+                              }}
                               className="text-[#4318FF] hover:bg-blue-50 p-1 rounded-full transition-colors"
                               title="View AI Declarations"
                             >
@@ -317,16 +326,22 @@ const LecturerGradingListPage = () => {
 
       {/* AI Declaration Sidebar Panel */}
       {viewingAiDeclaration && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity"
-            onClick={() => setViewingAiDeclaration(null)}
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
           ></div>
           
-          {/* Sidebar */}
-          <div className="absolute inset-y-0 right-0 w-1/2 min-w-[700px] flex">
-            <div className="w-full h-full bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out">
+          {/* Modal */}
+          <div 
+            className="relative w-[80vw] h-[80vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 pointer-events-auto"
+            onMouseEnter={() => {
+              if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+            }}
+            onMouseLeave={() => {
+              setViewingAiDeclaration(null);
+            }}
+          >
               
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-white">
@@ -358,10 +373,11 @@ const LecturerGradingListPage = () => {
                     <table className="w-full text-left text-sm text-gray-600 table-fixed">
                       <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold text-[#1B2559] uppercase tracking-wider">
                         <tr>
-                          <th className="px-3 py-4 w-[16%]">Tool & Purpose</th>
-                          <th className="px-3 py-4 w-[35%]">Prompt Content</th>
-                          <th className="px-3 py-4 w-[35%]">Response & Reflection</th>
-                          <th className="px-3 py-4 w-[14%] text-center">Decision</th>
+                          <th className="px-3 py-4 w-[15%]">Tool & Purpose</th>
+                          <th className="px-3 py-4 w-[25%]">Prompt Content</th>
+                          <th className="px-3 py-4 w-[25%]">AI Response</th>
+                          <th className="px-3 py-4 w-[25%]">Student Reflection</th>
+                          <th className="px-3 py-4 w-[10%] text-center">Decision</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
@@ -389,25 +405,13 @@ const LecturerGradingListPage = () => {
                               </div>
                             </td>
                             <td className="px-3 py-5 align-top">
-                              <div className="text-sm space-y-3">
-                                <div>
-                                  <div className="font-bold text-[#1B2559] mb-1.5 flex items-center">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 shrink-0"></div>
-                                    AI Response:
-                                  </div>
-                                  <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100 h-20 overflow-y-auto whitespace-pre-wrap break-all text-gray-700 leading-relaxed shadow-sm">
-                                    {interaction.aiResponseSummary}
-                                  </div>
-                                </div>
-                                <div>
-                                  <div className="font-bold text-[#1B2559] mb-1.5 flex items-center">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 mr-2 shrink-0"></div>
-                                    Student Reflection:
-                                  </div>
-                                  <div className="bg-green-50/50 p-3 rounded-xl border border-green-100 h-20 overflow-y-auto whitespace-pre-wrap break-all text-gray-700 italic leading-relaxed shadow-sm">
-                                    {interaction.reflectionText}
-                                  </div>
-                                </div>
+                              <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100 h-40 overflow-y-auto whitespace-pre-wrap break-all text-gray-700 leading-relaxed shadow-sm text-sm">
+                                {interaction.aiResponseSummary}
+                              </div>
+                            </td>
+                            <td className="px-3 py-5 align-top">
+                              <div className="bg-green-50/50 p-3 rounded-xl border border-green-100 h-40 overflow-y-auto whitespace-pre-wrap break-all text-gray-700 italic leading-relaxed shadow-sm text-sm">
+                                {interaction.reflectionText}
                               </div>
                             </td>
                             <td className="px-3 py-5 align-top text-center">
@@ -445,7 +449,6 @@ const LecturerGradingListPage = () => {
                   Close Panel
                 </button>
               </div>
-            </div>
           </div>
         </div>
       )}
