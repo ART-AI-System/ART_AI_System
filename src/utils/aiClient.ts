@@ -3,7 +3,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 /**
- * Shared AI Client for calling Google Gemini API with structured JSON return.
+ * Shared AI Client for calling Google Gemini API with structured JSON return and model fallback.
  */
 export async function callLLMWithJSON<T>(systemInstruction: string, userPrompt: string, mockFallback?: T): Promise<T> {
   const apiKey = process.env.GEMINI_API_KEY || ''
@@ -17,29 +17,48 @@ export async function callLLMWithJSON<T>(systemInstruction: string, userPrompt: 
     throw new Error('GEMINI_API_KEY is not configured in .env file.')
   }
 
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'gemini-1.5-pro-latest',
-      systemInstruction,
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature: 0.3
-      }
-    })
+  const candidateModels = [
+    process.env.GEMINI_MODEL || 'gemini-flash-latest',
+    'gemini-flash-latest',
+    'gemini-pro-latest',
+    'gemma-4-31b-it',
+    'gemini-2.5-flash-lite'
+  ]
 
-    const result = await model.generateContent(userPrompt)
-    const responseText = result.response.text()
-    
-    // Clean potential markdown code blocks if any exist
-    const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim()
-    return JSON.parse(cleanedText) as T
-  } catch (error: any) {
-    console.error('❌ [aiClient] Gemini API Error:', error.message || error)
-    if (mockFallback) {
-      console.warn('⚠️ [aiClient] Falling back to mock data due to API failure.')
-      return mockFallback
+  // Remove duplicates while keeping order
+  const modelsToTry = Array.from(new Set(candidateModels))
+
+  const genAI = new GoogleGenerativeAI(apiKey)
+  let lastError: any = null
+
+  for (const modelName of modelsToTry) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction,
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.3
+        }
+      })
+
+      const result = await model.generateContent(userPrompt)
+      const responseText = result.response.text()
+      
+      // Clean potential markdown code blocks if any exist
+      const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim()
+      return JSON.parse(cleanedText) as T
+    } catch (error: any) {
+      lastError = error
+      const statusMsg = error.message || String(error)
+      console.warn(`⚠️ [aiClient] Model ${modelName} failed (${statusMsg.slice(0, 100)}...). Trying next model if available...`)
     }
-    throw error
   }
+
+  console.error('❌ [aiClient] All Gemini models failed. Last error:', lastError?.message || lastError)
+  if (mockFallback) {
+    console.warn('⚠️ [aiClient] Falling back to mock data due to API failure/quota.')
+    return mockFallback
+  }
+  throw lastError || new Error('All Gemini AI models failed to generate content.')
 }
