@@ -26,6 +26,11 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
   const [declarations, setDeclarations] = useState<any[]>([]);
   const [loadingAi, setLoadingAi] = useState(false);
 
+  // AI Audit States
+  const [aiAuditResult, setAiAuditResult] = useState<any>(null);
+  const [loadingAudit, setLoadingAudit] = useState(false);
+  const [visibleAnswers, setVisibleAnswers] = useState<Record<number, boolean>>({});
+
   const totalScore = (aiReflectionScore + decompositionScore + patternRecognitionScore + abstractionScore + algorithmicThinkingScore).toFixed(1);
 
   // Expose to parent
@@ -82,6 +87,20 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
     };
     fetchAiData();
   }, [submissionId]);
+
+  const handleRunAiAudit = async () => {
+    if (!submissionId) return;
+    setLoadingAudit(true);
+    try {
+      const res = await axiosClient.post(`/submissions/${submissionId}/ai-audit-viva`);
+      const data = (res as any)?.data?.result || (res as any)?.result || (res as any)?.data || res;
+      setAiAuditResult(data);
+    } catch (err) {
+      console.error('Failed to run AI Audit', err);
+    } finally {
+      setLoadingAudit(false);
+    }
+  };
 
   const isFlagged = aiEvaluation?.flagStatus === 'FLAGGED' || (aiEvaluation?.aiMatchPercentage && aiEvaluation.aiMatchPercentage > 80);
   const matchPct = aiEvaluation?.aiMatchPercentage || 0;
@@ -203,6 +222,80 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
                 </tbody>
               </table>
             </div>
+          </div>
+          
+          {/* AI Audit & Viva Defense Section */}
+          <div className="mb-6 border-t border-gray-200 pt-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">AI Audit & Viva Defense</h3>
+              <button 
+                onClick={handleRunAiAudit}
+                disabled={loadingAudit}
+                className="flex items-center gap-2 bg-[#F26F21] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-[#d95c14] transition-colors disabled:opacity-50"
+              >
+                🛡️ {loadingAudit ? 'Running Audit...' : 'Run AI Audit & Defense'}
+              </button>
+            </div>
+
+            {aiAuditResult && (
+              <div className="space-y-4">
+                {/* Status Badge */}
+                <div className={`p-4 rounded-2xl border ${
+                  aiAuditResult.status === 'RED' ? 'bg-red-50 border-red-200 text-red-800' :
+                  aiAuditResult.status === 'YELLOW' ? 'bg-yellow-50 border-yellow-200 text-yellow-800' :
+                  'bg-green-50 border-green-200 text-green-800'
+                }`}>
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-bold text-sm">Consistency Score: {aiAuditResult.consistencyScore}%</h4>
+                    <span className="text-xs font-extrabold px-2 py-1 rounded bg-white bg-opacity-50 uppercase">{aiAuditResult.status}</span>
+                  </div>
+                  <p className="text-xs">{aiAuditResult.summaryAnalysis}</p>
+                </div>
+
+                {/* Red Flags */}
+                {aiAuditResult.redFlags && aiAuditResult.redFlags.length > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                    <h4 className="font-bold text-red-800 text-sm mb-2">🚩 Red Flags</h4>
+                    <ul className="list-disc pl-5 text-xs text-red-700 space-y-1">
+                      {aiAuditResult.redFlags.map((flag: string, idx: number) => (
+                        <li key={idx}>{flag}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Viva Defense Cards */}
+                {aiAuditResult.vivaQuestions && aiAuditResult.vivaQuestions.length > 0 && (
+                  <div>
+                    <h4 className="font-bold text-[#1B2559] text-sm mb-3 mt-6">Viva Defense Questions</h4>
+                    <div className="space-y-3">
+                      {aiAuditResult.vivaQuestions.map((q: any, idx: number) => (
+                        <div key={idx} className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="text-xs font-bold text-gray-400">Q{q.questionNumber} • {q.purpose}</span>
+                            <span className="text-[10px] font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                              {q.targetFilePath}
+                            </span>
+                          </div>
+                          <p className="font-bold text-[#1B2559] text-sm mb-3">{q.questionText}</p>
+                          <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                            <button 
+                              onClick={() => setVisibleAnswers(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                              className="text-xs font-bold text-[#4318FF] mb-2 hover:underline"
+                            >
+                              {visibleAnswers[idx] ? 'Hide Expected Answer' : 'Show Expected Answer'}
+                            </button>
+                            {visibleAnswers[idx] && (
+                              <p className="text-xs text-gray-600 mt-2 border-t border-gray-200 pt-2">{q.expectedAnswer}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Lecturer Evaluation */}

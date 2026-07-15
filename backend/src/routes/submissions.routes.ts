@@ -14,7 +14,8 @@ import {
   getSubmissionHeatmapController,
   finalizeSubmissionController,
   resubmitSubmissionVersionController,
-  withdrawSubmissionController
+  withdrawSubmissionController,
+  aiAuditAndVivaController
 } from '~/controllers/submissions.controller'
 import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import { parseSubmissionFile } from '~/middlewares/submissions.middleware'
@@ -131,6 +132,13 @@ submissionsRouter.delete(
   requireAuth,
   requireRole('STUDENT', 'LECTURER'),
   wrapRequestHandler(withdrawSubmissionController)
+)
+
+submissionsRouter.post(
+  '/submissions/:submissionId/ai-audit-viva',
+  requireAuth,
+  requireRole('LECTURER', 'ADMIN', 'SUBJECT_HEAD'),
+  wrapRequestHandler(aiAuditAndVivaController)
 )
 
 export default submissionsRouter

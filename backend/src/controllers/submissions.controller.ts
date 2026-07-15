@@ -5,6 +5,7 @@ import { ErrorWithStatus } from '~/models/Errors'
 import { UploadedSubmissionFile } from '~/models/requests/submissions.request'
 import User from '~/models/schemas/users.schema'
 import submissionsService from '~/services/submissions.service'
+import aiAuditService from '~/services/aiAudit.service'
 
 export const createSubmissionController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -279,6 +280,21 @@ export const withdrawSubmissionController = async (req: Request, res: Response, 
 
     res.json({
       message: 'Withdraw submission successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const aiAuditAndVivaController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { submissionId } = req.params
+    const user = req.user as User
+    const result = await aiAuditService.generateAuditAndVivaQuestions(submissionId as string, user)
+
+    res.json({
+      message: 'Generate AI Audit and Viva questions successfully',
       result
     })
   } catch (error) {
