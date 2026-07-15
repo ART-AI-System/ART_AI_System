@@ -41,7 +41,7 @@ class ChatSocketService {
       });
     } else if (!this.socket.connected) {
       // Re-update token just in case
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('access_token') || localStorage.getItem('accessToken');
       if (token) {
         this.socket.auth = { token };
       }
