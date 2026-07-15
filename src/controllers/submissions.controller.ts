@@ -5,6 +5,7 @@ import { ErrorWithStatus } from '~/models/Errors'
 import { UploadedSubmissionFile } from '~/models/requests/submissions.request'
 import User from '~/models/schemas/users.schema'
 import submissionsService from '~/services/submissions.service'
+import aiGradingService from '~/services/aiGrading.service'
 
 export const createSubmissionController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -297,6 +298,21 @@ export const updateSubmissionGroupMembersController = async (req: Request, res: 
 
     res.json({
       message: 'Update group members successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getAIGradeSuggestionController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { submissionId } = req.params
+    const user = req.user as User
+    const result = await aiGradingService.analyzeSubmissionAndSuggestGrade(submissionId as string, user)
+
+    res.json({
+      message: 'Get AI grade suggestion successfully',
       result
     })
   } catch (error) {
