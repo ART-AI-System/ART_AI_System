@@ -86,6 +86,14 @@ AI Usage Evaluation
 
 # 5. Backend Project Structure
 
+The backend application is located under:
+
+```text
+backend/
+```
+
+All backend paths below are relative to `backend/`.
+
 ```text
 src/
 ├── constants/

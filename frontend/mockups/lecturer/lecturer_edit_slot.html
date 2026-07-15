@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ART-AI Edit Slot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F4F7FE; }
+        .fpt-orange-gradient { background: linear-gradient(135deg, #F26F21 0%, #F79C65 100%); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- LECTURER SIDEBAR -->
+    <aside class="w-[280px] bg-[#1B2559] flex flex-col h-full shadow-2xl relative z-20">
+        <a href="lecturer_dashboard.html" class="h-24 flex items-center px-8 cursor-pointer border-b border-white/10">
+            <div class="w-10 h-10 rounded-xl fpt-orange-gradient flex items-center justify-center text-white font-bold text-xl mr-3 shadow-lg shadow-orange-500/30">
+                <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+            </div>
+            <span class="text-2xl font-extrabold text-white tracking-tight">ART-AI<span class="text-[#F26F21] text-xs align-top ml-1">LECTURER</span></span>
+        </a>
+
+        <nav class="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
+            <a href="lecturer_dashboard.html" class="flex items-center px-4 py-3.5 text-blue-200 hover:text-white font-medium rounded-xl transition-all hover:bg-white/5">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-4 opacity-70"></i> Dashboard
+            </a>
+            
+            <a href="lecturer_subjects.html" class="flex items-center px-4 py-3.5 bg-white/10 text-white font-bold rounded-xl transition-all relative">
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#F26F21] rounded-r-full"></div>
+                <i data-lucide="book-open" class="w-5 h-5 mr-4 text-[#F26F21]"></i> My Subjects
+            </a>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        <!-- TOP HEADER -->
+        <header class="h-24 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-10 sticky top-0 z-10">
+            <div class="flex items-center">
+                <a href="lecturer_subject_detail.html?tab=syllabus" class="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 hover:bg-[#F26F21] hover:border-[#F26F21] text-gray-500 hover:text-white flex items-center justify-center transition-all mr-5 shadow-sm">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <div class="flex flex-col">
+                    <div class="flex items-center text-sm font-bold text-gray-400 mb-1">
+                        <a href="lecturer_subjects.html" class="hover:text-[#4318FF] transition-colors">My Subjects</a>
+                        <i data-lucide="chevron-right" class="w-4 h-4 mx-2"></i>
+                        <a href="lecturer_subject_detail.html?tab=syllabus" class="hover:text-[#4318FF] transition-colors">PRJ301</a>
+                        <i data-lucide="chevron-right" class="w-4 h-4 mx-2"></i>
+                        <span class="text-[#F26F21]">Master Syllabus</span>
+                    </div>
+                    <h1 class="text-2xl font-extrabold text-[#1B2559]">Edit Slot 1: Intro to Java Web</h1>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button class="bg-[#F26F21] text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-orange-500/20 hover:bg-[#D95D1A] transition-all flex items-center">
+                    <i data-lucide="save" class="w-4 h-4 mr-2"></i> Save & Sync
+                </button>
+            </div>
+        </header>
+
+        <!-- FORM CONTENT -->
+        <div class="flex-1 overflow-y-auto p-10 scroll-smooth">
+            <div class="max-w-4xl mx-auto space-y-8">
+                
+                <!-- Notice -->
+                <div class="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-start">
+                    <i data-lucide="info" class="w-5 h-5 text-orange-500 mt-0.5 mr-3 shrink-0"></i>
+                    <div>
+                        <h4 class="text-sm font-bold text-orange-800">Master Slot Edition</h4>
+                        <p class="text-xs text-orange-600 mt-1">Changes made here will trigger an update notification for all local class instances synced with this Master Slot.</p>
+                    </div>
+                </div>
+
+                <!-- Basic Info -->
+                <div class="bg-white rounded-[24px] p-8 border border-gray-100 shadow-sm">
+                    <h2 class="text-lg font-extrabold text-[#1B2559] mb-6">Slot Information</h2>
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-4 gap-4">
+                            <div class="col-span-1">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Slot No.</label>
+                                <input type="number" value="1" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-[#4318FF] outline-none">
+                            </div>
+                            <div class="col-span-3">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Title <span class="text-red-500">*</span></label>
+                                <input type="text" value="Introduction to Java Web" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:border-[#4318FF] outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                            <textarea rows="3" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:border-[#4318FF] outline-none">Overview of web architecture and HTTP protocol.</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Materials & Assignments -->
+                <div class="bg-white rounded-[24px] p-8 border border-gray-100 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-extrabold text-[#1B2559]">Activities & Content</h2>
+                        <div class="flex space-x-2">
+                            <button class="px-4 py-2 text-sm font-bold text-[#4318FF] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center">
+                                <i data-lucide="paperclip" class="w-4 h-4 mr-2"></i> Add Material
+                            </button>
+                            <button class="px-4 py-2 text-sm font-bold text-white bg-[#1B2559] hover:bg-[#2A3673] rounded-lg transition-colors flex items-center">
+                                <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Link Assignment
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Reading Material -->
+                        <div class="flex items-center justify-between p-4 border border-gray-100 rounded-xl bg-gray-50">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-4">
+                                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-[#1B2559]">Chapter 1: HTTP Protocol.pdf</h4>
+                                    <p class="text-xs text-gray-500">Document • 2.4 MB</p>
+                                </div>
+                            </div>
+                            <button class="p-2 text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+
+                        <!-- Linked Assignment -->
+                        <div class="flex items-center justify-between p-4 border border-[#F26F21]/30 rounded-xl bg-orange-50/50">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-lg bg-[#F26F21] text-white flex items-center justify-center mr-4 shadow-sm">
+                                    <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center mb-1">
+                                        <span class="bg-[#F26F21] text-white text-[10px] font-bold px-2 py-0.5 rounded-md mr-2">Assignment</span>
+                                        <h4 class="text-sm font-bold text-[#1B2559]">Practical Exam 1</h4>
+                                    </div>
+                                    <p class="text-xs text-gray-500 flex items-center">
+                                        <i data-lucide="link" class="w-3 h-3 mr-1"></i> Linked from Global Assignments
+                                    </p>
+                                </div>
+                            </div>
+                            <button class="p-2 text-gray-400 hover:text-red-500"><i data-lucide="unlink" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
