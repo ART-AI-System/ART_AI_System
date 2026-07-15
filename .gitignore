@@ -12,3 +12,8 @@ src/scripts/
 
 docs/postman
 docs/testing
+
+# AI Rules & Prompts
+.ai_rules.md
+RULE_AI.md
+ai_rule*.md
