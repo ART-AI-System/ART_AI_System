@@ -6,6 +6,7 @@ import { UploadedSubmissionFile } from '~/models/requests/submissions.request'
 import User from '~/models/schemas/users.schema'
 import submissionsService from '~/services/submissions.service'
 import aiGradingService from '~/services/aiGrading.service'
+import aiAnnotatorService from '~/services/aiAnnotator.service'
 
 export const createSubmissionController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -313,6 +314,30 @@ export const getAIGradeSuggestionController = async (req: Request, res: Response
 
     res.json({
       message: 'Get AI grade suggestion successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getAIAnnotateFileController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { submissionId } = req.params
+    const { filePath } = req.body
+    const user = req.user as User
+
+    if (!filePath) {
+      throw new ErrorWithStatus({
+        message: 'filePath is required in request body',
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    const result = await aiAnnotatorService.annotateCodeFile(submissionId as string, filePath as string, user)
+
+    res.json({
+      message: 'Get AI file annotations successfully',
       result
     })
   } catch (error) {

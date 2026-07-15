@@ -16,7 +16,8 @@ import {
   resubmitSubmissionVersionController,
   withdrawSubmissionController,
   updateSubmissionGroupMembersController,
-  getAIGradeSuggestionController
+  getAIGradeSuggestionController,
+  getAIAnnotateFileController
 } from '~/controllers/submissions.controller'
 import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import { parseSubmissionFile } from '~/middlewares/submissions.middleware'
@@ -147,6 +148,13 @@ submissionsRouter.post(
   requireAuth,
   requireRole('LECTURER', 'ADMIN', 'SUBJECT_HEAD'),
   wrapRequestHandler(getAIGradeSuggestionController)
+)
+
+submissionsRouter.post(
+  '/submissions/:submissionId/ai-annotate-file',
+  requireAuth,
+  requireRole('LECTURER', 'ADMIN', 'SUBJECT_HEAD'),
+  wrapRequestHandler(getAIAnnotateFileController)
 )
 
 export default submissionsRouter
