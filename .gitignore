@@ -29,3 +29,8 @@ backend/
 .ecc_reference/
 .gh_cli/
 pr_body.txt
+
+# AI Rules & Prompts
+RULE_AI.md
+.ai_rules.md
+ai_rule*.md
