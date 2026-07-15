@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertOctagon, Sparkles, Loader2, Copy, CheckCircle2, Award, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertOctagon, Sparkles, Loader2, Copy, CheckCircle2, Award, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import axiosClient from '../../api/axiosClient';
 import { gradeService } from '../../services/grade.service';
 import { reviewService } from '../../services/review.service';
@@ -31,6 +31,27 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
   const [aiSuggestion, setAiSuggestion] = useState<any | null>(null);
   const [aiSuggestionError, setAiSuggestionError] = useState<string>('');
   const [showBreakdown, setShowBreakdown] = useState<boolean>(true);
+
+  // Panel Resizing State
+  const [panelWidth, setPanelWidth] = useState<number>(460);
+  const [isDraggingPanel, setIsDraggingPanel] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isDraggingPanel) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = window.innerWidth - e.clientX;
+      setPanelWidth(Math.max(380, Math.min(window.innerWidth * 0.7, newWidth)));
+    };
+    const handleMouseUp = () => {
+      setIsDraggingPanel(false);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingPanel]);
 
   const handleFetchAiSuggestion = async () => {
     if (!submissionId) return;
@@ -122,7 +143,19 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
   const discrepancyText = aiEvaluation?.discrepancies || 'System detected high AI signatures that do not align with student declarations.';
 
   return (
-    <div className="w-[450px] shrink-0 bg-white flex flex-col shadow-xl z-10 relative">
+    <div
+      style={{ width: `${panelWidth}px` }}
+      className="shrink-0 bg-white flex flex-col shadow-2xl z-10 relative transition-[width] duration-75 ease-out"
+    >
+      {/* Drag Handle Bar on Left Edge */}
+      <div
+        onMouseDown={(e) => { e.preventDefault(); setIsDraggingPanel(true); }}
+        className="absolute left-0 top-0 bottom-0 w-2.5 -ml-1 hover:w-3 bg-transparent hover:bg-indigo-300/70 cursor-ew-resize flex items-center justify-center z-30 transition-all select-none group"
+        title="Kéo trái/phải để thay đổi độ rộng khung chấm điểm"
+      >
+        <div className="w-1 h-16 bg-gray-300 group-hover:bg-indigo-600 rounded-full transition-colors shadow-sm" />
+      </div>
+
       {/* Tabs Header */}
       <div className="flex border-b border-gray-200">
         <button 
@@ -274,29 +307,29 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
           <div className="space-y-6">
             
             {/* ── Person A Feature: AI Rubric Suggestion Card ── */}
-            <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-white border border-indigo-100 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-sm">
-                    <Sparkles className="w-4 h-4 animate-pulse" />
+            <div className="bg-gradient-to-br from-indigo-50/90 via-purple-50/60 to-white border border-indigo-200/80 rounded-2xl p-5 shadow-sm transition-all">
+              <div className="flex flex-col gap-3.5 mb-3">
+                <div className="flex items-start space-x-3">
+                  <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl shadow-md shrink-0">
+                    <Sparkles className="w-5 h-5 animate-pulse" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h4 className="text-sm font-extrabold text-[#1B2559]">AI Rubric Evaluator & Assistant</h4>
-                    <p className="text-xs text-gray-500">Automated code inspection & grade proposal based on rubric</p>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">Automated code inspection & grade proposal based on rubric criteria</p>
                   </div>
                 </div>
                 <button
                   onClick={handleFetchAiSuggestion}
                   disabled={loadingAiSuggestion || !submissionId}
-                  className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+                  className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.99] select-none"
                 >
                   {loadingAiSuggestion ? (
                     <>
-                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Analyzing Source Code...
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing Source Code & Rubric Criteria...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-3.5 h-3.5 mr-1.5" /> {aiSuggestion ? 'Re-Analyze with AI' : 'Analyze & Suggest Grade'}
+                      <Sparkles className="w-4 h-4 mr-2" /> {aiSuggestion ? 'Re-Analyze Submission with AI' : '✨ Analyze & Suggest Grade with AI'}
                     </>
                   )}
                 </button>
@@ -311,32 +344,37 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
               {aiSuggestion && (
                 <div className="mt-4 pt-4 border-t border-indigo-100 space-y-4 animate-fadeIn">
                   {/* Summary */}
-                  <div className="bg-white/80 border border-indigo-100 p-3.5 rounded-xl">
-                    <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider block mb-1">Project Summary</span>
+                  <div className="bg-white/90 border border-indigo-100 p-3.5 rounded-xl shadow-sm">
+                    <span className="text-xs font-extrabold text-indigo-700 uppercase tracking-wider block mb-1">Project Summary</span>
                     <p className="text-xs text-gray-700 leading-relaxed">{aiSuggestion.summary}</p>
                   </div>
 
                   {/* Proposed Score & Actions */}
-                  <div className="flex flex-wrap items-center justify-between bg-indigo-600 text-white p-4 rounded-xl shadow-sm gap-3">
-                    <div className="flex items-center space-x-3">
-                      <Award className="w-6 h-6 text-yellow-300" />
-                      <div>
-                        <span className="text-xs text-indigo-200 block font-medium">Proposed Grade</span>
-                        <span className="text-2xl font-extrabold">{aiSuggestion.suggestedScore} <span className="text-xs text-indigo-200">/ {aiSuggestion.maxScore || 10}</span></span>
+                  <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white p-4 rounded-xl shadow-md space-y-3">
+                    <div className="flex items-center justify-between border-b border-indigo-400/30 pb-3">
+                      <div className="flex items-center space-x-3">
+                        <Award className="w-7 h-7 text-yellow-300 shrink-0" />
+                        <div>
+                          <span className="text-[11px] text-indigo-100 block font-semibold uppercase tracking-wider">Proposed Grade</span>
+                          <span className="text-2xl font-extrabold">{aiSuggestion.suggestedScore} <span className="text-sm font-normal text-indigo-200">/ {aiSuggestion.maxScore || 10}</span></span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] bg-white/20 text-white font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">AI Recommendation</span>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="grid grid-cols-2 gap-2.5 pt-1">
                       <button
                         onClick={() => handleApplyAiSuggestion(aiSuggestion)}
-                        className="px-3.5 py-2 bg-white text-indigo-700 hover:bg-indigo-50 text-xs font-extrabold rounded-lg transition-colors shadow-sm flex items-center"
+                        className="w-full py-2.5 bg-white text-indigo-700 hover:bg-indigo-50 text-xs font-extrabold rounded-lg transition-colors shadow-sm flex items-center justify-center select-none"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-green-600" /> Apply Rubric Scores
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-green-600 shrink-0" /> Apply Rubric Scores
                       </button>
                       <button
                         onClick={() => setFeedback(aiSuggestion.suggestedFeedback)}
-                        className="px-3.5 py-2 bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold rounded-lg transition-colors flex items-center border border-indigo-500"
+                        className="w-full py-2.5 bg-indigo-800/80 hover:bg-indigo-900 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center border border-indigo-400/40 select-none"
                       >
-                        <Copy className="w-3.5 h-3.5 mr-1.5" /> Paste Feedback
+                        <Copy className="w-3.5 h-3.5 mr-1.5 shrink-0" /> Paste Feedback
                       </button>
                     </div>
                   </div>
