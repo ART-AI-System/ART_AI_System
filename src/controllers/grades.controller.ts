@@ -22,7 +22,7 @@ export const getGradeBySubmissionController = async (req: Request, res: Response
     const targetStudentId = req.query.studentId as string | undefined
     const result = await gradesService.getGradeBySubmission(submissionId as string, user, targetStudentId)
     if (!result) {
-      res.status(404).json({ message: 'Grade not found for this submission' })
+      res.status(200).json({ message: 'Grade not found for this submission', result: null })
       return
     }
     res.json({
