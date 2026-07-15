@@ -425,12 +425,22 @@ class AuthService {
     password: string
   ): Promise<InstanceType<typeof User> | null> {
     const passwordHash = hashPassword(password)
+    const cleanCode = studentCode.trim()
 
     const user = await databaseService.users.findOne({
-      studentCode,
-      $or: [
-        { passwordHash },
-        { password: passwordHash } // backward compat
+      $and: [
+        {
+          $or: [
+            { studentCode: { $regex: new RegExp(`^${cleanCode}$`, 'i') } },
+            { email: { $regex: new RegExp(`^${cleanCode}$`, 'i') } }
+          ]
+        },
+        {
+          $or: [
+            { passwordHash },
+            { password: passwordHash }
+          ]
+        }
       ]
     })
 
@@ -446,12 +456,22 @@ class AuthService {
     password: string
   ): Promise<InstanceType<typeof User> | null> {
     const passwordHash = hashPassword(password)
+    const cleanUser = username.trim()
 
     const user = await databaseService.users.findOne({
-      username,
-      $or: [
-        { passwordHash },
-        { password: passwordHash } // backward compat
+      $and: [
+        {
+          $or: [
+            { username: { $regex: new RegExp(`^${cleanUser}$`, 'i') } },
+            { email: { $regex: new RegExp(`^${cleanUser}$`, 'i') } }
+          ]
+        },
+        {
+          $or: [
+            { passwordHash },
+            { password: passwordHash }
+          ]
+        }
       ]
     })
 

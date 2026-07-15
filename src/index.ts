@@ -76,10 +76,10 @@ app.use('/api/sessions', sessionsRouter)
 
 app.use('/api/reports', reportRouter)
 
-app.use('/api/student', studentRouter)
-app.use('/api/lecturer', lecturerRouter)
-app.use('/api/subject-head', subjectHeadRouter)
-app.use('/api/admin', adminRouter)
+app.use(['/api/student', '/api/students'], studentRouter)
+app.use(['/api/lecturer', '/api/lecturers'], lecturerRouter)
+app.use(['/api/subject-head', '/api/subject-heads'], subjectHeadRouter)
+app.use(['/api/admin', '/api/admins'], adminRouter)
 app.use('/api/chat', chatRouter)
 
 app.use(defaultErrorHandler)
