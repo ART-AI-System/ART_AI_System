@@ -81,7 +81,7 @@ export const getSubmissionByIdController = async (req: Request, res: Response, n
   try {
     const { id } = req.params
     const user = req.user as User
-    const result = await submissionsService.getSubmissionById(id as string, user)
+    const result = await submissionsService.getSubmissionDetailById(id as string, user)
 
     res.json({
       message: 'Get submission successfully',

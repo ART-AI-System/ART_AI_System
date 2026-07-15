@@ -555,6 +555,54 @@ class SubmissionsService {
     return submission
   }
 
+  async getSubmissionDetailById(id: string, user: User) {
+    // First run the standard check
+    const rawSubmission = await this.getSubmissionById(id, user)
+
+    const submissions = await databaseService.submissions
+      .aggregate([
+        { $match: { _id: rawSubmission._id } },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'studentId',
+            foreignField: '_id',
+            as: 'studentId'
+          }
+        },
+        { $unwind: { path: '$studentId', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'classes',
+            localField: 'classId',
+            foreignField: '_id',
+            as: 'classId'
+          }
+        },
+        { $unwind: { path: '$classId', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'gradeItems',
+            localField: 'gradeItemId',
+            foreignField: '_id',
+            as: 'gradeItemId'
+          }
+        },
+        { $unwind: { path: '$gradeItemId', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'groupMembers',
+            foreignField: '_id',
+            as: 'groupMembers'
+          }
+        }
+      ])
+      .toArray()
+
+    return submissions[0]
+  }
+
   async getMySubmissions(studentId: string) {
     return await databaseService.submissions
       .find({

@@ -12,6 +12,7 @@ export interface GradeItemType {
   aiInteractionRequired?: boolean
   minAiInteractions?: number
   maxAiInteractions?: number
+  aiDeclarationConfig?: { categoryId: string, weight: number }[]
   sequenceOrder?: number
   isActive?: boolean
   isGroupAssignment?: boolean
@@ -31,6 +32,7 @@ export default class GradeItem {
   aiInteractionRequired: boolean
   minAiInteractions: number
   maxAiInteractions: number
+  aiDeclarationConfig: { categoryId: string, weight: number }[]
   sequenceOrder: number
   isActive: boolean
   isGroupAssignment: boolean
@@ -50,6 +52,7 @@ export default class GradeItem {
     this.aiInteractionRequired = gradeItemData.aiInteractionRequired ?? false
     this.minAiInteractions = gradeItemData.minAiInteractions || 0
     this.maxAiInteractions = gradeItemData.maxAiInteractions || 0
+    this.aiDeclarationConfig = gradeItemData.aiDeclarationConfig || []
     this.sequenceOrder = gradeItemData.sequenceOrder || 1
     this.isActive = gradeItemData.isActive ?? true
     this.isGroupAssignment = gradeItemData.isGroupAssignment ?? false
