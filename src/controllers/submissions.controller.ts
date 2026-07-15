@@ -24,7 +24,8 @@ export const createSubmissionController = async (req: Request, res: Response, ne
       targetGradeItemId,
       user._id!.toString(),
       submissionFile,
-      req.body.note
+      req.body.note,
+      req.body.groupMembers
     )
 
     res.status(HTTP_STATUS.CREATED).json({
@@ -80,7 +81,7 @@ export const getSubmissionByIdController = async (req: Request, res: Response, n
   try {
     const { id } = req.params
     const user = req.user as User
-    const result = await submissionsService.getSubmissionById(id as string, user)
+    const result = await submissionsService.getSubmissionDetailById(id as string, user)
 
     res.json({
       message: 'Get submission successfully',
@@ -176,7 +177,8 @@ export const resubmitSubmissionVersionController = async (req: Request, res: Res
       submissionId as string,
       user._id!.toString(),
       submissionFile,
-      req.body.note
+      req.body.note,
+      req.body.groupMembers
     )
 
     res.status(HTTP_STATUS.CREATED).json({
@@ -279,6 +281,22 @@ export const withdrawSubmissionController = async (req: Request, res: Response, 
 
     res.json({
       message: 'Withdraw submission successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const updateSubmissionGroupMembersController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params
+    const user = req.user as User
+    const { groupMembers } = req.body
+    const result = await submissionsService.updateSubmissionGroupMembers(id as string, user, groupMembers)
+
+    res.json({
+      message: 'Update group members successfully',
       result
     })
   } catch (error) {

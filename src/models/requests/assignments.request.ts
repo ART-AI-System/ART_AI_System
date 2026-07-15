@@ -9,6 +9,7 @@ export interface CreateAssignmentReqBody {
   minAiInteractions?: number
   maxAiInteractions?: number
   allowResubmission?: boolean
+  isGroupAssignment?: boolean
 }
 
 export type UpdateAssignmentReqBody = Partial<CreateAssignmentReqBody>

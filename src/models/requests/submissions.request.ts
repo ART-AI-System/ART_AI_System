@@ -8,4 +8,5 @@ export interface UploadedSubmissionFile {
 
 export interface SubmissionUploadFields {
   note?: string
+  groupMembers?: string
 }

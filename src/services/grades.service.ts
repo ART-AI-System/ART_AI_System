@@ -10,42 +10,82 @@ class GradesService {
       throw new Error('Submission not found')
     }
 
-    const existingGrade = await databaseService.grades.findOne({ submissionId: new ObjectId(submissionId) })
-    
-    if (existingGrade) {
-      const result = await databaseService.grades.findOneAndUpdate(
-        { submissionId: new ObjectId(submissionId) },
-        {
-          $set: {
-            score: payload.score,
-            maxScore: payload.maxScore,
-            feedback: payload.feedback,
-            studentId: submission.studentId, // restore in case it was corrupted
-            classId: submission.classId,
-            gradeItemId: submission.gradeItemId,
-            gradedBy: new ObjectId(userId),
-            updatedAt: new Date()
-          }
-        },
-        { returnDocument: 'after' }
-      )
-      return result
+    const targetStudentId = payload.studentId ? new ObjectId(payload.studentId) : submission.studentId
+    const studentIdsToGrade = [targetStudentId]
+
+    // If grading the representative (target is the submission owner), also grade all group members
+    if (targetStudentId.toString() === submission.studentId.toString() && submission.groupMembers && submission.groupMembers.length > 0) {
+      studentIdsToGrade.push(...submission.groupMembers)
     }
 
-    const newGrade = new Grade({
-      ...payload,
-      submissionId: new ObjectId(submissionId),
-      studentId: submission.studentId,
-      classId: submission.classId,
-      gradeItemId: submission.gradeItemId,
-      gradedBy: new ObjectId(userId)
-    })
-    const result = await databaseService.grades.insertOne(newGrade)
-    return { ...newGrade, _id: result.insertedId }
+    const results = []
+
+    for (const sId of studentIdsToGrade) {
+      const existingGrade = await databaseService.grades.findOne({ 
+        submissionId: new ObjectId(submissionId),
+        studentId: sId 
+      })
+      
+      if (existingGrade) {
+        const result = await databaseService.grades.findOneAndUpdate(
+          { _id: existingGrade._id },
+          {
+            $set: {
+              score: payload.score,
+              maxScore: payload.maxScore,
+              feedback: payload.feedback,
+              studentId: sId,
+              classId: submission.classId,
+              gradeItemId: submission.gradeItemId,
+              gradedBy: new ObjectId(userId),
+              updatedAt: new Date()
+            }
+          },
+          { returnDocument: 'after' }
+        )
+        results.push(result)
+      } else {
+        const newGrade = new Grade({
+          ...payload,
+          submissionId: new ObjectId(submissionId),
+          studentId: sId,
+          classId: submission.classId,
+          gradeItemId: submission.gradeItemId,
+          gradedBy: new ObjectId(userId)
+        })
+        const result = await databaseService.grades.insertOne(newGrade)
+        results.push({ ...newGrade, _id: result.insertedId })
+      }
+    }
+
+    // Return the result for the specific target student, or the first one
+    return results[0]
   }
 
-  async getGradeBySubmission(submissionId: string) {
-    return await databaseService.grades.findOne({ submissionId: new ObjectId(submissionId) })
+  async getGradeBySubmission(submissionId: string, user?: any, targetStudentId?: string) {
+    if (user && user.role === 'STUDENT') {
+      return await databaseService.grades.findOne({ 
+        submissionId: new ObjectId(submissionId),
+        studentId: user._id
+      })
+    }
+    
+    // For Lecturer/Admin, if targetStudentId is provided, return that specific student's grade
+    if (targetStudentId) {
+      return await databaseService.grades.findOne({ 
+        submissionId: new ObjectId(submissionId),
+        studentId: new ObjectId(targetStudentId)
+      })
+    }
+
+    // Otherwise return the grade of the submission owner
+    const submission = await databaseService.submissions.findOne({ _id: new ObjectId(submissionId) })
+    if (!submission) return null;
+
+    return await databaseService.grades.findOne({ 
+      submissionId: new ObjectId(submissionId),
+      studentId: submission.studentId
+    })
   }
 
   async deleteGradeBySubmission(submissionId: string) {

@@ -18,6 +18,7 @@ export interface AssignmentType {
   allowResubmission?: boolean
   status?: AssignmentStatus
   isPublished?: boolean
+  isGroupAssignment?: boolean
   publishedAt?: Date | null
   closedAt?: Date | null
   createdBy: ObjectId
@@ -41,6 +42,7 @@ export default class Assignment {
   allowResubmission: boolean
   status: AssignmentStatus
   isPublished: boolean
+  isGroupAssignment: boolean
   publishedAt: Date | null
   closedAt: Date | null
   createdBy: ObjectId
@@ -64,6 +66,7 @@ export default class Assignment {
     this.allowResubmission = data.allowResubmission ?? true
     this.status = data.status || 'draft'
     this.isPublished = data.isPublished ?? false
+    this.isGroupAssignment = data.isGroupAssignment ?? false
     this.publishedAt = data.publishedAt ?? null
     this.closedAt = data.closedAt ?? null
     this.createdBy = data.createdBy

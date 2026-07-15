@@ -83,9 +83,14 @@ export const parseSubmissionFile = async (req: Request, res: Response, next: Nex
 
         const noteRaw = fields.note
         const note = Array.isArray(noteRaw) ? noteRaw[0] : noteRaw
+        
+        const groupMembersRaw = fields.groupMembers
+        const groupMembers = Array.isArray(groupMembersRaw) ? groupMembersRaw[0] : groupMembersRaw
+
         req.body = {
           ...req.body,
-          ...(typeof note === 'string' ? { note: note.trim() } : {})
+          ...(typeof note === 'string' ? { note: note.trim() } : {}),
+          ...(typeof groupMembers === 'string' ? { groupMembers: groupMembers.trim() } : {})
         } satisfies SubmissionUploadFields
 
         resolve()
