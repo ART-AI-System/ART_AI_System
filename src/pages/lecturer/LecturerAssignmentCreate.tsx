@@ -27,6 +27,19 @@ const LecturerAssignmentCreate = () => {
   const [aiInteractionRequired, setAiInteractionRequired] = useState(true);
   const [minAiInteractions, setMinAiInteractions] = useState(5);
   const [maxAiInteractions, setMaxAiInteractions] = useState(10);
+  
+  const CATEGORIES = [
+    { id: 'decomposition', title: 'Decomposition' },
+    { id: 'pattern_recognition', title: 'Pattern Recognition' },
+    { id: 'abstraction', title: 'Abstraction' },
+    { id: 'algorithmic_thinking', title: 'Algorithmic Thinking' },
+    { id: 'reflection', title: 'Reflection' }
+  ];
+  
+  const [aiDeclarationConfig, setAiDeclarationConfig] = useState(
+    CATEGORIES.map(c => ({ categoryId: c.id, weight: 20, selected: true }))
+  );
+  
   const [isGroupAssignment, setIsGroupAssignment] = useState(false);
   
   // Materials state
@@ -63,6 +76,14 @@ const LecturerAssignmentCreate = () => {
             setMinAiInteractions(item.minAiInteractions || 5);
             setMaxAiInteractions(item.maxAiInteractions || 10);
             setIsGroupAssignment(item.isGroupAssignment || false);
+            
+            if (item.aiDeclarationConfig && Array.isArray(item.aiDeclarationConfig)) {
+              setAiDeclarationConfig(CATEGORIES.map(c => {
+                const config = item.aiDeclarationConfig.find((x: any) => x.categoryId === c.id);
+                return config ? { ...c, categoryId: c.id, weight: config.weight, selected: true } 
+                              : { ...c, categoryId: c.id, weight: 0, selected: false };
+              }));
+            }
             
             await fetchMaterials(assignmentId);
           }
@@ -151,26 +172,43 @@ const LecturerAssignmentCreate = () => {
       return;
     }
 
+    if (!deadline) {
+      setError('Deadline is required.');
+      return;
+    }
+    
+    const selectedConfig = aiDeclarationConfig.filter(c => c.selected);
+    if (selectedConfig.length === 0) {
+      setError('At least one AI declaration category must be selected.');
+      return;
+    }
+    
+    const totalWeight = selectedConfig.reduce((sum, c) => sum + c.weight, 0);
+    if (totalWeight !== 100) {
+      setError(`Total AI declaration weight must be exactly 100%. Current: ${totalWeight}%`);
+      return;
+    }
+
     setSubmitting(true);
-    setError('');
+
+    const payload: any = {
+      title,
+      description,
+      weight: Number(weight),
+      maxScore: Number(maxScore),
+      deadline: new Date(deadline).toISOString(),
+      aiInteractionRequired,
+      minAiInteractions: Number(minAiInteractions),
+      maxAiInteractions: Number(maxAiInteractions),
+      aiDeclarationConfig: selectedConfig.map(c => ({ categoryId: c.categoryId, weight: Number(c.weight) })),
+      isGroupAssignment
+    };
+    
+    if (sessionId) {
+      payload.sessionId = sessionId;
+    }
 
     try {
-      const payload: any = {
-        title,
-        description,
-        weight,
-        maxScore,
-        deadline: new Date(deadline).toISOString(),
-        aiInteractionRequired,
-        minAiInteractions,
-        maxAiInteractions,
-        isGroupAssignment
-      };
-      
-      if (sessionId) {
-        payload.sessionId = sessionId;
-      }
-
       if (isEditMode) {
         // Edit mode: only update this specific assignment
         await axiosClient.put(`/grade-items/standalone/${assignmentId}`, payload);
@@ -327,8 +365,74 @@ const LecturerAssignmentCreate = () => {
                     </label>
                   </div>
 
-
+                  {aiInteractionRequired && (
+                    <div className="bg-white/10 p-5 rounded-xl border border-white/10 backdrop-blur-sm mt-4">
+                      <h4 className="text-sm font-bold text-white mb-4">Required AI Declaration Phases (Total must be 100%)</h4>
+                      <div className="space-y-3">
+                        {aiDeclarationConfig.map((config, idx) => (
+                          <div key={config.categoryId} className="flex items-center justify-between bg-white/5 p-3 rounded-lg border border-white/5">
+                            <label className="flex items-center space-x-3 cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                checked={config.selected}
+                                onChange={(e) => {
+                                  const newConfig = [...aiDeclarationConfig];
+                                  newConfig[idx].selected = e.target.checked;
+                                  
+                                  // Auto balance weights if possible
+                                  const selectedCount = newConfig.filter(c => c.selected).length;
+                                  if (selectedCount > 0) {
+                                    const defaultWeight = Math.floor(100 / selectedCount);
+                                    let remainder = 100 - (defaultWeight * selectedCount);
+                                    newConfig.forEach(c => {
+                                      if (c.selected) {
+                                        c.weight = defaultWeight + (remainder > 0 ? 1 : 0);
+                                        if (remainder > 0) remainder--;
+                                      } else {
+                                        c.weight = 0;
+                                      }
+                                    });
+                                  } else {
+                                    newConfig.forEach(c => c.weight = 0);
+                                  }
+                                  
+                                  setAiDeclarationConfig(newConfig);
+                                }}
+                                className="w-4 h-4 rounded text-[#F26F21] border-white/20 focus:ring-[#F26F21] cursor-pointer"
+                              />
+                              <span className="text-sm font-semibold text-blue-100">{CATEGORIES.find(c => c.id === config.categoryId)?.title}</span>
+                            </label>
+                            
+                            {config.selected && (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-xs font-medium text-blue-200">Weight (%)</span>
+                                <input 
+                                  type="number" min="0" max="100"
+                                  value={config.weight}
+                                  onChange={(e) => {
+                                    const newConfig = [...aiDeclarationConfig];
+                                    newConfig[idx].weight = Number(e.target.value);
+                                    setAiDeclarationConfig(newConfig);
+                                  }}
+                                  className="w-16 h-8 px-2 text-center text-sm font-bold bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-[#F26F21] transition-all"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {aiDeclarationConfig.filter(c => c.selected).reduce((sum, c) => sum + c.weight, 0) !== 100 && (
+                        <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                          <p className="text-xs font-bold text-red-200 text-center">
+                            Warning: Total weight must exactly equal 100%. Current: {aiDeclarationConfig.filter(c => c.selected).reduce((sum, c) => sum + c.weight, 0)}%
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
+
               </div>
             </div>
 

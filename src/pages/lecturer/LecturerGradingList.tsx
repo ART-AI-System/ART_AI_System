@@ -112,7 +112,7 @@ const LecturerGradingListPage = () => {
     const submission = submissions.find(s => 
       s.studentId?._id === student.studentId || 
       s.studentId === student.studentId ||
-      s.groupMembers?.includes(student.studentId)
+      (s.groupMembers && s.groupMembers.some((id: any) => (id?._id || id) === student.studentId))
     );
     const grade = grades.find(g => 
       g.submissionId === submission?._id && 

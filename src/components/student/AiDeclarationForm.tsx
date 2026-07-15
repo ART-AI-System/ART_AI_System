@@ -16,6 +16,7 @@ interface AiDeclarationFormProps {
   isSubmitting?: boolean;
   data?: AiInteractionData[];
   onChange?: (val: AiInteractionData[]) => void;
+  aiDeclarationConfig?: { categoryId: string, weight: number }[];
 }
 
 const CATEGORIES = [
@@ -40,15 +41,20 @@ const AiDeclarationForm: React.FC<AiDeclarationFormProps> = ({
   handleSubmit, 
   isSubmitting = false, 
   data, 
-  onChange 
+  onChange,
+  aiDeclarationConfig
 }) => {
-  // Initialize state with exactly 5 items mapping to the categories
+  const activeCategories = aiDeclarationConfig && aiDeclarationConfig.length > 0
+    ? CATEGORIES.filter(c => aiDeclarationConfig.some(conf => conf.categoryId === c.id))
+    : CATEGORIES;
+
+  // Initialize state with the active items mapping to the active categories
   const [interactions, setInteractions] = useState<AiInteractionData[]>(() => {
-    if (data && data.length === CATEGORIES.length) return data;
-    const initialData = CATEGORIES.map(c => defaultInteraction(c.id));
+    if (data && data.length === activeCategories.length) return data;
+    const initialData = activeCategories.map(c => defaultInteraction(c.id));
     if (data && data.length > 0) {
       data.forEach(d => {
-        const idx = CATEGORIES.findIndex(c => c.id === d.usagePurpose);
+        const idx = activeCategories.findIndex(c => c.id === d.usagePurpose);
         if (idx !== -1) initialData[idx] = d;
       });
     }
@@ -75,7 +81,7 @@ const AiDeclarationForm: React.FC<AiDeclarationFormProps> = ({
     onChange?.(filledOut);
   };
 
-  const currentCategory = CATEGORIES[activeTab];
+  const currentCategory = activeCategories[activeTab];
 
   return (
     <div className="mt-8">
@@ -92,8 +98,8 @@ const AiDeclarationForm: React.FC<AiDeclarationFormProps> = ({
         
         {/* Vertical Tabs (Left) */}
         <div className="w-full xl:w-64 bg-gray-50 border-b xl:border-b-0 xl:border-r border-gray-100 flex flex-row xl:flex-col shrink-0 overflow-x-auto xl:overflow-y-auto custom-scrollbar">
-          {CATEGORIES.map((cat, idx) => {
-            const isFilled = interactions[idx].promptContent.trim() !== '';
+          {activeCategories.map((cat, idx) => {
+            const isFilled = interactions[idx]?.promptContent?.trim() !== '';
             return (
               <button 
                 key={cat.id}
@@ -203,7 +209,7 @@ const AiDeclarationForm: React.FC<AiDeclarationFormProps> = ({
             </button>
             <button 
               onClick={() => {
-                if (activeTab === CATEGORIES.length - 1) {
+                if (activeTab === activeCategories.length - 1) {
                   if (handleSubmit) {
                     const filledOut = interactions.filter(item => item.promptContent.trim() !== '');
                     handleSubmit(filledOut);
@@ -215,14 +221,14 @@ const AiDeclarationForm: React.FC<AiDeclarationFormProps> = ({
               disabled={isSubmitting}
               className={`px-5 py-2.5 text-white rounded-xl font-bold text-sm transition-colors flex items-center shadow-md ${
                 isSubmitting ? 'bg-gray-400 cursor-not-allowed' :
-                activeTab === CATEGORIES.length - 1 
+                activeTab === activeCategories.length - 1 
                   ? 'bg-green-500 hover:bg-green-600'
                   : 'bg-[#1B2559] hover:bg-gray-800'
               }`}
             >
               {isSubmitting ? (
                 'Submitting...'
-              ) : activeTab === CATEGORIES.length - 1 ? (
+              ) : activeTab === activeCategories.length - 1 ? (
                 <>Finish <Check className="w-4 h-4 ml-2" /></>
               ) : (
                 <>Next <ChevronRight className="w-4 h-4 ml-2" /></>

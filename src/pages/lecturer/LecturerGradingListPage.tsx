@@ -80,7 +80,11 @@ const LecturerGradingListPage = () => {
 
   // Merge students with submissions and grades
   const mergedData = students.map((student: any) => {
-    const submission = submissions.find(s => s.studentId?._id === student.studentId || s.studentId === student.studentId);
+    const submission = submissions.find(s => 
+      s.studentId?._id === student.studentId || 
+      s.studentId === student.studentId || 
+      (s.groupMembers && s.groupMembers.some((id: any) => (id?._id || id) === student.studentId))
+    );
     const grade = grades.find(g => g.submissionId === submission?._id);
     
     return {

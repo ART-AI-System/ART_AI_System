@@ -126,13 +126,29 @@ const LecturerGradingDetailPage = () => {
           
           <div>
             <div className="flex items-center text-[10px] font-bold text-gray-400 mb-0.5 uppercase tracking-wider">
-              <Link to="/classes" className="hover:text-white transition-colors">Grading</Link>
+              <Link to="/lecturer/classes" className="hover:text-white transition-colors">Grading</Link>
               <ChevronRight className="w-3 h-3 mx-1" />
-              <Link to="#" className="hover:text-white transition-colors">{className}</Link>
+              <Link to={`/lecturer/classes/${submission.classId?._id}/submissions`} className="hover:text-white transition-colors">{className}</Link>
               <ChevronRight className="w-3 h-3 mx-1" />
               <Link to="#" className="hover:text-white transition-colors">{assignmentTitle}</Link>
             </div>
-            <h1 className="text-sm font-bold">{studentName} {studentRoll ? `(${studentRoll})` : ''}</h1>
+            <div className="flex flex-col">
+              <h1 className="text-sm font-bold flex items-center gap-2">
+                <span className="text-white">
+                  {studentName} {studentRoll ? `(${studentRoll})` : ''} <span className="text-xs text-gray-400 font-normal ml-1">(Submitter)</span>
+                </span>
+              </h1>
+              {submission.groupMembers && submission.groupMembers.length > 0 && (
+                <div className="text-xs text-gray-400 mt-1 flex flex-wrap items-center gap-1">
+                  <span className="font-semibold text-gray-300">Group Members:</span>
+                  {submission.groupMembers.map((member: any, idx: number) => (
+                    <span key={member._id || idx} className="bg-white/10 px-2 py-0.5 rounded text-gray-300">
+                      {member.fullName} {member.rollNumber ? `(${member.rollNumber})` : ''}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         

@@ -273,6 +273,7 @@ const StudentSubmissionPanel: React.FC<StudentSubmissionPanelProps> = ({ assignm
               onChange={setAiData}
               handleSubmit={handleFinalize} 
               isSubmitting={isFinalizing} 
+              aiDeclarationConfig={assignment?.aiDeclarationConfig}
             />
           </div>
         </div>
