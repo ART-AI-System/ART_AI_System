@@ -38,7 +38,7 @@ const LecturerSubjectDetail = () => {
     const fetchSessions = async () => {
       try {
         const res: any = await axiosClient.get(`/classes/${subjectId}/sessions?limit=100`);
-        const sortedDocs = (res.result?.docs || []).sort((a: any, b: any) => a.sessionNo - b.sessionNo);
+        const sortedDocs = (res.result?.docs || []).sort((a: any, b: any) => (a.sessionNo || 0) - (b.sessionNo || 0));
         setSessions(sortedDocs);
       } catch (error) {
         console.error('Failed to load sessions:', error);
@@ -155,20 +155,20 @@ const LecturerSubjectDetail = () => {
             </div>
 
             <div className="space-y-4">
-              {sessions.map((session) => (
-                <div key={session._id} className="bg-white border border-gray-100 rounded-[24px] shadow-sm hover:shadow-md transition-all">
+              {sessions.map((session, idx) => (
+                <div key={session._id || idx} className="bg-white border border-gray-100 rounded-[24px] shadow-sm hover:shadow-md transition-all">
                   <div 
                     className="flex items-center justify-between p-6 cursor-pointer"
                     onClick={() => setExpandedSession(expandedSession === session._id ? null : session._id)}
                   >
                     <div className="flex items-center">
                       <div className="w-12 h-12 rounded-xl bg-orange-50 text-[#F26F21] flex items-center justify-center mr-4">
-                        <span className="text-xl font-extrabold">{session.sessionNo.toString().padStart(2, '0')}</span>
+                        <span className="text-xl font-extrabold">{(session.sessionNo || idx + 1).toString().padStart(2, '0')}</span>
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-[#1B2559]">{session.title?.replace(/Session/gi, 'Slot')}</h3>
+                        <h3 className="text-lg font-bold text-[#1B2559]">{(session.title || `Slot ${idx + 1}`).replace(/Session/gi, 'Slot')}</h3>
                         <p className="text-sm text-gray-500 font-medium">
-                          {new Date(session.startTime).toLocaleDateString()}
+                          {session.startTime ? new Date(session.startTime).toLocaleDateString() : 'N/A'}
                         </p>
                       </div>
                     </div>

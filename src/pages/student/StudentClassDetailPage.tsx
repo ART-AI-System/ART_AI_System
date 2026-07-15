@@ -91,7 +91,7 @@ const ClassDetailPage = () => {
                   >
                     <div className="flex items-center">
                       <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#4318FF] flex items-center justify-center mr-4">
-                        <span className="text-xl font-extrabold">{session.sessionNo.toString().padStart(2, '0')}</span>
+                        <span className="text-xl font-extrabold">{(session.sessionNo || index + 1).toString().padStart(2, '0')}</span>
                       </div>
                       <div>
                         <h4 className="font-bold text-[#1B2559] text-base group-hover:text-[#4318FF] transition-colors">{session.title?.replace(/Session/gi, 'Slot')}</h4>

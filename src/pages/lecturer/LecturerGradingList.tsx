@@ -440,11 +440,11 @@ const LecturerGradingListPage = () => {
                             </td>
                             <td className="px-3 py-5 align-top text-center">
                               <span className={`inline-flex items-center justify-center px-2 py-1.5 rounded-lg text-[11px] font-bold shadow-sm border w-full max-w-full break-words ${
-                                interaction.studentDecision === 'accepted' ? 'bg-green-50 text-green-700 border-green-200' :
-                                interaction.studentDecision === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
+                                (interaction.studentDecision || '') === 'accepted' ? 'bg-green-50 text-green-700 border-green-200' :
+                                (interaction.studentDecision || '') === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
                                 'bg-orange-50 text-orange-700 border-orange-200'
                               }`}>
-                                {interaction.studentDecision.replace(/_/g, ' ')}
+                                {(interaction.studentDecision || 'N/A').replace(/_/g, ' ')}
                               </span>
                             </td>
                           </tr>

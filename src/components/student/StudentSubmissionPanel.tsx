@@ -28,7 +28,7 @@ const StudentSubmissionPanel: React.FC<StudentSubmissionPanelProps> = ({ assignm
   const [currentStep, setCurrentStep] = useState(1);
   const [classData, setClassData] = useState<any>(null);
   const { user } = useAuth();
-  const currentStudentId = user?.id || user?.studentId || user?._id || '';
+  const currentStudentId = user?.id || (user as any)?.studentId || (user as any)?._id || '';
   const [groupMembers, setGroupMembers] = useState<string[]>([]);
   
   // AI Interaction state from the form
