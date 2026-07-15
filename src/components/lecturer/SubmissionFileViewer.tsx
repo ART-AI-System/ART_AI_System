@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Download, Sidebar, Folder, FolderOpen, FileCode2, FileText,
   File as FileIcon, ChevronDown, ChevronRight, LayoutTemplate,
-  AlertTriangle, Loader2, Sparkles, AlertOctagon, CheckCircle, ShieldAlert, Bug, Lightbulb, Copy, X, ArrowRight
+  AlertTriangle, Loader2, Sparkles, AlertOctagon, CheckCircle, ShieldAlert, Bug, Lightbulb, Copy, X, ArrowRight,
+  Maximize2, Minimize2, GripHorizontal
 } from 'lucide-react';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import js from 'react-syntax-highlighter/dist/esm/languages/hljs/javascript';
@@ -176,6 +177,25 @@ const SubmissionFileViewer: React.FC<SubmissionFileViewerProps> = ({ submissionI
   const [annotationsError, setAnnotationsError] = useState('');
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   const [showAnnotationsDrawer, setShowAnnotationsDrawer] = useState(false);
+  const [auditPanelHeight, setAuditPanelHeight] = useState<number>(260);
+  const [isDraggingAudit, setIsDraggingAudit] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isDraggingAudit) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const newHeight = window.innerHeight - e.clientY - 60;
+      setAuditPanelHeight(Math.max(140, Math.min(window.innerHeight * 0.85, newHeight)));
+    };
+    const handleMouseUp = () => {
+      setIsDraggingAudit(false);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingAudit]);
 
   // ── Phase 1: Load tree via server API ──────────────────────────────────────
   useEffect(() => {
@@ -471,20 +491,52 @@ const SubmissionFileViewer: React.FC<SubmissionFileViewerProps> = ({ submissionI
 
                 {/* AI Annotations Bottom Panel */}
                 {showAnnotationsDrawer && annotationsResult && (
-                  <div className="max-h-[220px] bg-white border-t-2 border-indigo-200 shadow-xl overflow-y-auto shrink-0 flex flex-col z-20">
-                    <div className="p-3 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between shrink-0">
-                      <div className="flex items-center space-x-2 text-xs font-bold text-indigo-900">
-                        <Sparkles className="w-4 h-4 text-indigo-600" />
-                        <span>AI Code Audit Summary: {annotationsResult.overallQuality}</span>
-                      </div>
-                      <button
-                        onClick={() => setShowAnnotationsDrawer(false)}
-                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                  <div
+                    style={{ height: `${auditPanelHeight}px` }}
+                    className="bg-white border-t-2 border-indigo-300 shadow-2xl overflow-hidden shrink-0 flex flex-col z-20 relative transition-[height] duration-75 ease-out"
+                  >
+                    {/* Drag Handle Bar */}
+                    <div
+                      onMouseDown={(e) => { e.preventDefault(); setIsDraggingAudit(true); }}
+                      className="h-2.5 bg-indigo-100/80 hover:bg-indigo-200 cursor-ns-resize flex items-center justify-center border-b border-indigo-200/60 shrink-0 transition-colors select-none"
+                      title="Kéo lên/xuống để thay đổi kích thước khung audit"
+                    >
+                      <GripHorizontal className="w-5 h-3 text-indigo-500" />
                     </div>
-                    <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto">
+
+                    {/* Header Bar */}
+                    <div className="p-2.5 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between shrink-0">
+                      <div className="flex items-center space-x-2 text-xs font-bold text-indigo-900 truncate pr-2">
+                        <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
+                        <span className="truncate">AI Code Audit Summary: {annotationsResult.overallQuality}</span>
+                      </div>
+                      <div className="flex items-center space-x-1 shrink-0">
+                        <button
+                          onClick={() => setAuditPanelHeight(160)}
+                          title="Thu nhỏ (Minimize)"
+                          className="p-1 text-indigo-600 hover:bg-indigo-100 rounded transition-colors"
+                        >
+                          <Minimize2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setAuditPanelHeight(Math.floor(window.innerHeight * 0.65))}
+                          title="Mở rộng (Maximize)"
+                          className="p-1 text-indigo-600 hover:bg-indigo-100 rounded transition-colors"
+                        >
+                          <Maximize2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setShowAnnotationsDrawer(false)}
+                          title="Đóng (Close)"
+                          className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors ml-1.5"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Scrollable Grid Content */}
+                    <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto flex-1">
                       {annotationsResult.annotations?.map((ann: any, idx: number) => {
                         const isActive = selectedLine === ann.lineNumber;
                         const icon =
