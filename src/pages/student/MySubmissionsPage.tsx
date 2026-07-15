@@ -55,7 +55,10 @@ const MySubmissionsPage = () => {
           
           <div className="mt-6 md:mt-0 md:ml-8 flex flex-col items-start md:items-end shrink-0">
             <p className="text-xs font-bold text-gray-400 uppercase mb-3">Not Submitted</p>
-            <Link to={ROUTES.SUBMISSION_DETAIL.replace(':id', '1')} className="px-6 py-2.5 bg-gradient-to-br from-[#F26F21] to-[#F79C65] text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 hover:opacity-90 transition-opacity flex items-center">
+            <Link 
+              to={`/student/assignments/1/submit`} 
+              className="px-6 py-2 bg-gradient-to-br from-[#F26F21] to-[#F79C65] text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 hover:opacity-90 transition-opacity flex items-center"
+            >
               Start Assignment <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </div>
@@ -82,7 +85,7 @@ const MySubmissionsPage = () => {
           
           <div className="mt-6 md:mt-0 md:ml-8 flex flex-col items-start md:items-end shrink-0">
             <p className="text-xs font-bold text-gray-400 uppercase mb-3">Not Submitted</p>
-            <Link to={ROUTES.SUBMISSION_DETAIL.replace(':id', 'new')} className="px-6 py-2.5 bg-[#4318FF] text-white rounded-xl text-sm font-bold shadow-md shadow-blue-200 hover:bg-blue-700 transition-colors flex items-center">
+            <Link to={`/student/assignments/2/submit`} className="px-6 py-2.5 bg-[#4318FF] text-white rounded-xl text-sm font-bold shadow-md shadow-blue-200 hover:bg-blue-700 transition-colors flex items-center">
               Start Assignment <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </div>

@@ -24,6 +24,9 @@ axiosClient.interceptors.request.use((config) => {
 });
 
 axiosClient.interceptors.response.use((response) => {
+  if (response.config.responseType === 'blob') {
+    return response;
+  }
   return response.data;
 }, (error) => {
   return Promise.reject(error);

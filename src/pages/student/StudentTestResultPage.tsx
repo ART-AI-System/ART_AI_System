@@ -115,7 +115,7 @@ const StudentTestResultPage = () => {
                 {/* Correct answer, student got it right but failed the overall question */}
                 <label className="flex items-center p-4 border border-gray-200 rounded-xl opacity-50">
                   <input type="checkbox" checked disabled className="w-5 h-5 text-gray-400 rounded" />
-                  <span className="ml-4 font-medium text-gray-700">session</span>
+                  <span className="ml-4 font-medium text-gray-700">slot</span>
                 </label>
               </div>
             </div>

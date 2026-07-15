@@ -9,16 +9,26 @@ import LecturerLayout from './layouts/LecturerLayout';
 import StudentAssignments from './pages/student/StudentAssignments';
 import StudentSubmission from './pages/student/StudentSubmission';
 import StudentSubmitSuccess from './pages/student/StudentSubmitSuccess';
+import StudentClassesPage from './pages/student/StudentClassesPage';
+import StudentClassDetailPage from './pages/student/StudentClassDetailPage';
+import StudentResultsView from './pages/student/StudentResultsView';
 import LecturerGradingSubjects from './pages/lecturer/LecturerGradingSubjects';
 import LecturerGradingList from './pages/lecturer/LecturerGradingList';
 import LecturerGradingDetail from './pages/lecturer/LecturerGradingDetail';
 import LecturerAssignmentCreate from './pages/lecturer/LecturerAssignmentCreate';
+import LecturerSubmissionList from './pages/lecturer/LecturerSubmissionList';
+import LecturerCreateTestPage from './pages/lecturer/LecturerCreateTestPage';
+import LecturerEditSlotPage from './pages/lecturer/LecturerEditSlotPage';
+import ClassGradebook from './pages/lecturer/ClassGradebook';
+import StudentMessagesPage from './pages/student/StudentMessagesPage';
+import LecturerMessagesPage from './pages/lecturer/LecturerMessagesPage';
 
 // Admin Pages
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminSemesters from './pages/admin/AdminSemesters';
 import AdminSubjects from './pages/admin/AdminSubjects';
+import AdminMessagesPage from './pages/admin/AdminMessagesPage';
 import AdminTeachers from './pages/admin/AdminTeachers';
 import AdminClasses from './pages/admin/AdminClasses';
 
@@ -35,7 +45,8 @@ function AppRoutes() {
       <Route path="/student" element={<StudentLayout />}>
         <Route index element={<Navigate to="/student/home" replace />} />
         <Route path="home" element={<StudentDashboard />} />
-        <Route path="subjects" element={<div className="text-xl font-bold">Subjects Page</div>} />
+        <Route path="subjects" element={<StudentClassesPage />} />
+        <Route path="classes/:id" element={<StudentClassDetailPage />} />
         <Route path="schedule" element={<div className="text-xl font-bold">Schedule Page</div>} />
         
         <Route path="assignments">
@@ -45,7 +56,8 @@ function AppRoutes() {
         </Route>
         
         <Route path="news" element={<div className="text-xl font-bold">News Page</div>} />
-        <Route path="chat" element={<div className="text-xl font-bold">Chat Page</div>} />
+        <Route path="messages" element={<StudentMessagesPage />} />
+        <Route path="results" element={<StudentResultsView />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       
@@ -55,11 +67,17 @@ function AppRoutes() {
         <Route path="dashboard" element={<LecturerDashboard />} />
         <Route path="subjects" element={<LecturerSubjects />} />
         <Route path="subjects/:subjectId" element={<LecturerSubjectDetail />} />
+        <Route path="assignments/create" element={<LecturerAssignmentCreate />} />
+        <Route path="assignments/:assignmentId/edit" element={<LecturerAssignmentCreate />} />
+        <Route path="tests/create" element={<LecturerCreateTestPage />} />
+        <Route path="slots/:slotId/edit" element={<LecturerEditSlotPage />} />
+        <Route path="assignments/:assignmentId/submissions" element={<LecturerSubmissionList />} />
+        <Route path="classes/:classId/gradebook" element={<ClassGradebook />} />
         <Route path="grading" element={<LecturerGradingSubjects />} />
         <Route path="grading/:classId" element={<LecturerGradingList />} />
         <Route path="reports" element={<div className="text-xl font-bold">Reports Page</div>} />
         <Route path="news" element={<div className="text-xl font-bold">News Page</div>} />
-        <Route path="messages" element={<div className="text-xl font-bold">Messages Page</div>} />
+        <Route path="messages" element={<LecturerMessagesPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 
@@ -76,6 +94,7 @@ function AppRoutes() {
         <Route path="semesters" element={<AdminSemesters />} />
         <Route path="subjects" element={<AdminSubjects />} />
         <Route path="classes" element={<AdminClasses />} />
+        <Route path="messages" element={<AdminMessagesPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>

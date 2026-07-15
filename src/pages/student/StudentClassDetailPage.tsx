@@ -1,11 +1,43 @@
-import { useState } from 'react';
-import { ArrowLeft, ChevronDown, FileText, CheckCircle2, FileVideo, Circle, ArrowRight, Lock } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, ChevronDown, FileText, CheckCircle2, FileVideo, Circle, ArrowRight, Lock, Plus } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
 import { ROUTES } from '../../config/routes';
 import { Card } from '../../components/common/Card';
+import axiosClient from '../../api/axiosClient';
 
 const ClassDetailPage = () => {
-  const [expandedSlots, setExpandedSlots] = useState<string[]>(['s2']);
+  const { id } = useParams();
+  const [expandedSlots, setExpandedSlots] = useState<string[]>(['1']);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [classOverview, setClassOverview] = useState<any>(null);
+  const [assignments, setAssignments] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+      try {
+        const [sessionRes, classRes, assignmentRes]: any = await Promise.all([
+          axiosClient.get(`/classes/${id}/sessions?limit=100`),
+          axiosClient.get(`/classes/${id}`).catch(() => ({ result: null })),
+          axiosClient.get(`/classes/${id}/grade-items`).catch(() => ({ result: [] }))
+        ]);
+        
+        let fetchedSessions = sessionRes.result?.docs || [];
+        // Sort sessions ascending by sessionNo
+        fetchedSessions.sort((a: any, b: any) => (a.sessionNo || 0) - (b.sessionNo || 0));
+        
+        setSessions(fetchedSessions);
+        
+        if (classRes?.result) {
+          setClassOverview(classRes.result);
+        }
+        setAssignments(assignmentRes?.result || []);
+      } catch (err) {
+        console.error('Failed to load class details:', err);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   const toggleSlot = (slotId: string) => {
     setExpandedSlots(prev => 
@@ -20,11 +52,15 @@ const ClassDetailPage = () => {
       {/* Page Title */}
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <Link to={ROUTES.CLASSES} className="inline-flex items-center text-sm font-bold text-gray-400 hover:text-[#4318FF] mb-2 transition-colors">
+          <Link to={ROUTES.STUDENT_SUBJECTS} className="inline-flex items-center text-sm font-bold text-gray-400 hover:text-[#4318FF] mb-2 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to Subjects
           </Link>
-          <h1 className="text-3xl font-extrabold text-[#1B2559]">SWD392 - Software Architecture</h1>
-          <p className="text-gray-500 font-medium mt-1">Class: SE18D01 • Semester: Summer 2026</p>
+          <h1 className="text-3xl font-extrabold text-[#1B2559]">
+            {classOverview?.subjectSnapshot?.code || 'Subject'} - {classOverview?.subjectSnapshot?.name || 'Class Details'}
+          </h1>
+          <p className="text-gray-500 font-medium mt-1">
+            Class: {classOverview?.classCode || '...'} • Semester: {classOverview?.semester?.name || 'Current'}
+          </p>
         </div>
       </div>
 
@@ -36,7 +72,7 @@ const ClassDetailPage = () => {
           {/* Course Sessions Accordion */}
           <Card className="overflow-hidden p-0">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-[#1B2559]">Course Sessions</h3>
+              <h3 className="text-lg font-bold text-[#1B2559]">Course Slots</h3>
               <button 
                 onClick={() => setExpandedSlots(['s1', 's2'])}
                 className="text-sm font-bold text-[#4318FF] hover:underline"
@@ -47,163 +83,72 @@ const ClassDetailPage = () => {
             
             <div className="divide-y divide-gray-100">
               
-              {/* Slot 1 */}
-              <div className="group">
-                <div 
-                  className="p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors" 
-                  onClick={() => toggleSlot('s1')}
-                >
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center font-bold mr-4">
-                      S1
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-[#1B2559] text-base group-hover:text-[#4318FF] transition-colors">Introduction to Design Thinking</h4>
-                      <p className="text-xs font-medium text-gray-500 mt-0.5">10 Jun 2026</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-xs font-bold text-green-500 bg-green-50 px-3 py-1 rounded-full mr-4 hidden md:block">Completed</span>
-                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${expandedSlots.includes('s1') ? 'rotate-180' : ''}`} />
-                  </div>
-                </div>
-                {expandedSlots.includes('s1') && (
-                  <div className="bg-gray-50/50">
-                    <div className="p-6 pt-2 border-t border-gray-100">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Materials</h5>
-                          <ul className="space-y-2">
-                            <li>
-                              <a href="#" className="flex items-center text-sm font-medium text-gray-700 hover:text-[#4318FF] transition-colors">
-                                <FileText className="w-4 h-4 mr-2 text-red-500" /> Design_Thinking_Guide.pdf
-                              </a>
-                            </li>
-                          </ul>
-                        </div>
-                        <div>
-                          <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Activities</h5>
-                          <ul className="space-y-2">
-                            <li className="flex items-center text-sm font-medium text-gray-700">
-                              <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" /> Read chapter 1
-                            </li>
-                            <li className="flex items-center text-sm font-medium text-gray-700">
-                              <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" /> Proposal Draft Submitted
-                            </li>
-                          </ul>
-                        </div>
+              {sessions.map((session, index) => (
+                <div key={session._id} className="group">
+                  <div 
+                    className="p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors" 
+                    onClick={() => toggleSlot(session._id)}
+                  >
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#4318FF] flex items-center justify-center mr-4">
+                        <span className="text-xl font-extrabold">{session.sessionNo.toString().padStart(2, '0')}</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-[#1B2559] text-base group-hover:text-[#4318FF] transition-colors">{session.title?.replace(/Session/gi, 'Slot')}</h4>
+                        <p className="text-xs font-medium text-gray-500 mt-0.5">
+                          {new Date(session.startTime).toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Slot 2 */}
-              <div className={`group ${expandedSlots.includes('s2') ? 'border-l-4 border-orange-500' : ''}`}>
-                <div 
-                  className="p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors" 
-                  onClick={() => toggleSlot('s2')}
-                >
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold mr-4 shadow-sm">
-                      S2
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-[#1B2559] text-base group-hover:text-orange-500 transition-colors">Architectural Patterns (MVC vs MVVM)</h4>
-                      <p className="text-xs font-medium text-gray-500 mt-0.5">12 Jun 2026</p>
+                    <div className="flex items-center">
+                      <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${expandedSlots.includes(session._id) ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
-                  <div className="flex items-center">
-                    <span className="text-xs font-bold text-orange-500 bg-orange-50 px-3 py-1 rounded-full mr-4 hidden md:block border border-orange-100 animate-pulse">Due in 2 days</span>
-                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${expandedSlots.includes('s2') ? 'rotate-180' : ''}`} />
-                  </div>
-                </div>
-                {expandedSlots.includes('s2') && (
-                  <div className="bg-white">
-                    <div className="p-6 pt-4 border-t border-gray-100">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-                        <div>
-                          <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Materials</h5>
-                          <ul className="space-y-3">
-                            <li>
-                              <a href="#" className="flex items-center text-sm font-medium text-gray-700 hover:text-[#4318FF] transition-colors p-2 -ml-2 rounded-lg hover:bg-blue-50">
-                                <FileVideo className="w-5 h-5 mr-3 text-blue-500" /> 
-                                <div>
-                                  <p>MVC Pattern Overview</p>
-                                  <p className="text-xs text-gray-400">15 mins video</p>
+                  {expandedSlots.includes(session._id) && (
+                    <div className="bg-gray-50/50">
+                      <div className="p-6 pt-4 border-t border-gray-100">
+                        <div className="text-sm text-gray-500">
+                          {session.description || "No specific instructions for this slot."}
+                        </div>
+                        
+                        {assignments.filter((a: any) => a.sessionId === session._id).length > 0 ? (
+                          <div className="mt-4 space-y-3">
+                            <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Assignments</h5>
+                            {assignments.filter((a: any) => a.sessionId === session._id).map((assignment: any) => (
+                              <div key={assignment._id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <div className="w-10 h-10 bg-orange-50 rounded-xl flex flex-col items-center justify-center mr-4">
+                                    <FileText className="w-5 h-5 text-orange-500" />
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-[#1B2559]">{assignment.title}</p>
+                                    <p className="text-xs font-medium text-gray-500">Due: {new Date(assignment.deadline).toLocaleDateString()}</p>
+                                  </div>
                                 </div>
-                              </a>
-                            </li>
-                            <li>
-                              <a href="#" className="flex items-center text-sm font-medium text-gray-700 hover:text-[#4318FF] transition-colors p-2 -ml-2 rounded-lg hover:bg-blue-50">
-                                <FileText className="w-5 h-5 mr-3 text-red-500" /> 
-                                <div>
-                                  <p>Microservices.pdf</p>
-                                  <p className="text-xs text-gray-400">2.1 MB</p>
-                                </div>
-                              </a>
-                            </li>
-                          </ul>
-                        </div>
-                        <div>
-                          <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Activities</h5>
-                          <ul className="space-y-3">
-                            <li className="flex items-start text-sm font-medium text-gray-700">
-                              <Circle className="w-4 h-4 mr-2 mt-0.5 text-gray-300" />
-                              <div>
-                                <p>Quiz 1 (On EduNext)</p>
-                                <p className="text-xs text-gray-400">Not started</p>
+                                <Link 
+                                  to={`/student/assignments/${assignment._id}/submit`} 
+                                  className="px-4 py-2 bg-gradient-to-br from-[#F26F21] to-[#F79C65] text-white rounded-lg text-xs font-bold shadow-md shadow-orange-200 hover:opacity-90 transition-opacity flex items-center"
+                                >
+                                  View <ArrowRight className="w-3 h-3 ml-1" />
+                                </Link>
                               </div>
-                            </li>
-                            <li className="flex items-start text-sm font-medium text-[#1B2559]">
-                              <Circle className="w-4 h-4 mr-2 mt-0.5 text-orange-500" />
-                              <div>
-                                <p className="font-bold">Assignment: Architecture Diagram</p>
-                                <p className="text-xs text-red-500 font-bold">AI Declaration Required</p>
-                              </div>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                      
-                      {/* Action Area */}
-                      <div className="bg-orange-50/50 rounded-xl p-4 border border-orange-100 flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-bold text-[#1B2559]">Software Architecture Diagram</p>
-                          <p className="text-xs text-gray-500 font-medium">Pending submission</p>
-                        </div>
-                        <Link 
-                          to={ROUTES.SUBMISSION_DETAIL.replace(':id', '1')} 
-                          className="px-6 py-2.5 bg-gradient-to-br from-[#F26F21] to-[#F79C65] text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 hover:opacity-90 transition-opacity flex items-center"
-                        >
-                          Start Assignment <ArrowRight className="w-4 h-4 ml-2" />
-                        </Link>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-4 p-3 bg-white border border-gray-100 rounded-xl shadow-sm text-xs text-gray-400 text-center font-medium">
+                            No assignments or materials for this slot yet.
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Slot 3 */}
-              <div className="group">
-                <div className="p-5 flex items-center justify-between cursor-not-allowed opacity-60">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center font-bold mr-4">
-                      S3
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-gray-500 text-base">UML & System Design</h4>
-                      <p className="text-xs font-medium text-gray-400 mt-0.5">15 Jun 2026</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full mr-4 flex items-center">
-                      <Lock className="w-3 h-3 mr-1" /> Locked
-                    </span>
-                    <ChevronDown className="w-5 h-5 text-gray-300" />
-                  </div>
+                  )}
                 </div>
-              </div>
+              ))}
+              {sessions.length === 0 && (
+                <div className="p-6 text-center text-gray-500">
+                  No slots generated yet.
+                </div>
+              )}
 
             </div>
           </Card>
@@ -291,18 +236,10 @@ const ClassDetailPage = () => {
             <h3 className="text-lg font-bold text-[#1B2559] mb-4">Course Teachers</h3>
             
             <div className="flex items-center p-3 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100 cursor-pointer">
-              <img src="https://ui-avatars.com/api/?name=Dr.Smith&background=EBF4FF&color=0072BC" alt="Dr. Smith" className="w-12 h-12 rounded-full shadow-sm" />
+              <img src={`https://ui-avatars.com/api/?name=${classOverview?.lecturer?.fullName || 'Lecturer'}&background=EBF4FF&color=0072BC`} alt="Lecturer" className="w-12 h-12 rounded-full shadow-sm" />
               <div className="ml-4">
-                <h4 className="text-sm font-bold text-[#1B2559]">Dr. Alan Smith</h4>
-                <p className="text-xs font-medium text-gray-500">Software Architecture</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center p-3 mt-2 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100 cursor-pointer">
-              <img src="https://ui-avatars.com/api/?name=Mrs.Anna&background=FCE7F3&color=BE185D" alt="Mrs. Anna" className="w-12 h-12 rounded-full shadow-sm" />
-              <div className="ml-4">
-                <h4 className="text-sm font-bold text-[#1B2559]">Mrs. Anna Taylor</h4>
-                <p className="text-xs font-medium text-gray-500">Subject Head</p>
+                <h4 className="text-sm font-bold text-[#1B2559]">{classOverview?.lecturer?.fullName || 'Lecturer'}</h4>
+                <p className="text-xs font-medium text-gray-500">{classOverview?.subjectSnapshot?.name || 'Subject Lecturer'}</p>
               </div>
             </div>
           </Card>

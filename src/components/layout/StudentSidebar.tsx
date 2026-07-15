@@ -135,7 +135,7 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({
             )}
           </div>
 
-          <Link to="/student/chat" className={navItemClass('/student/chat')}>
+          <Link to="/student/messages" className={navItemClass('/student/messages')}>
             <MessageCircle className="w-5 h-5 mr-4 shrink-0" />
             {!sidebarCollapsed && <span className="whitespace-nowrap">Messages</span>}
           </Link>

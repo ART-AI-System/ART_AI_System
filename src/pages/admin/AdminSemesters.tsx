@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
-import { Plus, CheckCircle, Calendar, CalendarOff, AlertTriangle } from 'lucide-react';
-import axiosClient from '../../api/axiosClient';
+import { Plus, CheckCircle, Calendar, CalendarOff } from 'lucide-react';
+import { semesterService } from '../../services/semester.service';
+import type { Semester } from '../../types/semester';
 
 const AdminSemesters = () => {
-  const [semesters, setSemesters] = useState<any[]>([]);
+  const [semesters, setSemesters] = useState<Semester[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -18,9 +20,9 @@ const AdminSemesters = () => {
   const fetchSemesters = async () => {
     setLoading(true);
     try {
-      const res: any = await axiosClient.get('/semesters');
-      setSemesters(res.result || []);
-    } catch (err) {
+      const result = await semesterService.getSemesters();
+      setSemesters(result || []);
+    } catch (err: any) {
       console.error('Failed to fetch semesters:', err);
     } finally {
       setLoading(false);
@@ -28,13 +30,14 @@ const AdminSemesters = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSemesters();
   }, []);
 
   const handleAddSemester = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axiosClient.post('/semesters', formData);
+      await semesterService.createSemester(formData);
       setShowAddModal(false);
       setFormData({
         code: '',
@@ -52,9 +55,9 @@ const AdminSemesters = () => {
 
   const setAsCurrent = async (id: string) => {
     try {
-      await axiosClient.patch(`/semesters/${id}/current`);
+      await semesterService.setAsCurrent(id);
       fetchSemesters();
-    } catch (err) {
+    } catch {
       alert('Failed to set current semester');
     }
   };

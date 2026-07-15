@@ -1,15 +1,30 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
-import { Plus, BookOpen, GraduationCap, Users } from 'lucide-react';
-import axiosClient from '../../api/axiosClient';
+import { Plus, BookOpen, GraduationCap, Users, ArrowRight } from 'lucide-react';
+import { classService } from '../../services/class.service';
+import { semesterService } from '../../services/semester.service';
+import { subjectService } from '../../services/subject.service';
+import { userService } from '../../services/user.service';
+import { FileUpload } from '../../components/common/FileUpload';
+import { PromoteCohortModal } from '../../components/classes/PromoteCohortModal';
+import type { Class } from '../../types/class';
 
 const AdminClasses = () => {
-  const [classes, setClasses] = useState<any[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [semesters, setSemesters] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
+  const [allStudents, setAllStudents] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [manageStudentsClass, setManageStudentsClass] = useState<Class | null>(null);
+  const [promoteClass, setPromoteClass] = useState<Class | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  
+  const [importing, setImporting] = useState(false);
+  const [importSummary, setImportSummary] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     classCode: '',
@@ -21,17 +36,19 @@ const AdminClasses = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [clsRes, semRes, subRes, tchrRes] = await Promise.all([
-        axiosClient.get('/classes'),
-        axiosClient.get('/semesters'),
-        axiosClient.get('/subjects'),
-        axiosClient.get('/users?role=LECTURER')
+      const [clsRes, semRes, subRes, tchrRes, stdRes] = await Promise.all([
+        classService.getClasses(),
+        semesterService.getSemesters(),
+        subjectService.getSubjects(),
+        userService.getUsers({ role: 'LECTURER' }),
+        userService.getUsers({ role: 'STUDENT' })
       ]);
-      setClasses((clsRes as any).result || []);
-      setSemesters((semRes as any).result || []);
-      setSubjects((subRes as any).result || []);
-      setTeachers((tchrRes as any).result?.users || []);
-    } catch (err) {
+      setClasses(clsRes || []);
+      setSemesters(semRes || []);
+      setSubjects(subRes || []);
+      setTeachers(tchrRes.users || []);
+      setAllStudents(stdRes.users || []);
+    } catch (err: any) {
       console.error('Failed to fetch data:', err);
     } finally {
       setLoading(false);
@@ -39,10 +56,91 @@ const AdminClasses = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
-  const handleAddClass = async (e: React.FormEvent) => {
+  const openAddModal = () => {
+    setEditingId(null);
+    setFormData({
+      classCode: '',
+      semesterId: '',
+      subjectId: '',
+      lecturerId: ''
+    });
+    setShowAddModal(true);
+  };
+
+  const openEditModal = (cls: Class) => {
+    setEditingId(cls._id);
+    setFormData({
+      classCode: cls.classCode,
+      semesterId: cls.semesterId,
+      subjectId: cls.subjectId,
+      lecturerId: cls.lecturer?.lecturerId || (cls as any).lecturerId || ''
+    });
+    setShowAddModal(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this class?')) return;
+    try {
+      await classService.deleteClass(id);
+      fetchData();
+    } catch (err: any) {
+      alert('Failed to delete class: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleAddStudent = async () => {
+    if (!manageStudentsClass || selectedStudentIds.length === 0) return;
+    try {
+      await Promise.all(
+        selectedStudentIds.map(studentId => 
+          classService.addStudentToClass(manageStudentsClass._id, studentId)
+        )
+      );
+      const updatedClass = await classService.getClassById(manageStudentsClass._id);
+      setManageStudentsClass(updatedClass);
+      fetchData();
+      setSelectedStudentIds([]);
+    } catch (err: any) {
+      alert('Failed to add some students: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleRemoveStudent = async (studentId: string) => {
+    if (!manageStudentsClass) return;
+    if (!window.confirm('Are you sure you want to remove this student?')) return;
+    try {
+      await classService.removeStudentFromClass(manageStudentsClass._id, studentId);
+      const updatedClass = await classService.getClassById(manageStudentsClass._id);
+      setManageStudentsClass(updatedClass);
+      fetchData();
+    } catch (err: any) {
+      alert('Failed to remove student: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleImportStudents = async (file: File) => {
+    if (!manageStudentsClass) return;
+    setImporting(true);
+    setImportSummary(null);
+    try {
+      const response = await classService.importStudents(manageStudentsClass._id, file);
+      // The response struct is { totalRows, success, failed, errors } from backend
+      setImportSummary(response);
+      const updatedClass = await classService.getClassById(manageStudentsClass._id);
+      setManageStudentsClass(updatedClass);
+      fetchData();
+    } catch (err: any) {
+      alert('Failed to import students: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleSubmitClass = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Find the selected subject and teacher to build snapshots
@@ -71,8 +169,14 @@ const AdminClasses = () => {
     };
     
     try {
-      await axiosClient.post('/classes', payload);
+      if (editingId) {
+        // Build an UpdateClassDto. It expects isActive, etc, or just partial fields.
+        await classService.updateClass(editingId, payload);
+      } else {
+        await classService.createClass(payload);
+      }
       setShowAddModal(false);
+      setEditingId(null);
       setFormData({
         classCode: '',
         semesterId: '',
@@ -81,7 +185,7 @@ const AdminClasses = () => {
       });
       fetchData();
     } catch (err: any) {
-      alert('Failed to add class: ' + (err.response?.data?.message || err.message));
+      alert(`Failed to ${editingId ? 'update' : 'add'} class: ` + (err.response?.data?.message || err.message));
     }
   };
 
@@ -91,7 +195,7 @@ const AdminClasses = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-bold text-[#064E3B]">Class Management</h2>
           <button 
-            onClick={() => setShowAddModal(true)}
+            onClick={openAddModal}
             className="bg-[#16A34A] text-white px-4 py-2 rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center shadow-md shadow-green-500/20"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -137,9 +241,34 @@ const AdminClasses = () => {
                   </div>
                 </div>
                 
-                <div className="mt-auto pt-4 flex justify-between items-center">
-                  <button className="text-[#16A34A] text-sm font-bold hover:underline">Manage Students</button>
-                  <button className="text-gray-500 text-sm font-bold hover:underline">Edit</button>
+                <div className="pt-4 border-t border-gray-100 flex items-center justify-between mt-auto">
+                  <button 
+                    onClick={() => setManageStudentsClass(cls)}
+                    className="text-[#16A34A] font-bold text-sm hover:underline flex items-center gap-1"
+                  >
+                    <Users size={16} /> Manage Students
+                  </button>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => setPromoteClass(cls)}
+                      className="text-blue-500 font-bold text-sm hover:underline flex items-center gap-1"
+                      title="Promote cohort to next semester"
+                    >
+                      <ArrowRight size={16} /> Promote
+                    </button>
+                    <button 
+                      onClick={() => openEditModal(cls)}
+                      className="text-gray-600 font-bold text-sm hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(cls._id)}
+                      className="text-red-500 font-bold text-sm hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -152,10 +281,10 @@ const AdminClasses = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="bg-[#064E3B] px-6 py-4 flex justify-between items-center text-white">
-              <h3 className="font-bold text-lg flex items-center"><BookOpen className="w-5 h-5 mr-2" /> Create New Class</h3>
+              <h3 className="font-bold text-lg flex items-center"><BookOpen className="w-5 h-5 mr-2" /> {editingId ? 'Edit Class' : 'Create New Class'}</h3>
             </div>
             
-            <form onSubmit={handleAddClass} className="p-6 space-y-5">
+            <form onSubmit={handleSubmitClass} className="p-6 space-y-5">
               <div>
                 <label className="block text-sm font-bold text-[#064E3B] mb-1">Class Code</label>
                 <input 
@@ -227,12 +356,184 @@ const AdminClasses = () => {
                   type="submit" 
                   className="px-5 py-2 bg-[#16A34A] text-white font-bold rounded-xl hover:bg-green-700 transition-colors shadow-md shadow-green-500/20"
                 >
-                  Create Class
+                  {editingId ? 'Save Changes' : 'Create Class'}
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {/* Manage Students Modal */}
+      {manageStudentsClass && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="bg-[#064E3B] px-6 py-4 flex justify-between items-center text-white">
+              <h3 className="font-bold text-lg flex items-center"><Users className="w-5 h-5 mr-2" /> Manage Students - {manageStudentsClass.classCode}</h3>
+              <button onClick={() => setManageStudentsClass(null)} className="text-white hover:text-green-200">✕</button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              {importSummary && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <h4 className="font-bold text-blue-800 mb-2">Import Summary</h4>
+                  <ul className="text-sm text-blue-700 space-y-1 mb-3">
+                    <li>Total Rows: {importSummary.totalRows}</li>
+                    <li>Imported: {importSummary.success}</li>
+                    <li>Failed/Skipped: {importSummary.failed}</li>
+                  </ul>
+                  {importSummary.errors && importSummary.errors.length > 0 && (
+                    <div className="max-h-32 overflow-y-auto bg-white p-3 rounded border border-blue-100 text-xs text-red-600">
+                      <ul className="space-y-1">
+                        {importSummary.errors.map((err: any, idx: number) => (
+                          <li key={idx}>Row {err.row}: {err.reason}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <button 
+                    onClick={() => setImportSummary(null)}
+                    className="mt-3 px-4 py-1.5 bg-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+
+              <div className="mb-8 p-5 border border-gray-200 rounded-xl bg-gray-50">
+                <h4 className="font-bold text-[#064E3B] mb-3 text-sm">Batch Import Students (Excel/CSV)</h4>
+                {importing ? (
+                  <div className="flex flex-col items-center justify-center py-6">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#16A34A] mb-2"></div>
+                    <span className="text-sm text-gray-600 font-medium">Uploading and processing...</span>
+                  </div>
+                ) : (
+                  <FileUpload 
+                    onFileSelect={handleImportStudents}
+                    onFileReject={(err) => alert(err)}
+                    accept=".xlsx,.xls,.csv"
+                    className="bg-white"
+                  />
+                )}
+              </div>
+
+              <div className="mb-6">
+                <div className="border border-gray-200 rounded-xl overflow-hidden bg-white flex flex-col h-48">
+                  <div className="bg-gray-50 px-4 py-2 text-sm font-bold text-gray-700 border-b border-gray-200 flex justify-between items-center">
+                    <span>Select Students to Add</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const available = allStudents.filter(s => !(manageStudentsClass.students || []).some(cs => cs.studentId === s._id));
+                        if (selectedStudentIds.length === available.length) {
+                          setSelectedStudentIds([]); // Deselect all
+                        } else {
+                          setSelectedStudentIds(available.map(s => s._id)); // Select all
+                        }
+                      }}
+                      className="text-[#16A34A] hover:underline"
+                    >
+                      {selectedStudentIds.length > 0 ? 'Deselect All' : 'Select All'}
+                    </button>
+                  </div>
+                  <div className="overflow-y-auto p-2 flex-1">
+                    {allStudents.filter(s => !(manageStudentsClass.students || []).some(cs => cs.studentId === s._id)).length === 0 ? (
+                      <div className="text-center text-gray-400 py-4 text-sm">All students are already in this class.</div>
+                    ) : (
+                      allStudents.filter(s => !(manageStudentsClass.students || []).some(cs => cs.studentId === s._id)).map(student => (
+                        <label key={student._id} className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="mr-3 rounded border-gray-300 text-[#16A34A] focus:ring-[#16A34A]"
+                            checked={selectedStudentIds.includes(student._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedStudentIds([...selectedStudentIds, student._id]);
+                              } else {
+                                setSelectedStudentIds(selectedStudentIds.filter(id => id !== student._id));
+                              }
+                            }}
+                          />
+                          <span className="text-sm font-medium text-gray-700">{student.studentCode} - {student.fullName}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <button 
+                    onClick={handleAddStudent}
+                    disabled={selectedStudentIds.length === 0}
+                    className="px-6 py-2 bg-[#16A34A] text-white font-bold rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Add {selectedStudentIds.length > 0 ? `(${selectedStudentIds.length})` : ''}
+                  </button>
+                </div>
+              </div>
+
+              <div className="border border-gray-100 rounded-xl overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100">
+                      <th className="px-4 py-3 text-sm font-bold text-gray-700">Code</th>
+                      <th className="px-4 py-3 text-sm font-bold text-gray-700">Name</th>
+                      <th className="px-4 py-3 text-sm font-bold text-gray-700 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(manageStudentsClass.students || []).length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="px-4 py-8 text-center text-gray-500 text-sm">No students enrolled.</td>
+                      </tr>
+                    ) : (
+                      (manageStudentsClass.students || []).map((student) => (
+                        <tr key={student.studentId} className="border-b border-gray-50 hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-semibold">{student.studentCode}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{student.fullName}</td>
+                          <td className="px-4 py-3 text-right">
+                            <button 
+                              onClick={() => handleRemoveStudent(student.studentId)}
+                              className="text-red-500 text-sm font-bold hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 px-6 py-4 flex justify-end border-t border-gray-100">
+              <button 
+                onClick={() => {
+                  setManageStudentsClass(null);
+                  setImportSummary(null);
+                }}
+                className="px-6 py-2 bg-white border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Promote Cohort Modal */}
+      {promoteClass && (
+        <PromoteCohortModal
+          isOpen={true}
+          onClose={() => setPromoteClass(null)}
+          sourceClass={promoteClass}
+          semesters={semesters}
+          subjects={subjects}
+          lecturers={teachers}
+          onSuccess={() => {
+            fetchData();
+            alert('Cohort promoted successfully! The new classes have been created.');
+          }}
+        />
       )}
     </div>
   );

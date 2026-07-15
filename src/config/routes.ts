@@ -27,15 +27,23 @@ export const ROUTES = {
   ADMIN_FEEDBACK: '/dashboard/admin/feedback',
   ADMIN_SETTINGS: '/dashboard/admin/settings',
 
+  // Assignments & Materials
+  ASSIGNMENTS: '/assignments',
+  ASSIGNMENT_DETAIL: '/assignments/:id',
+  CREATE_ASSIGNMENT: '/lecturer/subjects/:id/create-assignment',
+
+  // Submissions
+  SUBMISSION_DETAIL: '/submissions/:id',
+  ASSIGNMENT_SUBMISSIONS: '/assignments/:id/submissions',
+  CLASS_GRADE_ITEMS: '/classes/:classId/grade-items',
+
   // Academic Structure
   CLASSES: '/classes',
   SUBJECT_DETAIL: '/subjects/:id',
-  CLASS_DETAIL: '/classes/:id',
-  CLASS_GRADE_ITEMS: '/classes/:classId/grade-items',
+  CLASS_DETAIL: '/student/classes/:id',
 
   // Assignment Submission Management
   GRADE_ITEM_SUBMISSIONS: '/grade-items/:gradeItemId/submissions',
-  SUBMISSION_DETAIL: '/submissions/:id',
   MY_SUBMISSIONS: '/my-submissions',
 
   // Lecturer Review
@@ -60,6 +68,7 @@ export const ROUTES = {
   MESSAGES: '/messages', // Retain for other roles
 
   // Student specific
+  STUDENT_SUBJECTS: '/student/subjects',
   STUDENT_NEWS: '/student/news',
   STUDENT_MESSAGES: '/student/messages',
   STUDENT_SETTINGS: '/student/settings',
@@ -78,7 +87,7 @@ export const ROUTES = {
   GRADING_DETAIL: '/grading/:submissionId',
   GRADING_SUBJECTS: '/grading',
   GRADING_ASSIGNMENTS: '/grading/subjects/:subjectId',
-  CREATE_ASSIGNMENT: '/assignments/create',
+  LECTURER_CREATE_ASSIGNMENT: '/assignments/create',
   CREATE_TEST: '/tests/create',
   TEST_ANALYTICS: '/tests/analytics',
   EDIT_SLOT: '/schedule/:slotId/edit',

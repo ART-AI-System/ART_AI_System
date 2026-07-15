@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Info, Users, Calendar, Settings2, CheckCircle, BrainCircuit } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { 
+  ArrowLeft, Info, Users, Calendar, Settings2, CheckCircle, BrainCircuit,
+  Upload, Trash2, Download, FileText
+} from 'lucide-react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 
 const LecturerAssignmentCreate = () => {
   const navigate = useNavigate();
-  const [classes, setClasses] = useState<any[]>([]);
-  const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+  const { assignmentId } = useParams();
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get('sessionId');
+  const classId = searchParams.get('classId');
+  const isEditMode = !!assignmentId;
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -20,68 +27,203 @@ const LecturerAssignmentCreate = () => {
   const [aiInteractionRequired, setAiInteractionRequired] = useState(true);
   const [minAiInteractions, setMinAiInteractions] = useState(5);
   const [maxAiInteractions, setMaxAiInteractions] = useState(10);
+  
+  const CATEGORIES = [
+    { id: 'decomposition', title: 'Decomposition' },
+    { id: 'pattern_recognition', title: 'Pattern Recognition' },
+    { id: 'abstraction', title: 'Abstraction' },
+    { id: 'algorithmic_thinking', title: 'Algorithmic Thinking' },
+    { id: 'reflection', title: 'Reflection' }
+  ];
+  
+  const [aiDeclarationConfig, setAiDeclarationConfig] = useState(
+    CATEGORIES.map(c => ({ categoryId: c.id, weight: 20, selected: true }))
+  );
+  
+  const [isGroupAssignment, setIsGroupAssignment] = useState(false);
+  
+  // Materials state
+  const [materials, setMaterials] = useState<any[]>([]);
+  const [uploadingMaterial, setUploadingMaterial] = useState(false);
+  const [materialError, setMaterialError] = useState('');
+
+  const fetchMaterials = async (id: string) => {
+    try {
+      const res: any = await axiosClient.get(`/grade-items/standalone/${id}/materials`);
+      setMaterials(res.result || []);
+    } catch (err) {
+      console.error('Failed to load materials', err);
+    }
+  };
 
   useEffect(() => {
-    const fetchClasses = async () => {
+    const fetchData = async () => {
       try {
-        const response: any = await axiosClient.get('/lecturer/home');
-        if (response.result && response.result.classes) {
-          setClasses(response.result.classes);
+        if (isEditMode) {
+          const assignmentRes: any = await axiosClient.get(`/grade-items/standalone/${assignmentId}`);
+          const item = assignmentRes.result;
+          if (item) {
+            setTitle(item.title || '');
+            setDescription(item.description || '');
+            if (item.deadline) {
+              const date = new Date(item.deadline);
+              const formatted = date.toISOString().slice(0, 16);
+              setDeadline(formatted);
+            }
+            setWeight(item.weight || 10);
+            setMaxScore(item.maxScore || 10);
+            setAiInteractionRequired(item.aiInteractionRequired !== false);
+            setMinAiInteractions(item.minAiInteractions || 5);
+            setMaxAiInteractions(item.maxAiInteractions || 10);
+            setIsGroupAssignment(item.isGroupAssignment || false);
+            
+            if (item.aiDeclarationConfig && Array.isArray(item.aiDeclarationConfig)) {
+              setAiDeclarationConfig(CATEGORIES.map(c => {
+                const config = item.aiDeclarationConfig.find((x: any) => x.categoryId === c.id);
+                return config ? { ...c, categoryId: c.id, weight: config.weight, selected: true } 
+                              : { ...c, categoryId: c.id, weight: 0, selected: false };
+              }));
+            }
+            
+            await fetchMaterials(assignmentId);
+          }
         }
       } catch (err) {
-        console.error('Failed to fetch classes:', err);
-        setError('Failed to load your classes.');
+        console.error('Failed to fetch data:', err);
+        setError('Failed to load data.');
       } finally {
         setLoading(false);
       }
     };
-    fetchClasses();
-  }, []);
+    fetchData();
+  }, [assignmentId, isEditMode]);
 
-  const handleClassToggle = (classId: string) => {
-    setSelectedClasses(prev => 
-      prev.includes(classId) ? prev.filter(id => id !== classId) : [...prev, classId]
-    );
+  const handleUploadMaterial = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    // Quick validation
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const validExts = ['pdf', 'docx', 'pptx', 'zip'];
+    if (!ext || !validExts.includes(ext)) {
+      setMaterialError('Invalid file type. Allowed: PDF, DOCX, PPTX, ZIP');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setMaterialError('File size exceeds 10MB limit.');
+      return;
+    }
+
+    setMaterialError('');
+    setUploadingMaterial(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      await axiosClient.post(`/grade-items/standalone/${assignmentId}/materials`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      await fetchMaterials(assignmentId!);
+    } catch (err: any) {
+      console.error('Upload failed', err);
+      setMaterialError(err.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploadingMaterial(false);
+      // clear input
+      e.target.value = '';
+    }
   };
 
-  const handleSelectAll = () => {
-    if (selectedClasses.length === classes.length) {
-      setSelectedClasses([]);
-    } else {
-      setSelectedClasses(classes.map(c => c.classId));
+  const handleDeleteMaterial = async (materialId: string) => {
+    if (!window.confirm('Are you sure you want to delete this material?')) return;
+    try {
+      await axiosClient.delete(`/grade-items/materials/${materialId}`);
+      setMaterials(prev => prev.filter(m => m._id !== materialId));
+    } catch (err: any) {
+      console.error('Delete failed', err);
+      setMaterialError('Delete failed');
+    }
+  };
+
+  const handleDownloadMaterial = async (materialId: string, filename: string) => {
+    try {
+      const response = await axiosClient.get(`/grade-items/materials/${materialId}/download`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data as any]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (err) {
+      console.error('Download failed', err);
+      alert('Failed to download material');
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !deadline || selectedClasses.length === 0) {
-      setError('Please fill all required fields and select at least one class.');
+    setError('');
+
+    if (!title.trim()) {
+      setError('Title is required.');
+      return;
+    }
+
+    if (!deadline) {
+      setError('Deadline is required.');
+      return;
+    }
+    
+    const selectedConfig = aiDeclarationConfig.filter(c => c.selected);
+    if (selectedConfig.length === 0) {
+      setError('At least one AI declaration category must be selected.');
+      return;
+    }
+    
+    const totalWeight = selectedConfig.reduce((sum, c) => sum + c.weight, 0);
+    if (totalWeight !== 100) {
+      setError(`Total AI declaration weight must be exactly 100%. Current: ${totalWeight}%`);
       return;
     }
 
     setSubmitting(true);
-    setError('');
+
+    const payload: any = {
+      title,
+      description,
+      weight: Number(weight),
+      maxScore: Number(maxScore),
+      deadline: new Date(deadline).toISOString(),
+      aiInteractionRequired,
+      minAiInteractions: Number(minAiInteractions),
+      maxAiInteractions: Number(maxAiInteractions),
+      aiDeclarationConfig: selectedConfig.map(c => ({ categoryId: c.categoryId, weight: Number(c.weight) })),
+      isGroupAssignment
+    };
+    
+    if (sessionId) {
+      payload.sessionId = sessionId;
+    }
 
     try {
-      // For each selected class, create a grade item (assignment)
-      const promises = selectedClasses.map(classId => 
-        axiosClient.post(`/classes/${classId}/grade-items`, {
-          title,
-          description,
-          weight,
-          maxScore,
-          deadline: new Date(deadline).toISOString(),
-          aiInteractionRequired,
-          minAiInteractions,
-          maxAiInteractions
-        })
-      );
-
-      await Promise.all(promises);
-      navigate('/lecturer/dashboard');
+      if (isEditMode) {
+        // Edit mode: only update this specific assignment
+        await axiosClient.put(`/grade-items/standalone/${assignmentId}`, payload);
+      } else {
+        // Create mode: Create assignment for the specific class
+        if (!classId) {
+          throw new Error('No class specified for this assignment.');
+        }
+        await axiosClient.post(`/classes/${classId}/grade-items`, payload);
+      }
+      
+      navigate(-1);
     } catch (err: any) {
-      console.error('Failed to create assignment:', err);
-      setError(err.response?.data?.message || 'An error occurred while creating the assignment.');
+      console.error('Failed to save assignment:', err);
+      setError(err.response?.data?.message || 'An error occurred while saving the assignment.');
       setSubmitting(false);
     }
   };
@@ -94,7 +236,7 @@ const LecturerAssignmentCreate = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex flex-col">
-            <h1 className="text-2xl font-extrabold text-[#1B2559]">Create New Assignment</h1>
+            <h1 className="text-2xl font-extrabold text-[#1B2559]">{isEditMode ? 'Edit Assignment' : 'Create New Assignment'}</h1>
           </div>
         </div>
       </header>
@@ -162,43 +304,6 @@ const LecturerAssignmentCreate = () => {
               </div>
             </div>
 
-            {/* Target Classes */}
-            <div className="bg-white rounded-[24px] p-8 border border-gray-100 shadow-sm">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-extrabold text-[#1B2559] flex items-center">
-                  <Users className="w-5 h-5 mr-2 text-[#4318FF]" /> Target Classes <span className="text-red-500 ml-1">*</span>
-                </h2>
-                <button type="button" onClick={handleSelectAll} className="text-sm font-bold text-[#4318FF] hover:underline">
-                  {selectedClasses.length === classes.length && classes.length > 0 ? 'Deselect All' : 'Select All'}
-                </button>
-              </div>
-              
-              <p className="text-sm text-gray-500 mb-4">Choose which classes will receive this assignment slot. Each class will get an identical copy.</p>
-              
-              {loading ? (
-                <div className="text-sm text-gray-500">Loading classes...</div>
-              ) : classes.length === 0 ? (
-                <div className="text-sm text-gray-500">No classes found.</div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {classes.map((cls) => (
-                    <label key={cls.classId} className="flex items-start p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedClasses.includes(cls.classId)}
-                        onChange={() => handleClassToggle(cls.classId)}
-                        className="mt-1 w-4 h-4 text-[#4318FF] border-gray-300 rounded focus:ring-[#4318FF]" 
-                      />
-                      <div className="ml-3">
-                        <span className="block text-sm font-bold text-[#1B2559]">{cls.classCode}</span>
-                        <span className="block text-xs font-medium text-gray-400 mt-0.5">{cls.totalStudents || 0} Students</span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Timeline */}
             <div className="bg-white rounded-[24px] p-8 border border-gray-100 shadow-sm">
               <h2 className="text-lg font-extrabold text-[#1B2559] mb-6 flex items-center">
@@ -216,6 +321,19 @@ const LecturerAssignmentCreate = () => {
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4318FF]/20 focus:border-[#4318FF] transition-all" 
                   />
                 </div>
+              </div>
+
+              <div className="mt-6 flex items-center">
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input 
+                    type="checkbox" 
+                    checked={isGroupAssignment} 
+                    onChange={(e) => setIsGroupAssignment(e.target.checked)} 
+                    className="sr-only peer" 
+                  />
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F26F21]"></div>
+                </label>
+                <span className="ml-3 text-sm font-bold text-gray-700">Project (Group Assignment)</span>
               </div>
             </div>
 
@@ -248,30 +366,150 @@ const LecturerAssignmentCreate = () => {
                   </div>
 
                   {aiInteractionRequired && (
-                    <div className="bg-white/10 p-4 rounded-xl border border-white/10 backdrop-blur-sm grid grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-bold text-white mb-2">Min Interactions</label>
-                        <input 
-                          type="number" 
-                          value={minAiInteractions}
-                          onChange={(e) => setMinAiInteractions(Number(e.target.value))}
-                          className="w-full bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm text-white focus:outline-none" 
-                        />
+                    <div className="bg-white/10 p-5 rounded-xl border border-white/10 backdrop-blur-sm mt-4">
+                      <h4 className="text-sm font-bold text-white mb-4">Required AI Declaration Phases (Total must be 100%)</h4>
+                      <div className="space-y-3">
+                        {aiDeclarationConfig.map((config, idx) => (
+                          <div key={config.categoryId} className="flex items-center justify-between bg-white/5 p-3 rounded-lg border border-white/5">
+                            <label className="flex items-center space-x-3 cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                checked={config.selected}
+                                onChange={(e) => {
+                                  const newConfig = [...aiDeclarationConfig];
+                                  newConfig[idx].selected = e.target.checked;
+                                  
+                                  // Auto balance weights if possible
+                                  const selectedCount = newConfig.filter(c => c.selected).length;
+                                  if (selectedCount > 0) {
+                                    const defaultWeight = Math.floor(100 / selectedCount);
+                                    let remainder = 100 - (defaultWeight * selectedCount);
+                                    newConfig.forEach(c => {
+                                      if (c.selected) {
+                                        c.weight = defaultWeight + (remainder > 0 ? 1 : 0);
+                                        if (remainder > 0) remainder--;
+                                      } else {
+                                        c.weight = 0;
+                                      }
+                                    });
+                                  } else {
+                                    newConfig.forEach(c => c.weight = 0);
+                                  }
+                                  
+                                  setAiDeclarationConfig(newConfig);
+                                }}
+                                className="w-4 h-4 rounded text-[#F26F21] border-white/20 focus:ring-[#F26F21] cursor-pointer"
+                              />
+                              <span className="text-sm font-semibold text-blue-100">{CATEGORIES.find(c => c.id === config.categoryId)?.title}</span>
+                            </label>
+                            
+                            {config.selected && (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-xs font-medium text-blue-200">Weight (%)</span>
+                                <input 
+                                  type="number" min="0" max="100"
+                                  value={config.weight}
+                                  onChange={(e) => {
+                                    const newConfig = [...aiDeclarationConfig];
+                                    newConfig[idx].weight = Number(e.target.value);
+                                    setAiDeclarationConfig(newConfig);
+                                  }}
+                                  className="w-16 h-8 px-2 text-center text-sm font-bold bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-[#F26F21] transition-all"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                      <div>
-                        <label className="block text-sm font-bold text-white mb-2">Max Interactions</label>
-                        <input 
-                          type="number" 
-                          value={maxAiInteractions}
-                          onChange={(e) => setMaxAiInteractions(Number(e.target.value))}
-                          className="w-full bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm text-white focus:outline-none" 
-                        />
-                      </div>
+                      
+                      {aiDeclarationConfig.filter(c => c.selected).reduce((sum, c) => sum + c.weight, 0) !== 100 && (
+                        <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                          <p className="text-xs font-bold text-red-200 text-center">
+                            Warning: Total weight must exactly equal 100%. Current: {aiDeclarationConfig.filter(c => c.selected).reduce((sum, c) => sum + c.weight, 0)}%
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
+
               </div>
             </div>
+
+            {/* Materials */}
+            {isEditMode && (
+              <div className="bg-white rounded-[24px] p-8 border border-gray-100 shadow-sm">
+                <h2 className="text-lg font-extrabold text-[#1B2559] mb-6 flex items-center">
+                  <FileText className="w-5 h-5 mr-2 text-[#4318FF]" /> Reference Materials
+                </h2>
+                
+                {materialError && (
+                  <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-100">
+                    {materialError}
+                  </div>
+                )}
+
+                <div className="space-y-4 mb-6">
+                  {materials.length === 0 ? (
+                    <div className="text-sm text-gray-400 italic py-2">No materials uploaded yet.</div>
+                  ) : (
+                    materials.map(m => (
+                      <div key={m._id} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-xl">
+                        <div className="flex items-center">
+                          <FileText className="w-5 h-5 text-[#4318FF] mr-3" />
+                          <span className="text-sm font-bold text-[#1B2559]">{m.originalFilename}</span>
+                          <span className="text-xs text-gray-400 ml-3">
+                            {(m.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button 
+                            type="button"
+                            onClick={() => handleDownloadMaterial(m._id, m.originalFilename)}
+                            className="p-2 text-gray-400 hover:text-[#4318FF] transition-colors rounded-lg hover:bg-white"
+                            title="Download"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => handleDeleteMaterial(m._id)}
+                            className="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-white"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="flex items-center justify-center w-full">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-[#4318FF] transition-all">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Upload className={`w-8 h-8 mb-3 ${uploadingMaterial ? 'text-gray-400 animate-bounce' : 'text-gray-400'}`} />
+                      <p className="mb-2 text-sm text-gray-500">
+                        {uploadingMaterial ? (
+                          <span className="font-semibold">Uploading...</span>
+                        ) : (
+                          <><span className="font-semibold">Click to upload</span> or drag and drop</>
+                        )}
+                      </p>
+                      <p className="text-xs text-gray-500">PDF, DOCX, PPTX or ZIP (MAX. 10MB)</p>
+                    </div>
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      onChange={handleUploadMaterial}
+                      disabled={uploadingMaterial}
+                      accept=".pdf,.docx,.pptx,.zip"
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+
 
             <div className="flex justify-end space-x-4 pt-4 pb-10">
               <button type="button" onClick={() => navigate(-1)} className="px-6 py-3 rounded-xl font-bold text-gray-500 bg-white border border-gray-200 hover:bg-gray-50 transition-all">

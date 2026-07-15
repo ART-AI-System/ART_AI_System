@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, BookOpen, ClipboardList, HelpCircle, Plus, RefreshCw, FileText, Calendar, Copy, Edit2, UploadCloud, ChevronRight, Check } from 'lucide-react';
+import { Users, BookOpen, ClipboardList, HelpCircle, Plus, RefreshCw, FileText, Calendar, Copy, Edit2, UploadCloud, ChevronRight, Check, Trash2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 
@@ -7,14 +7,17 @@ const LecturerSubjectDetail = () => {
   const { subjectId } = useParams();
   const [activeTab, setActiveTab] = useState('classes');
   const [classData, setClassData] = useState<any>(null);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedSession, setExpandedSession] = useState<string | null>(null);
 
   useEffect(() => {
     // In a real app, you would fetch details for the specific subject/class based on ID
     // For now, we reuse the class overview or dashboard endpoint to simulate it
     const fetchClassOverview = async () => {
       try {
-        const response: any = await axiosClient.get(`/lecturers/classes/${subjectId}/overview`);
+        const response: any = await axiosClient.get(`/lecturer/classes/${subjectId}/overview`);
         setClassData(response.result);
       } catch (error) {
         console.error('Failed to load subject details:', error);
@@ -22,8 +25,30 @@ const LecturerSubjectDetail = () => {
         setLoading(false);
       }
     };
+    
+    const fetchAssignments = async () => {
+      try {
+        const res: any = await axiosClient.get(`/classes/${subjectId}/grade-items`);
+        setAssignments(res.result || []);
+      } catch (error) {
+        console.error('Failed to load assignments:', error);
+      }
+    };
+
+    const fetchSessions = async () => {
+      try {
+        const res: any = await axiosClient.get(`/classes/${subjectId}/sessions?limit=100`);
+        const sortedDocs = (res.result?.docs || []).sort((a: any, b: any) => a.sessionNo - b.sessionNo);
+        setSessions(sortedDocs);
+      } catch (error) {
+        console.error('Failed to load sessions:', error);
+      }
+    };
+
     if (subjectId) {
       fetchClassOverview();
+      fetchAssignments();
+      fetchSessions();
     }
   }, [subjectId]);
 
@@ -130,26 +155,103 @@ const LecturerSubjectDetail = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="bg-white border-2 border-[#F26F21]/30 rounded-[24px] shadow-md">
-                <div className="flex items-center justify-between p-6 bg-orange-50/50 rounded-[22px]">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 rounded-xl bg-[#F26F21] text-white flex flex-col items-center justify-center mr-4 shadow-lg shadow-orange-500/30">
-                      <span className="text-xs font-bold uppercase leading-none">Slot</span>
-                      <span className="text-lg font-extrabold leading-none mt-0.5">1</span>
+              {sessions.map((session) => (
+                <div key={session._id} className="bg-white border border-gray-100 rounded-[24px] shadow-sm hover:shadow-md transition-all">
+                  <div 
+                    className="flex items-center justify-between p-6 cursor-pointer"
+                    onClick={() => setExpandedSession(expandedSession === session._id ? null : session._id)}
+                  >
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 rounded-xl bg-orange-50 text-[#F26F21] flex items-center justify-center mr-4">
+                        <span className="text-xl font-extrabold">{session.sessionNo.toString().padStart(2, '0')}</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-[#1B2559]">{session.title?.replace(/Session/gi, 'Slot')}</h3>
+                        <p className="text-sm text-gray-500 font-medium">
+                          {new Date(session.startTime).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-[#1B2559]">Introduction</h3>
-                      <p className="text-sm text-[#F26F21] font-bold">Contains: 2 Materials, 1 Assignment</p>
+                    <div className="flex items-center space-x-4">
+                      <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${expandedSession === session._id ? 'rotate-90' : ''}`} />
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full flex items-center">
-                      <Check className="w-4 h-4 mr-1" /> Synced
-                    </span>
-                    <button className="p-2 text-gray-400 hover:text-[#4318FF] transition-colors"><Edit2 className="w-5 h-5" /></button>
-                  </div>
+                  
+                  {expandedSession === session._id && (
+                    <div className="px-6 pb-6 border-t border-gray-50 pt-4 bg-gray-50/50 rounded-b-[24px]">
+                      
+                      {/* List assignments for this slot */}
+                      {assignments.filter((a: any) => a.sessionId === session._id).length > 0 && (
+                        <div className="mb-4 space-y-2">
+                          <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Assignments & Tasks</h4>
+                          {assignments.filter((a: any) => a.sessionId === session._id).map((assignment: any) => (
+                            <div key={assignment._id} className="bg-white border border-gray-200 rounded-xl p-3 flex justify-between items-center shadow-sm">
+                              <div className="flex items-center">
+                                <FileText className="w-5 h-5 text-orange-500 mr-3" />
+                                <div>
+                                  <p className="text-sm font-bold text-[#1B2559]">{assignment.title}</p>
+                                  <p className="text-xs text-gray-400 font-medium">Due: {new Date(assignment.deadline).toLocaleDateString()}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                  <Link 
+                                    to={`/lecturer/grading/${subjectId}`} 
+                                    state={{ selectedGradeItemId: assignment._id }} 
+                                    className="px-3 py-1.5 bg-indigo-50 text-[#4318FF] text-xs font-bold rounded-lg hover:bg-[#4318FF] hover:text-white transition-colors flex items-center"
+                                  >
+                                    Grade
+                                  </Link>
+                                  <Link 
+                                    to={`/lecturer/assignments/${assignment._id}/edit`} 
+                                    className="p-1.5 text-gray-400 hover:text-[#4318FF] rounded-lg transition-colors"
+                                    title="Edit Assignment"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </Link>
+                                  <button 
+                                    onClick={async () => {
+                                      if (window.confirm('Are you sure you want to delete this assignment?')) {
+                                        try {
+                                          await axiosClient.delete(`/grade-items/standalone/${assignment._id}`);
+                                          setAssignments(prev => prev.filter(a => a._id !== assignment._id));
+                                        } catch (error) {
+                                          console.error('Failed to delete assignment:', error);
+                                          alert('Failed to delete assignment');
+                                        }
+                                      }
+                                    }}
+                                    className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+                                    title="Delete Assignment"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex space-x-3 mt-4 pt-4 border-t border-gray-200/50">
+                        <Link to={`/lecturer/assignments/create?sessionId=${session._id}&classId=${subjectId}`} className="bg-white border border-gray-200 hover:border-orange-200 hover:text-[#F26F21] px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center shadow-sm">
+                          <Plus className="w-4 h-4 mr-2" /> Add Assignment
+                        </Link>
+                        <Link to={`/lecturer/tests/create?sessionId=${session._id}&classId=${subjectId}`} className="bg-white border border-gray-200 hover:border-blue-200 hover:text-[#4318FF] px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center shadow-sm">
+                          <Plus className="w-4 h-4 mr-2" /> Add Test
+                        </Link>
+                        <button className="bg-white border border-gray-200 hover:border-green-200 hover:text-green-600 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center shadow-sm">
+                          <UploadCloud className="w-4 h-4 mr-2" /> Upload Material
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              ))}
+              
+              {sessions.length === 0 && !loading && (
+                <div className="text-center py-10 text-gray-500 font-medium">
+                  No slots generated yet.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -163,30 +265,51 @@ const LecturerSubjectDetail = () => {
                 <p className="text-sm font-medium text-gray-500 mt-1">Create an assignment and push it to multiple classes simultaneously.</p>
               </div>
               {/* HERE IS THE CREATE ASSIGNMENT BUTTON FROM THE MOCKUP */}
-              <Link to="/lecturer/assignments/create" className="bg-[#F26F21] hover:bg-[#E86115] text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-orange-500/20 transition-all flex items-center">
+              <Link to={`/lecturer/assignments/create?classId=${subjectId}`} className="bg-[#F26F21] hover:bg-[#E86115] text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-orange-500/20 transition-all flex items-center">
                 <Plus className="w-5 h-5 mr-2" /> Create Global Assignment
               </Link>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm flex items-center justify-between group">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-xl bg-orange-50 text-[#F26F21] flex items-center justify-center mr-4">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[#1B2559] text-lg">Assignment 1</h3>
-                    <div className="flex items-center text-sm font-medium text-gray-500 mt-1">
-                      <Calendar className="w-4 h-4 mr-1" /> Due: June 25, 2026
-                      <span className="mx-3 text-gray-300">|</span>
-                      <Copy className="w-4 h-4 mr-1" /> Cloned to class
+              {assignments.length > 0 ? assignments.map((assignment, idx) => (
+                <div key={assignment._id || idx} className="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm flex items-center justify-between group">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 rounded-xl bg-orange-50 text-[#F26F21] flex items-center justify-center mr-4">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-[#1B2559] text-lg">{assignment.title}</h3>
+                      <div className="flex items-center text-sm font-medium text-gray-500 mt-1">
+                        <Calendar className="w-4 h-4 mr-1" /> Due: {new Date(assignment.deadline).toLocaleDateString()}
+                        <span className="mx-3 text-gray-300">|</span>
+                        <Copy className="w-4 h-4 mr-1" /> Weight: {assignment.weight}%
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center space-x-3">
+                    <Link to={`/lecturer/assignments/${assignment._id}/edit`} className="p-2 text-gray-400 hover:text-[#4318FF] transition-colors"><Edit2 className="w-5 h-5" /></Link>
+                    <button 
+                      onClick={async () => {
+                        if (window.confirm('Are you sure you want to delete this global assignment?')) {
+                          try {
+                            await axiosClient.delete(`/grade-items/standalone/${assignment._id}`);
+                            setAssignments(prev => prev.filter(a => a._id !== assignment._id));
+                          } catch (error) {
+                            console.error('Failed to delete assignment:', error);
+                            alert('Failed to delete assignment');
+                          }
+                        }
+                      }}
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                      title="Delete Assignment"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <button className="p-2 text-gray-400 hover:text-[#4318FF] transition-colors"><Edit2 className="w-5 h-5" /></button>
-                </div>
-              </div>
+              )) : (
+                <div className="text-gray-500 text-center py-10">No global assignments created yet.</div>
+              )}
             </div>
           </div>
         )}
@@ -203,9 +326,9 @@ const LecturerSubjectDetail = () => {
                 <button className="bg-white border border-gray-200 hover:border-[#F26F21] hover:text-[#F26F21] text-[#1B2559] px-5 py-2.5 rounded-xl font-bold shadow-sm transition-all flex items-center">
                   <UploadCloud className="w-4 h-4 mr-2" /> Import CSV
                 </button>
-                <button className="bg-[#F26F21] hover:bg-[#E86115] text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-orange-500/20 transition-all flex items-center">
+                <Link to="/lecturer/tests/create" className="bg-[#F26F21] hover:bg-[#E86115] text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-orange-500/20 transition-all flex items-center">
                   <Plus className="w-5 h-5 mr-2" /> Create Test
-                </button>
+                </Link>
               </div>
             </div>
 

@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, AlertTriangle, RefreshCcw, Save, Send, ChevronRight } from 'lucide-react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import CodeReviewer from '../../components/lecturer/CodeReviewer';
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
+import SubmissionFileViewer from '../../components/lecturer/SubmissionFileViewer';
 import EvaluationPanel from '../../components/lecturer/EvaluationPanel';
 import axiosClient from '../../api/axiosClient';
+import { gradeService } from '../../services/grade.service';
+import { reviewService } from '../../services/review.service';
 
-const LecturerGradingDetail = () => {
-  const { id } = useParams(); // submissionId
+const LecturerGradingDetail: React.FC = () => {
+  const { submissionId: id } = useParams<{ submissionId: string }>();
   const navigate = useNavigate();
-  const [gradeData, setGradeData] = useState({ score: 0, feedback: '' });
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const targetStudentId = searchParams.get('studentId') || undefined;
+  
+  const [gradeData, setGradeData] = useState({ score: 0, feedback: '', reviewStatus: 'pending', reviewComment: '' });
   const [isPublishing, setIsPublishing] = useState(false);
   const [submission, setSubmission] = useState<any>(null);
   const [aiEvaluation, setAiEvaluation] = useState<any>(null);
@@ -22,12 +28,23 @@ const LecturerGradingDetail = () => {
         const subData = subRes.result || subRes.data || subRes;
         setSubmission(subData);
 
-        if (subData?.studentId) {
+        if (targetStudentId) {
           try {
-            const stRes: any = await axiosClient.get(`/users/${subData.studentId}`);
+            const stRes: any = await axiosClient.get(`/users/${targetStudentId}`);
             setStudent(stRes.result || stRes.data || stRes);
           } catch (e) {
-            console.error('Failed to load student info', e);
+            console.error('Failed to load specific student info', e);
+          }
+        } else if (subData?.studentId) {
+          if (typeof subData.studentId === 'object' && subData.studentId.fullName) {
+            setStudent(subData.studentId);
+          } else {
+            try {
+              const stRes: any = await axiosClient.get(`/users/${subData.studentId}`);
+              setStudent(stRes.result || stRes.data || stRes);
+            } catch (e) {
+              console.error('Failed to load student info', e);
+            }
           }
         }
 
@@ -48,20 +65,24 @@ const LecturerGradingDetail = () => {
     setIsPublishing(true);
     try {
       if (id && submission) {
-        await axiosClient.post(`/submissions/${id}/grade`, {
-          score: Number(gradeData.score),
-          feedback: gradeData.feedback,
-          studentId: submission.studentId,
-          classId: submission.classId,
-          gradeItemId: submission.gradeItemId,
-          maxScore: 10
-        });
+        await Promise.all([
+          gradeService.createGrade(id, { 
+            score: Number(gradeData.score), 
+            maxScore: 10, 
+            feedback: gradeData.feedback,
+            studentId: targetStudentId
+          }),
+          reviewService.createReview(id, { 
+            reviewStatus: gradeData.reviewStatus as 'pending' | 'reviewed' | 'needs_revision' | 'flagged', 
+            comment: gradeData.reviewComment 
+          })
+        ]);
       }
-      alert('Grade published successfully');
-      navigate('/lecturer/grading');
+      alert('Grade and Review published successfully');
+      navigate(-1);
     } catch (err) {
       console.error('Failed to publish grade', err);
-      alert('Failed to publish grade');
+      alert('Failed to publish grade and review');
     } finally {
       setIsPublishing(false);
     }
@@ -75,19 +96,19 @@ const LecturerGradingDetail = () => {
       {/* TOP HEADER (Compact) */}
       <header className="h-16 bg-[#1B2559] text-white flex items-center justify-between px-6 shrink-0 shadow-md relative z-20">
         <div className="flex items-center">
-          <Link to="/lecturer/grading" className="p-2 mr-4 hover:bg-white/10 rounded-lg transition-colors text-gray-300 hover:text-white">
+          <button onClick={() => navigate(-1)} className="p-2 mr-4 hover:bg-white/10 rounded-lg transition-colors text-gray-300 hover:text-white">
             <ArrowLeft className="w-5 h-5" />
-          </Link>
+          </button>
 
           <div>
             <div className="flex items-center text-[10px] font-bold text-gray-400 mb-0.5 uppercase tracking-wider">
               <Link to="/lecturer/grading" className="hover:text-white transition-colors">Grading</Link>
               <ChevronRight className="w-3 h-3 mx-1" />
-              <span className="hover:text-white transition-colors">{submission?.courseCode || 'PRJ301'}</span>
+              <span className="hover:text-white transition-colors">{submission?.courseCode || 'Course'}</span>
               <ChevronRight className="w-3 h-3 mx-1" />
-              <span className="hover:text-white transition-colors">{submission?.classCode || 'SE18D01'} ({submission?.gradeItemName || 'PE 1'})</span>
+              <span className="hover:text-white transition-colors">{submission?.classCode || 'Class'} ({submission?.gradeItemName || 'Grade Item'})</span>
             </div>
-            <h1 className="text-sm font-bold">{student?.fullName || student?.username || 'Nguyen Van Duc (HE150001)'}</h1>
+            <h1 className="text-sm font-bold">{student ? `${student.fullName || student.username} (${student.studentCode || student.email || 'N/A'})` : 'Loading Student...'}</h1>
           </div>
           
           {isFlagged ? (
@@ -122,11 +143,11 @@ const LecturerGradingDetail = () => {
 
       {/* SPLIT VIEW CONTAINER */}
       <div className="flex-1 flex overflow-hidden">
-        {/* LEFT PANE: CODE REVIEWER */}
-        <CodeReviewer submissionId={id} />
+        {/* LEFT PANE: FILE VIEWER */}
+        <SubmissionFileViewer submissionId={id || ''} submissionInfo={submission} />
 
         {/* RIGHT PANE: EVALUATION PANEL */}
-        <EvaluationPanel submissionId={id} aiEvaluation={aiEvaluation} onChange={setGradeData} />
+        <EvaluationPanel submissionId={id || ''} aiEvaluation={aiEvaluation} onChange={(data) => setGradeData(data)} />
       </div>
     </div>
   );

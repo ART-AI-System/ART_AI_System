@@ -44,7 +44,7 @@ const StudentSettingsPage = () => {
             {/* Avatar Upload */}
             <div className="flex items-center mb-8 pb-8 border-b border-gray-100">
               <div className="relative group cursor-pointer">
-                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=F26F21&color=fff`} className="w-24 h-24 rounded-full shadow-md object-cover" alt="Avatar" />
+                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || user?.name || 'User')}&background=F26F21&color=fff`} className="w-24 h-24 rounded-full shadow-md object-cover" alt="Avatar" />
                 <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Camera className="w-8 h-8 text-white" />
                 </div>
@@ -63,11 +63,11 @@ const StudentSettingsPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
-                  <input type="text" defaultValue={user?.name?.split(' ')[0] || 'Viet'} className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-[#4318FF] focus:border-[#4318FF] transition-colors font-medium outline-none" />
+                  <input type="text" defaultValue={(user?.fullName || user?.name || '').split(' ')[0] || ''} className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-[#4318FF] focus:border-[#4318FF] transition-colors font-medium outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
-                  <input type="text" defaultValue={user?.name?.split(' ').slice(1).join(' ') || 'Khoa'} className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-[#4318FF] focus:border-[#4318FF] transition-colors font-medium outline-none" />
+                  <input type="text" defaultValue={(user?.fullName || user?.name || '').split(' ').slice(1).join(' ') || ''} className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-[#4318FF] focus:border-[#4318FF] transition-colors font-medium outline-none" />
                 </div>
               </div>
 
@@ -77,7 +77,7 @@ const StudentSettingsPage = () => {
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-gray-400" />
                   </div>
-                  <input type="email" value={user?.email || 'khoavse18d01@fpt.edu.vn'} disabled className="block w-full pl-11 pr-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium cursor-not-allowed" />
+                  <input type="email" value={user?.email || ''} disabled className="block w-full pl-11 pr-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium cursor-not-allowed" />
                 </div>
                 <p className="text-xs text-gray-400 font-medium mt-1">Email is managed by FPT University IT Department.</p>
               </div>
@@ -88,7 +88,7 @@ const StudentSettingsPage = () => {
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Badge className="h-5 w-5 text-gray-400" />
                   </div>
-                  <input type="text" value={user?.id || 'SE18D01'} disabled className="block w-full pl-11 pr-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium cursor-not-allowed" />
+                  <input type="text" value={user?.studentCode || user?.username || ''} disabled className="block w-full pl-11 pr-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium cursor-not-allowed" />
                 </div>
               </div>
               

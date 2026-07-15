@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axiosClient from '../api/axiosClient';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { preloadConversations } from '../hooks/useConversations';
 
 interface User {
   id: string;
@@ -36,6 +37,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (storedUser && token) {
       setUser(JSON.parse(storedUser));
+      // Preload conversations immediately after auto-login
+      preloadConversations();
     } else {
       // Only redirect to login if not already on the login page
       if (location.pathname !== '/login') {
@@ -50,6 +53,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('refresh_token', refresh_token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
+    // Preload conversations immediately after manual login
+    preloadConversations();
   };
 
   const logout = async () => {
