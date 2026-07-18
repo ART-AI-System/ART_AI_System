@@ -31,56 +31,47 @@ export class AIHolisticSynthesisService {
     existingGrading?: AIGradingSuggestion,
     existingAudit?: AIAuditAndVivaResponse
   ): Promise<AIHolisticSynthesisResult> {
-    // 1. Obtain or compute Grading Suggestion (Person A)
-    let gradingResult: AIGradingSuggestion
-    if (existingGrading && typeof existingGrading.suggestedScore === 'number') {
-      gradingResult = existingGrading
-    } else {
-      try {
-        gradingResult = await aiGradingService.analyzeSubmissionAndSuggestGrade(submissionId, user)
-      } catch (err) {
-        console.warn('⚠️ [AIHolisticSynthesis] Could not fetch grading suggestion, using defaults:', err)
-        gradingResult = {
-          summary: 'Fallback grading analysis.',
-          suggestedScore: 8.5,
-          maxScore: 10,
-          rubricBreakdown: [
-            { criteriaName: 'Clean Code & Architecture', score: 3.5, maxScore: 4.0, comment: 'Good structure.' },
-            { criteriaName: 'Business Logic & Error Handling', score: 3.5, maxScore: 4.0, comment: 'Correct logic.' },
-            { criteriaName: 'Documentation & Setup', score: 1.5, maxScore: 2.0, comment: 'Clear configuration.' }
-          ],
-          suggestedFeedback: 'Good technical implementation.'
-        }
-      }
-    }
+    // 1 & 2. Obtain or compute Grading Suggestion (Person A) and Audit & Viva Questions (Person B) concurrently
+    const gradingPromise = (existingGrading && typeof existingGrading.suggestedScore === 'number')
+      ? Promise.resolve(existingGrading)
+      : aiGradingService.analyzeSubmissionAndSuggestGrade(submissionId, user).catch((err) => {
+          console.warn('⚠️ [AIHolisticSynthesis] Could not fetch grading suggestion, using defaults:', err)
+          return {
+            summary: 'Fallback grading analysis.',
+            suggestedScore: 8.5,
+            maxScore: 10,
+            rubricBreakdown: [
+              { criteriaName: 'Clean Code & Architecture', score: 3.5, maxScore: 4.0, comment: 'Good structure.' },
+              { criteriaName: 'Business Logic & Error Handling', score: 3.5, maxScore: 4.0, comment: 'Correct logic.' },
+              { criteriaName: 'Documentation & Setup', score: 1.5, maxScore: 2.0, comment: 'Clear configuration.' }
+            ],
+            suggestedFeedback: 'Good technical implementation.'
+          } as AIGradingSuggestion
+        })
 
-    // 2. Obtain or compute Audit & Viva Questions (Person B)
-    let auditResult: AIAuditAndVivaResponse
-    if (existingAudit && typeof existingAudit.consistencyScore === 'number') {
-      auditResult = existingAudit
-    } else {
-      try {
-        auditResult = await aiAuditService.generateAuditAndVivaQuestions(submissionId, user)
-      } catch (err) {
-        console.warn('⚠️ [AIHolisticSynthesis] Could not fetch audit suggestion, using defaults:', err)
-        auditResult = {
-          consistencyScore: 75,
-          status: 'YELLOW',
-          summaryAnalysis: 'Moderate consistency between student declaration and code structure.',
-          redFlags: ['Complex helper logic with minimal reflection.'],
-          vivaQuestions: [
-            {
-              questionNumber: 1,
-              purpose: 'CHECK_UNDERSTANDING',
-              targetFilePath: 'src/main.ts',
-              targetLineOrFunction: 'main() / bootstrap flow',
-              questionText: 'Explain the core logic flow in your main entry point.',
-              expectedAnswer: 'Student should explain modular imports and initialization.'
-            }
-          ]
-        }
-      }
-    }
+    const auditPromise = (existingAudit && typeof existingAudit.consistencyScore === 'number')
+      ? Promise.resolve(existingAudit)
+      : aiAuditService.generateAuditAndVivaQuestions(submissionId, user).catch((err) => {
+          console.warn('⚠️ [AIHolisticSynthesis] Could not fetch audit suggestion, using defaults:', err)
+          return {
+            consistencyScore: 75,
+            status: 'YELLOW' as const,
+            summaryAnalysis: 'Moderate consistency between student declaration and code structure.',
+            redFlags: ['Complex helper logic with minimal reflection.'],
+            vivaQuestions: [
+              {
+                questionNumber: 1,
+                purpose: 'CHECK_UNDERSTANDING',
+                targetFilePath: 'src/main.ts',
+                targetLineOrFunction: 'main() / bootstrap flow',
+                questionText: 'Explain the core logic flow in your main entry point.',
+                expectedAnswer: 'Student should explain modular imports and initialization.'
+              }
+            ]
+          } as AIAuditAndVivaResponse
+        })
+
+    const [gradingResult, auditResult] = await Promise.all([gradingPromise, auditPromise])
 
     const rawRubricScore = gradingResult.suggestedScore || 0
     const consistencyScore = auditResult.consistencyScore || 0
