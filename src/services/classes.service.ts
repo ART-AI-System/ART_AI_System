@@ -1,0 +1,420 @@
+import { ObjectId } from 'mongodb'
+import databaseService from './database.service'
+import Class, { ClassType, StudentSnapshot } from '~/models/schemas/classes.schema'
+import usersService from './users.service'
+import { UserRoleType } from '~/models/schemas/users.schema'
+
+function normalizeClassPayload(payload: ClassType): ClassType {
+  return {
+    ...payload,
+    semesterId: payload.semesterId instanceof ObjectId ? payload.semesterId : new ObjectId(payload.semesterId),
+    subjectId: payload.subjectId instanceof ObjectId ? payload.subjectId : new ObjectId(payload.subjectId),
+    subjectSnapshot: {
+      ...payload.subjectSnapshot,
+      subjectId: payload.subjectSnapshot?.subjectId instanceof ObjectId ? payload.subjectSnapshot.subjectId : new ObjectId(payload.subjectSnapshot?.subjectId)
+    },
+    lecturer: {
+      ...payload.lecturer,
+      lecturerId:
+        payload.lecturer?.lecturerId instanceof ObjectId
+          ? payload.lecturer.lecturerId
+          : new ObjectId(payload.lecturer?.lecturerId)
+    },
+    students: (payload.students || []).map((student) => ({
+      ...student,
+      studentId: student.studentId instanceof ObjectId ? student.studentId : new ObjectId(student.studentId)
+    }))
+  }
+}
+
+class ClassesService {
+  async createClass(payload: ClassType) {
+    const newClass = new Class(normalizeClassPayload(payload))
+    const result = await databaseService.classes.insertOne(newClass)
+
+    // Auto-generate sessions based on subject's defaultSlots
+    const subject = await databaseService.subjects.findOne({ _id: newClass.subjectId })
+    const slots = subject?.defaultSlots || 10
+    
+    const sessions = []
+    const now = new Date()
+    for (let i = 1; i <= slots; i++) {
+      sessions.push({
+        classId: result.insertedId,
+        sessionNo: i,
+        title: `Session ${i}`,
+        description: '',
+        startTime: now,
+        endTime: now,
+        createdAt: now,
+        updatedAt: now
+      })
+    }
+    
+    if (sessions.length > 0) {
+      await databaseService.sessions.insertMany(sessions)
+    }
+
+    return { ...newClass, _id: result.insertedId }
+  }
+
+  async getClasses() {
+    const classes = await databaseService.classes.find({}).toArray()
+    return classes
+  }
+
+  async getClassById(id: string) {
+    const classData = await databaseService.classes.findOne({ _id: new ObjectId(id) })
+    return classData
+  }
+
+  async updateClass(id: string, payload: Partial<ClassType>) {
+    const updateData: any = { ...payload }
+    if (payload.semesterId) updateData.semesterId = new ObjectId(payload.semesterId)
+    if (payload.subjectId) updateData.subjectId = new ObjectId(payload.subjectId)
+    if (payload.subjectSnapshot?.subjectId) {
+      updateData.subjectSnapshot.subjectId = new ObjectId(payload.subjectSnapshot.subjectId)
+    }
+    if (payload.lecturer?.lecturerId) {
+      updateData.lecturer.lecturerId = new ObjectId(payload.lecturer.lecturerId)
+    }
+    if (payload.students) {
+      updateData.students = payload.students.map((student) => ({
+        ...student,
+        studentId: new ObjectId(student.studentId)
+      }))
+    }
+
+    const result = await databaseService.classes.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          ...updateData,
+          updatedAt: new Date()
+        }
+      },
+      { returnDocument: 'after' }
+    )
+    return result
+  }
+
+  async deleteClass(id: string) {
+    const result = await databaseService.classes.findOneAndDelete({ _id: new ObjectId(id) })
+    return result
+  }
+
+  async importStudents(classId: string, rows: Record<string, string>[]) {
+    const classObjectId = new ObjectId(classId)
+    const existingClass = await databaseService.classes.findOne({ _id: classObjectId })
+    if (!existingClass) {
+      throw new Error('Class not found')
+    }
+
+    const currentStudents = existingClass.students || []
+    const newStudents: StudentSnapshot[] = []
+    const errors: Array<{ row: number; reason: string }> = []
+    
+    let success = 0
+    let failed = 0
+
+    for (let i = 0; i < rows.length; i++) {
+      const rowNumber = i + 1
+      const row = rows[i]
+
+      const email = (row.email || row['Email'] || '').trim().toLowerCase()
+      const studentCode = (row.studentCode || row['Student Code'] || row['student_code'] || '').trim()
+      const fullName = (row.fullName || row['Full Name'] || row['full_name'] || '').trim()
+
+      if (!email || !studentCode || !fullName) {
+        errors.push({ row: rowNumber, reason: 'Missing required field (email, studentCode, or fullName)' })
+        failed++
+        continue
+      }
+
+      // Check if user exists in db
+      let user = await databaseService.users.findOne({ email })
+      if (!user) {
+        // Check by studentCode just in case
+        user = await databaseService.users.findOne({ studentCode })
+      }
+
+      if (!user) {
+        // Create user
+        const password = row.password || Math.random().toString(36).substring(2, 15)
+        try {
+          user = await usersService.createUser({
+            fullName,
+            email,
+            password,
+            role: 'STUDENT',
+            studentCode,
+            profile: {}
+          })
+        } catch (error: any) {
+          errors.push({ row: rowNumber, reason: `Failed to create user: ${error.message}` })
+          failed++
+          continue
+        }
+      } else {
+        if (user.role !== 'STUDENT') {
+          errors.push({ row: rowNumber, reason: `User ${email} exists but is not a STUDENT` })
+          failed++
+          continue
+        }
+      }
+
+      const classesWithSameSubject = await databaseService.classes
+        .find({ semesterId: existingClass.semesterId, subjectId: existingClass.subjectId })
+        .toArray()
+      const classIdsWithSameSubject = classesWithSameSubject.map(c => c._id)
+
+      const existingEnrollments = await databaseService.classMembers
+        .find({ classId: { $in: classIdsWithSameSubject }, status: 'active' })
+        .toArray()
+
+      if (user) {
+        // Check if already in class
+        const isAlreadyInClass = currentStudents.some(s => s.studentId.toString() === user!._id.toString()) || 
+                                 newStudents.some(s => s.studentId.toString() === user!._id.toString())
+        
+        if (isAlreadyInClass) {
+          errors.push({ row: rowNumber, reason: `Student ${email} is already in the class` })
+          failed++
+          continue
+        }
+
+        const isEnrolledInAnotherClass = existingEnrollments.some(e => e.studentId.toString() === user!._id.toString())
+        if (isEnrolledInAnotherClass) {
+          const enrolledClassId = existingEnrollments.find(e => e.studentId.toString() === user!._id.toString())?.classId
+          const enrolledClass = classesWithSameSubject.find(c => c._id.toString() === enrolledClassId?.toString())
+          errors.push({ row: rowNumber, reason: `Student ${email} is already enrolled in this subject in class ${enrolledClass?.classCode}` })
+          failed++
+          continue
+        }
+
+        newStudents.push({
+          studentId: user._id,
+          studentCode: user.studentCode as string,
+          fullName: user.fullName,
+          email: user.email
+        })
+        success++
+      }
+    }
+
+    if (newStudents.length > 0) {
+      await databaseService.classes.updateOne(
+        { _id: classObjectId },
+        { 
+          $push: { students: { $each: newStudents } },
+          $set: { updatedAt: new Date() }
+        }
+      )
+      
+      const bulkOps = newStudents.map(student => ({
+        updateOne: {
+          filter: { classId: classObjectId, studentId: student.studentId },
+          update: {
+            $set: {
+              classId: classObjectId,
+              studentId: student.studentId,
+              semesterId: existingClass.semesterId,
+              status: 'active',
+              updatedAt: new Date()
+            },
+            $setOnInsert: {
+              createdAt: new Date()
+            }
+          },
+          upsert: true
+        }
+      }))
+      await databaseService.classMembers.bulkWrite(bulkOps)
+    }
+
+    return { totalRows: rows.length, success, failed, errors }
+  }
+
+  async addStudentToClass(classId: string, studentId: string) {
+    const classObjectId = new ObjectId(classId)
+    const studentObjectId = new ObjectId(studentId)
+
+    const existingClass = await databaseService.classes.findOne({ _id: classObjectId })
+    if (!existingClass) throw new Error('Class not found')
+
+    const user = await databaseService.users.findOne({ _id: studentObjectId, role: 'STUDENT' })
+    if (!user) throw new Error('Student not found')
+
+    const currentStudents = existingClass.students || []
+    if (currentStudents.some((s) => s.studentId.toString() === studentObjectId.toString())) {
+      throw new Error('Student is already in the class')
+    }
+
+    const classesWithSameSubject = await databaseService.classes
+      .find({ semesterId: existingClass.semesterId, subjectId: existingClass.subjectId })
+      .toArray()
+    const classIdsWithSameSubject = classesWithSameSubject.map(c => c._id)
+
+    const existingEnrollment = await databaseService.classMembers.findOne({
+      studentId: studentObjectId,
+      classId: { $in: classIdsWithSameSubject },
+      status: 'active'
+    })
+    
+    if (existingEnrollment) {
+      const enrolledClass = classesWithSameSubject.find(c => c._id.toString() === existingEnrollment.classId.toString())
+      throw new Error(`Student is already enrolled in this subject in class ${enrolledClass?.classCode}`)
+    }
+
+    const studentSnapshot: StudentSnapshot = {
+      studentId: user._id,
+      studentCode: user.studentCode as string,
+      fullName: user.fullName,
+      email: user.email
+    }
+
+    await databaseService.classes.updateOne(
+      { _id: classObjectId },
+      { 
+        $push: { students: studentSnapshot },
+        $set: { updatedAt: new Date() }
+      }
+    )
+
+    await databaseService.classMembers.updateOne(
+      { classId: classObjectId, studentId: studentObjectId },
+      {
+        $set: {
+          classId: classObjectId,
+          studentId: studentObjectId,
+          semesterId: existingClass.semesterId,
+          status: 'active',
+          updatedAt: new Date()
+        },
+        $setOnInsert: { createdAt: new Date() }
+      },
+      { upsert: true }
+    )
+
+    return { message: 'Student added successfully', student: studentSnapshot }
+  }
+
+  async removeStudentFromClass(classId: string, studentId: string) {
+    const classObjectId = new ObjectId(classId)
+    const studentObjectId = new ObjectId(studentId)
+
+    const existingClass = await databaseService.classes.findOne({ _id: classObjectId })
+    if (!existingClass) throw new Error('Class not found')
+
+    await databaseService.classes.updateOne(
+      { _id: classObjectId },
+      { 
+        // @ts-ignore
+        $pull: { students: { studentId: studentObjectId } },
+        $set: { updatedAt: new Date() }
+      }
+    )
+
+    await databaseService.classMembers.updateOne(
+      { classId: classObjectId, studentId: studentObjectId },
+      { $set: { status: 'inactive', updatedAt: new Date() } }
+    )
+
+    return { message: 'Student removed successfully' }
+  }
+
+  async promoteCohort(
+    sourceClassId: string,
+    targetSemesterId: string,
+    assignments: { subjectId: string; lecturerId: string }[]
+  ) {
+    const classObjectId = new ObjectId(sourceClassId)
+    const semesterObjectId = new ObjectId(targetSemesterId)
+    
+    // Find the source class to get students and classCode
+    const sourceClass = await databaseService.classes.findOne({ _id: classObjectId })
+    if (!sourceClass) throw new Error('Source class not found')
+
+    const students = sourceClass.students || []
+    
+    const results = []
+    
+    for (const assignment of assignments) {
+      const subjectObjectId = new ObjectId(assignment.subjectId)
+      const lecturerObjectId = new ObjectId(assignment.lecturerId)
+      
+      // Fetch subject and lecturer snapshots
+      const subject = await databaseService.subjects.findOne({ _id: subjectObjectId })
+      const lecturer = await databaseService.users.findOne({ _id: lecturerObjectId })
+      
+      if (!subject || !lecturer) {
+        continue;
+      }
+      
+      // Check for duplicate class (same cohort, same semester, same subject)
+      const existingClass = await databaseService.classes.findOne({
+        classCode: sourceClass.classCode,
+        semesterId: semesterObjectId,
+        subjectId: subjectObjectId
+      })
+      if (existingClass) {
+        throw new Error(`Class ${sourceClass.classCode} already has subject ${subject.code} in the selected semester.`)
+      }
+      
+      const newClass: ClassType = {
+        classCode: sourceClass.classCode,
+        semesterId: semesterObjectId,
+        subjectId: subjectObjectId,
+        subjectSnapshot: {
+          subjectId: subjectObjectId,
+          code: subject.code,
+          name: subject.name
+        },
+        lecturer: {
+          lecturerId: lecturerObjectId,
+          fullName: lecturer.fullName,
+          email: lecturer.email
+        },
+        students: students,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      
+      const createdClass = await this.createClass(newClass)
+      
+      // Also copy class_members for all students
+      if (students.length > 0) {
+        const bulkOps = students.map(student => ({
+          updateOne: {
+            filter: { classId: createdClass._id, studentId: student.studentId },
+            update: {
+              $set: {
+                classId: createdClass._id,
+                studentId: student.studentId,
+                semesterId: semesterObjectId,
+                status: 'active',
+                updatedAt: new Date()
+              },
+              $setOnInsert: {
+                createdAt: new Date()
+              }
+            },
+            upsert: true
+          }
+        }))
+        await databaseService.classMembers.bulkWrite(bulkOps)
+      }
+      
+      results.push(createdClass)
+    }
+    
+    return {
+      message: 'Cohort promoted successfully',
+      createdClassesCount: results.length
+    }
+  }
+}
+
+const classesService = new ClassesService()
+export default classesService
