@@ -17,6 +17,11 @@ export interface AIHolisticSynthesisResult {
   isDefenseMandatory: boolean
   synergyAnalysis: string
   actionableDefensePlan: ActionableDefensePlanItem[]
+  gradingBreakdown?: any[]
+  vivaQuestions?: any[]
+  redFlags?: string[]
+  summaryAnalysis?: string
+  suggestedFeedback?: string
 }
 
 export class AIHolisticSynthesisService {
@@ -107,7 +112,12 @@ export class AIHolisticSynthesisService {
         rubricCriteria: gradingResult.rubricBreakdown?.[idx % (gradingResult.rubricBreakdown.length || 1)]?.criteriaName || 'Core Software Architecture',
         linkedVivaQuestionNumber: q.questionNumber || idx + 1,
         lecturerAdvice: `Hỏi sinh viên câu hỏi Q${q.questionNumber || idx + 1} (${q.purpose}) xoáy vào file ${q.targetFilePath || 'source code'}. Nếu trả lời chính xác như Expected Answer, khôi phục điểm tiêu chí Rubric này.`
-      }))
+      })),
+      gradingBreakdown: gradingResult.rubricBreakdown,
+      vivaQuestions: auditResult.vivaQuestions,
+      redFlags: auditResult.redFlags,
+      summaryAnalysis: auditResult.summaryAnalysis,
+      suggestedFeedback: gradingResult.suggestedFeedback
     }
 
     const systemInstruction = `Bạn là Chủ tịch Hội đồng Kiểm định & Đánh giá Đồ án Kỹ thuật Phần mềm (Chief Holistic Evaluation Officer). Nhiệm vụ của bạn là liên kết, tổng hợp kết quả của 2 module:
@@ -148,7 +158,15 @@ Hãy trả về chuẩn JSON theo định dạng sau:
   ]
 }`
 
-    return await callLLMWithJSON<AIHolisticSynthesisResult>(systemInstruction, userPrompt, mockFallback)
+    const llmResult = await callLLMWithJSON<AIHolisticSynthesisResult>(systemInstruction, userPrompt, mockFallback)
+    return {
+      ...llmResult,
+      gradingBreakdown: gradingResult.rubricBreakdown || mockFallback.gradingBreakdown,
+      vivaQuestions: auditResult.vivaQuestions || mockFallback.vivaQuestions,
+      redFlags: auditResult.redFlags || mockFallback.redFlags,
+      summaryAnalysis: auditResult.summaryAnalysis || mockFallback.summaryAnalysis,
+      suggestedFeedback: gradingResult.suggestedFeedback || mockFallback.suggestedFeedback
+    }
   }
 }
 
