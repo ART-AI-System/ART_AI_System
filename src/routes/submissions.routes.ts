@@ -17,7 +17,8 @@ import {
   withdrawSubmissionController,
   updateSubmissionGroupMembersController,
   getAIGradeSuggestionController,
-  getAIAnnotateFileController
+  getAIAnnotateFileController,
+  aiAuditAndVivaController
 } from '~/controllers/submissions.controller'
 import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import { parseSubmissionFile } from '~/middlewares/submissions.middleware'
@@ -155,6 +156,13 @@ submissionsRouter.post(
   requireAuth,
   requireRole('LECTURER', 'ADMIN', 'SUBJECT_HEAD'),
   wrapRequestHandler(getAIAnnotateFileController)
+)
+
+submissionsRouter.post(
+  '/submissions/:submissionId/ai-audit-viva',
+  requireAuth,
+  requireRole('LECTURER', 'ADMIN', 'SUBJECT_HEAD'),
+  wrapRequestHandler(aiAuditAndVivaController)
 )
 
 export default submissionsRouter

@@ -7,6 +7,7 @@ import User from '~/models/schemas/users.schema'
 import submissionsService from '~/services/submissions.service'
 import aiGradingService from '~/services/aiGrading.service'
 import aiAnnotatorService from '~/services/aiAnnotator.service'
+import aiAuditService from '~/services/aiAudit.service'
 
 export const createSubmissionController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -338,6 +339,21 @@ export const getAIAnnotateFileController = async (req: Request, res: Response, n
 
     res.json({
       message: 'Get AI file annotations successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const aiAuditAndVivaController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { submissionId } = req.params
+    const user = req.user as User
+    const result = await aiAuditService.generateAuditAndVivaQuestions(submissionId as string, user)
+
+    res.json({
+      message: 'Generate AI Audit and Viva questions successfully',
       result
     })
   } catch (error) {
