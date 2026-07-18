@@ -18,11 +18,11 @@ export async function callLLMWithJSON<T>(systemInstruction: string, userPrompt: 
   }
 
   const candidateModels = [
-    process.env.GEMINI_MODEL || 'gemini-flash-latest',
-    'gemini-flash-latest',
-    'gemini-pro-latest',
-    'gemma-4-31b-it',
-    'gemini-2.5-flash-lite'
+    process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+    'gemini-1.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-pro',
+    'gemini-flash-latest'
   ]
 
   // Remove duplicates while keeping order
@@ -45,9 +45,60 @@ export async function callLLMWithJSON<T>(systemInstruction: string, userPrompt: 
       const result = await model.generateContent(userPrompt)
       const responseText = result.response.text()
       
-      // Clean potential markdown code blocks if any exist
-      const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim()
-      return JSON.parse(cleanedText) as T
+      // Robust JSON extraction & cleanup
+      let cleanedText = responseText
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
+        .trim()
+
+      // Extract outermost JSON block if surrounded by conversational text
+      const objectMatch = cleanedText.match(/\{[\s\S]*\}/)
+      const arrayMatch = cleanedText.match(/\[[\s\S]*\]/)
+      if (objectMatch && (!arrayMatch || objectMatch.index! <= arrayMatch.index!)) {
+        cleanedText = objectMatch[0]
+      } else if (arrayMatch) {
+        cleanedText = arrayMatch[0]
+      }
+
+      // Remove trailing commas before closing braces/brackets (`{"a": 1,}` -> `{"a": 1}`)
+      cleanedText = cleanedText.replace(/,\s*([\]}])/g, '$1')
+
+      try {
+        return JSON.parse(cleanedText) as T
+      } catch (parseError) {
+        // Safe string-literal state machine repair for unescaped newlines inside JSON values
+        let inString = false
+        let escaped = false
+        let result = ''
+        for (let i = 0; i < cleanedText.length; i++) {
+          const char = cleanedText[i]
+          if (escaped) {
+            result += char
+            escaped = false
+            continue
+          }
+          if (char === '\\') {
+            escaped = true
+            result += char
+            continue
+          }
+          if (char === '"') {
+            inString = !inString
+            result += char
+            continue
+          }
+          if (inString && (char === '\n' || char === '\r')) {
+            result += '\\n'
+            continue
+          }
+          if (inString && char === '\t') {
+            result += '\\t'
+            continue
+          }
+          result += char
+        }
+        return JSON.parse(result) as T
+      }
     } catch (error: any) {
       lastError = error
       const statusMsg = error.message || String(error)
