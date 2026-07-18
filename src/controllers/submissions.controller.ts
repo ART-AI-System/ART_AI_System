@@ -8,6 +8,7 @@ import submissionsService from '~/services/submissions.service'
 import aiGradingService from '~/services/aiGrading.service'
 import aiAnnotatorService from '~/services/aiAnnotator.service'
 import aiAuditService from '~/services/aiAudit.service'
+import aiHolisticSynthesisService from '~/services/aiHolisticSynthesis.service'
 
 export const createSubmissionController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -354,6 +355,27 @@ export const aiAuditAndVivaController = async (req: Request, res: Response, next
 
     res.json({
       message: 'Generate AI Audit and Viva questions successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const aiHolisticSynthesisController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { submissionId } = req.params
+    const user = req.user as User
+    const { gradingResult, auditResult } = req.body || {}
+    const result = await aiHolisticSynthesisService.synthesizeAuditAndGrading(
+      submissionId as string,
+      user,
+      gradingResult,
+      auditResult
+    )
+
+    res.json({
+      message: 'Generate AI Holistic Synthesis successfully',
       result
     })
   } catch (error) {

@@ -18,7 +18,8 @@ import {
   updateSubmissionGroupMembersController,
   getAIGradeSuggestionController,
   getAIAnnotateFileController,
-  aiAuditAndVivaController
+  aiAuditAndVivaController,
+  aiHolisticSynthesisController
 } from '~/controllers/submissions.controller'
 import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import { parseSubmissionFile } from '~/middlewares/submissions.middleware'
@@ -163,6 +164,13 @@ submissionsRouter.post(
   requireAuth,
   requireRole('LECTURER', 'ADMIN', 'SUBJECT_HEAD'),
   wrapRequestHandler(aiAuditAndVivaController)
+)
+
+submissionsRouter.post(
+  '/submissions/:submissionId/ai-holistic-synthesis',
+  requireAuth,
+  requireRole('LECTURER', 'ADMIN', 'SUBJECT_HEAD'),
+  wrapRequestHandler(aiHolisticSynthesisController)
 )
 
 export default submissionsRouter
