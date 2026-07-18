@@ -37,6 +37,10 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
   const [loadingAudit, setLoadingAudit] = useState<boolean>(false);
   const [visibleAnswers, setVisibleAnswers] = useState<Record<number, boolean>>({});
 
+  // AI Holistic Synthesis States (Person A & B Linkage)
+  const [synthesisResult, setSynthesisResult] = useState<any | null>(null);
+  const [loadingSynthesis, setLoadingSynthesis] = useState<boolean>(false);
+
   // Panel Resizing State
   const [panelWidth, setPanelWidth] = useState<number>(460);
   const [isDraggingPanel, setIsDraggingPanel] = useState<boolean>(false);
@@ -97,6 +101,44 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
       console.error('Failed to run AI Audit', err);
     } finally {
       setLoadingAudit(false);
+    }
+  };
+
+  const handleRunSynthesis = async () => {
+    if (!submissionId) return;
+    setLoadingSynthesis(true);
+    try {
+      const res = await axiosClient.post(`/submissions/${submissionId}/ai-holistic-synthesis`, {
+        gradingResult: aiSuggestion,
+        auditResult: aiAuditResult
+      });
+      const data = (res as any)?.data?.result || (res as any)?.result || (res as any)?.data || res;
+      setSynthesisResult(data);
+    } catch (err) {
+      console.error('Failed to run AI Holistic Synthesis', err);
+    } finally {
+      setLoadingSynthesis(false);
+    }
+  };
+
+  const handleApplySynthesis = (syn: any) => {
+    if (!syn) return;
+    const recScore = typeof syn.holisticRecommendedScore === 'number' ? syn.holisticRecommendedScore : syn.rawRubricScore || 8;
+    const ratio = recScore / 10;
+    setAiReflectionScore(Number((3 * ratio).toFixed(1)));
+    setDecompositionScore(Number((2 * ratio).toFixed(1)));
+    setPatternRecognitionScore(Number((1.5 * ratio).toFixed(1)));
+    setAbstractionScore(Number((1.5 * ratio).toFixed(1)));
+    setAlgorithmicThinkingScore(Number((2 * ratio).toFixed(1)));
+    if (syn.synergyAnalysis) {
+      setFeedback(`[AI Holistic 360° Assessment]\n${syn.synergyAnalysis}\n\n[Mandatory Defense Verification]\n${(syn.actionableDefensePlan || []).map((item: any, idx: number) => `• Q${item.linkedVivaQuestionNumber} (${item.rubricCriteria}): ${item.lecturerAdvice}`).join('\n')}`);
+    }
+    if (syn.auditStatus === 'RED') {
+      setReviewStatus('flagged');
+    } else if (syn.auditStatus === 'YELLOW') {
+      setReviewStatus('needs_revision');
+    } else {
+      setReviewStatus('reviewed');
     }
   };
 
@@ -293,15 +335,24 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
           
           {/* AI Audit & Viva Defense Section (Person B Feature) */}
           <div className="mb-6 border-t border-gray-200 pt-6">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">AI Audit & Viva Defense</h3>
-              <button 
-                onClick={handleRunAiAudit}
-                disabled={loadingAudit}
-                className="flex items-center gap-2 bg-[#F26F21] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-[#d95c14] transition-colors disabled:opacity-50"
-              >
-                🛡️ {loadingAudit ? 'Running Audit...' : 'Run AI Audit & Defense'}
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleRunAiAudit}
+                  disabled={loadingAudit}
+                  className="flex items-center gap-2 bg-[#F26F21] text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-[#d95c14] transition-colors disabled:opacity-50"
+                >
+                  🛡️ {loadingAudit ? 'Running Audit...' : 'Run AI Audit & Defense'}
+                </button>
+                <button 
+                  onClick={() => { setActiveTab('grade'); handleRunSynthesis(); }}
+                  disabled={loadingSynthesis || !submissionId}
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white px-3.5 py-2 rounded-xl text-xs font-extrabold shadow-md hover:from-amber-700 hover:to-orange-700 transition-all disabled:opacity-50"
+                >
+                  ⚡ {loadingSynthesis ? 'Linking...' : 'Link with Rubric (360°)'}
+                </button>
+              </div>
             </div>
 
             {aiAuditResult && (
@@ -495,6 +546,98 @@ const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ submissionId, aiEvalu
                           ))}
                         </div>
                       )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* ── Person A & Person B Synergy: AI Holistic 360° Assessment Card ── */}
+            <div className="bg-gradient-to-br from-amber-50/90 via-orange-50/60 to-white border border-orange-200/80 rounded-2xl p-5 shadow-sm transition-all">
+              <div className="flex flex-col gap-3.5 mb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2.5 bg-gradient-to-br from-[#F26F21] to-amber-600 text-white rounded-xl shadow-md shrink-0">
+                      <AlertOctagon className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-extrabold text-[#1B2559]">AI Holistic 360° Assessment (Link Audit & Rubric)</h4>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">Synthesizes Person B&apos;s Audit/Viva consistency with Person A&apos;s Rubric technical score</p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleRunSynthesis}
+                  disabled={loadingSynthesis || !submissionId}
+                  className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-[#F26F21] via-orange-600 to-amber-600 hover:from-[#d95c14] hover:to-amber-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.99] select-none"
+                >
+                  {loadingSynthesis ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Synthesizing Rubric & Audit Findings...
+                    </>
+                  ) : (
+                    <>
+                      ⚡ Run Holistic 360° Assessment & Synergy Map
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {synthesisResult && (
+                <div className="mt-4 pt-4 border-t border-orange-100 space-y-4 animate-fadeIn">
+                  {/* Status & Scores comparison */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white/90 border border-orange-100 p-3 rounded-xl">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase block">Raw Rubric Score</span>
+                      <span className="text-lg font-extrabold text-[#1B2559]">{synthesisResult.rawRubricScore} <span className="text-xs font-normal">/ 10</span></span>
+                    </div>
+                    <div className={`p-3 rounded-xl border ${
+                      synthesisResult.auditStatus === 'RED' ? 'bg-red-50 border-red-200 text-red-800' :
+                      synthesisResult.auditStatus === 'YELLOW' ? 'bg-yellow-50 border-yellow-200 text-yellow-800' :
+                      'bg-green-50 border-green-200 text-green-800'
+                    }`}>
+                      <span className="text-[10px] font-bold uppercase block">Consistency Status</span>
+                      <span className="text-lg font-extrabold">{synthesisResult.consistencyScore}% ({synthesisResult.auditStatus})</span>
+                    </div>
+                  </div>
+
+                  {/* Recommendation Card */}
+                  <div className="bg-gradient-to-r from-[#F26F21] to-amber-600 text-white p-4 rounded-xl shadow-md space-y-3">
+                    <div className="flex items-center justify-between border-b border-orange-400/30 pb-3">
+                      <div>
+                        <span className="text-[11px] text-orange-100 block font-semibold uppercase tracking-wider">Holistic Recommended Score</span>
+                        <span className="text-2xl font-extrabold">{synthesisResult.holisticRecommendedScore} <span className="text-sm font-normal text-orange-200">/ 10</span></span>
+                      </div>
+                      <div className="text-right">
+                        {synthesisResult.isDefenseMandatory ? (
+                          <span className="text-[10px] bg-red-600 text-white font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">Mandatory Viva Required</span>
+                        ) : (
+                          <span className="text-[10px] bg-green-600 text-white font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">Confident Score</span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-orange-50 leading-relaxed">{synthesisResult.synergyAnalysis}</p>
+                    <button
+                      onClick={() => handleApplySynthesis(synthesisResult)}
+                      className="w-full py-2.5 bg-white text-orange-700 hover:bg-orange-50 text-xs font-extrabold rounded-lg transition-colors shadow-sm flex items-center justify-center select-none"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-green-600 shrink-0" /> Apply Holistic Score & Defense Plan to Review
+                    </button>
+                  </div>
+
+                  {/* Actionable Defense Plan */}
+                  {synthesisResult.actionableDefensePlan && synthesisResult.actionableDefensePlan.length > 0 && (
+                    <div className="bg-white/90 border border-orange-100 rounded-xl p-3.5 space-y-2.5">
+                      <h5 className="text-xs font-extrabold text-[#1B2559] uppercase tracking-wider">🎯 Actionable Viva-Rubric Synergy Checklist</h5>
+                      {synthesisResult.actionableDefensePlan.map((item: any, idx: number) => (
+                        <div key={idx} className="bg-orange-50/50 p-3 rounded-lg border border-orange-100/80 text-xs">
+                          <div className="flex justify-between items-center mb-1 font-bold text-[#F26F21]">
+                            <span>{item.rubricCriteria}</span>
+                            <span className="bg-[#F26F21] text-white px-2 py-0.5 rounded text-[10px]">Linked to Q{item.linkedVivaQuestionNumber}</span>
+                          </div>
+                          <p className="text-gray-700 mt-1 leading-relaxed">{item.lecturerAdvice}</p>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
