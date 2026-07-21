@@ -29,20 +29,24 @@ import { config } from 'dotenv'
 config()
 
 databaseService.connect().then(async () => {
-  await databaseService.initCollections()
-  databaseService.indexUsers()
-  databaseService.indexRefreshTokens()
-  databaseService.indexPasswordResetTokens()
-  databaseService.indexSubmissions()
-  databaseService.indexSubmissionReviews()
-  databaseService.indexNotifications()
-  databaseService.indexEmailLogs()
-  databaseService.indexAssignments()
-  databaseService.indexChatRooms()
-  databaseService.indexChatMessages()
-  databaseService.indexSubjects()
-  databaseService.indexTests()
-  databaseService.indexTestAttempts()
+  try {
+    await databaseService.initCollections()
+    await databaseService.indexUsers()
+    await databaseService.indexRefreshTokens()
+    await databaseService.indexPasswordResetTokens()
+    await databaseService.indexSubmissions()
+    await databaseService.indexSubmissionReviews()
+    await databaseService.indexNotifications()
+    await databaseService.indexEmailLogs()
+    await databaseService.indexAssignments()
+    await databaseService.indexChatRooms()
+    await databaseService.indexChatMessages()
+    await databaseService.indexSubjects()
+    await databaseService.indexTests()
+    await databaseService.indexTestAttempts()
+  } catch (err: any) {
+    console.warn('⚠️ [Database] Could not complete database indexing during startup (e.g., OutOfDiskSpace):', err.message || err)
+  }
 })
 
 import cors from 'cors'
