@@ -140,7 +140,13 @@ class SubjectHeadService {
       count
     }))
 
-    const highDependencyCases = evaluations.filter((e) => e.pattern === 'high_dependency').length
+    const pendingFlagsCount = await databaseService.submissionFlags.countDocuments({
+      classId: { $in: classIds },
+      isResolved: false
+    })
+    const highDependencyCases = pendingFlagsCount > 0
+      ? pendingFlagsCount
+      : evaluations.filter((e) => e.pattern === 'high_dependency' && !(e as any).isResolved).length
 
     const averageScoreByClass = classIds.map((cId) => {
       const cls = classMap.get(cId.toString())
