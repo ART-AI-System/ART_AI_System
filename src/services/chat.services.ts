@@ -8,6 +8,26 @@ import HTTP_STATUS from '~/constants/httpStatus'
 class ChatService {
   async checkPermission(userIdA: string, userIdB: string): Promise<boolean> {
     if (!userIdA || !userIdB || userIdA === userIdB) return false
+    const userAOid = ObjectId.isValid(userIdA) ? new ObjectId(userIdA) : null
+    const userBOid = ObjectId.isValid(userIdB) ? new ObjectId(userIdB) : null
+
+    const userA = userAOid ? await databaseService.users.findOne({ _id: userAOid }) : null
+    const userB = userBOid ? await databaseService.users.findOne({ _id: userBOid }) : null
+
+    if (!userA || !userB) return true // Fallback allow if profile not found
+
+    const roleA = (userA.role as string).toUpperCase()
+    const roleB = (userB.role as string).toUpperCase()
+
+    if (roleA === 'SUBJECT_HEAD' || roleA === 'HEADSUBJECT') {
+      return roleB === 'LECTURER' || roleB === 'ADMIN'
+    }
+    if (roleB === 'SUBJECT_HEAD' || roleB === 'HEADSUBJECT') {
+      return roleA === 'LECTURER' || roleA === 'ADMIN'
+    }
+    if (roleA === 'LECTURER') {
+      return roleB === 'SUBJECT_HEAD' || roleB === 'HEADSUBJECT' || roleB === 'STUDENT' || roleB === 'ADMIN'
+    }
     return true
   }
 
@@ -26,13 +46,28 @@ class ChatService {
     }
 
     if (!user) {
-      // Fallback if user profile lookup fails: return all lecturers, subject heads, and admins
       const staff = await databaseService.users.find({ isActive: true }).limit(50).toArray()
       staff.forEach(addContact)
       return contacts
     }
 
-    if (user.role === 'STUDENT') {
+    const userRole = (user.role as string).toUpperCase()
+
+    if (userRole === 'SUBJECT_HEAD' || userRole === 'HEADSUBJECT') {
+      // Headmaster ONLY sees Lecturers
+      const lecturers = await databaseService.users.find({ 
+        role: 'LECTURER',
+        isActive: true 
+      }).toArray()
+      lecturers.forEach(addContact)
+    } else if (userRole === 'LECTURER') {
+      // Lecturers ONLY see Subject Heads (Headmasters)
+      const headmasters = await databaseService.users.find({ 
+        role: 'SUBJECT_HEAD',
+        isActive: true 
+      }).toArray()
+      headmasters.forEach(addContact)
+    } else if (userRole === 'STUDENT') {
       const classes = await databaseService.classes.find({ 'students.studentId': user._id }).toArray()
       for (const cls of classes) {
         if (cls.lecturer?.lecturerId) {
@@ -44,28 +79,7 @@ class ChatService {
           addContact(s)
         }
       }
-    } else if (user.role === 'LECTURER') {
-      const classes = await databaseService.classes.find({ 'lecturer.lecturerId': user._id }).toArray()
-      for (const cls of classes) {
-        for (const student of cls.students || []) {
-          const s = await databaseService.users.findOne({ _id: student.studentId })
-          addContact(s)
-        }
-      }
-      // Add Subject Heads & Admins as contacts for Lecturers
-      const staff = await databaseService.users.find({ 
-        role: { $in: ['SUBJECT_HEAD', 'ADMIN'] },
-        isActive: true 
-      }).toArray()
-      staff.forEach(addContact)
-    } else if (user.role === 'SUBJECT_HEAD' || (user.role as any) === 'subject_head' || (user.role as any) === 'headsubject') {
-      // Add all Lecturers & Admins as contacts for Subject Head
-      const staff = await databaseService.users.find({ 
-        role: { $in: ['LECTURER', 'ADMIN', 'SUBJECT_HEAD'] },
-        isActive: true 
-      }).toArray()
-      staff.forEach(addContact)
-    } else if (user.role === 'ADMIN') {
+    } else if (userRole === 'ADMIN') {
       const allUsers = await databaseService.users.find({ isActive: true }).limit(50).toArray()
       allUsers.forEach(addContact)
     }
