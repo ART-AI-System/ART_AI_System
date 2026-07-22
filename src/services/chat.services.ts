@@ -87,15 +87,22 @@ class ChatService {
           addContact(s)
         }
       }
-      if (user.departmentId) {
-        const subjectHeads = await databaseService.users.find({ departmentId: user.departmentId, role: 'SUBJECT_HEAD' }).toArray()
-        subjectHeads.forEach(addContact)
-      }
-    } else if (user.role === 'SUBJECT_HEAD') {
-      if (user.departmentId) {
-        const lecturers = await databaseService.users.find({ departmentId: user.departmentId, role: 'LECTURER' }).toArray()
-        lecturers.forEach(addContact)
-      }
+      // Add Subject Heads & Admins as contacts for Lecturers
+      const staff = await databaseService.users.find({ 
+        role: { $in: ['SUBJECT_HEAD', 'ADMIN'] },
+        isActive: true 
+      }).toArray()
+      staff.forEach(addContact)
+    } else if (user.role === 'SUBJECT_HEAD' || (user.role as any) === 'subject_head' || (user.role as any) === 'headsubject') {
+      // Add all Lecturers & Admins as contacts for Subject Head
+      const staff = await databaseService.users.find({ 
+        role: { $in: ['LECTURER', 'ADMIN', 'SUBJECT_HEAD'] },
+        isActive: true 
+      }).toArray()
+      staff.forEach(addContact)
+    } else if (user.role === 'ADMIN') {
+      const allUsers = await databaseService.users.find({ isActive: true }).limit(50).toArray()
+      allUsers.forEach(addContact)
     }
 
     // NEW LOGIC: Also include any user that we already have a direct chat room with
