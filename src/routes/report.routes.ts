@@ -10,6 +10,7 @@ import {
   getClassAiUsageController,
   getSemesterAiUsageController,
   getSuspiciousCasesController,
+  resolveSuspiciousCaseController,
   exportReportController,
   getSubjectAiUsageController
 } from '~/controllers/report.controllers'
@@ -165,6 +166,13 @@ reportRouter.get(
   requireRole('SUBJECT_HEAD'),
   validateSuspiciousQueryParams,
   getSuspiciousCasesController
+)
+
+reportRouter.patch(
+  '/suspicious-cases/:caseId/resolve',
+  requireAuth,
+  requireRole('SUBJECT_HEAD'),
+  resolveSuspiciousCaseController
 )
 
 // ── Section 9.3 — Export Reports ─────────────────────────────────────────────

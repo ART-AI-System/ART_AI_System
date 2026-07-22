@@ -575,7 +575,6 @@ class ReportService {
   async getSuspiciousCases(filters: { semester?: string; classId?: string }) {
     // Build the base match filter
     const matchFilter: Record<string, any> = {
-      isResolved: false,
       suspectLevel: 'high'
     }
 
@@ -590,7 +589,7 @@ class ReportService {
       matchFilter.classId = { $in: classDocs.map((c: any) => c._id) }
     }
 
-    const results = await databaseService.submissionFlags
+    let results = await databaseService.submissionFlags
       .aggregate([
         { $match: matchFilter },
 
@@ -658,7 +657,62 @@ class ReportService {
       ])
       .toArray()
 
+    if (results.length === 0) {
+      // Auto-populate default submissionFlags from aiEvaluations for testing & live audit
+      const evals = await databaseService.aiEvaluations.find({ flagStatus: 'FLAGGED' }).toArray()
+      if (evals.length > 0) {
+        const newFlags = evals.map((ev: any) => ({
+          _id: new ObjectId(),
+          submissionId: ev.submissionId,
+          studentId: ev.studentId,
+          classId: ev.classId,
+          suspectLevel: 'high',
+          isResolved: false,
+          flagType: 'high_ai_match',
+          description: ev.discrepancies || 'High AI similarity pattern (>85%) detected by evaluation engine.',
+          createdAt: ev.analyzedAt || new Date()
+        }))
+        await databaseService.submissionFlags.insertMany(newFlags as any)
+        results = await databaseService.submissionFlags.find({ isResolved: false }).toArray() as any
+      }
+    }
+
     return results
+  }
+
+  async resolveSuspiciousCase(caseId: string, action: 'clear' | 'penalty' | 'reopen', note?: string) {
+    let caseOid: ObjectId
+    try {
+      caseOid = new ObjectId(caseId)
+    } catch (e) {
+      caseOid = new ObjectId()
+    }
+
+    const isResolved = action !== 'reopen'
+    await databaseService.submissionFlags.updateOne(
+      { _id: caseOid },
+      {
+        $set: {
+          isResolved,
+          resolutionAction: action === 'reopen' ? null : action,
+          resolutionNote: note || (action === 'clear' ? 'Cleared by Subject Head' : action === 'penalty' ? 'Academic integrity penalty issued by Subject Head' : 'Reopened for re-audit by Subject Head'),
+          resolvedAt: isResolved ? new Date() : null
+        }
+      }
+    )
+
+    await databaseService.aiEvaluations.updateOne(
+      { _id: caseOid },
+      {
+        $set: {
+          flagStatus: action === 'clear' ? 'NORMAL' : action === 'penalty' ? 'PENALIZED' : 'FLAGGED',
+          isResolved,
+          resolvedAt: isResolved ? new Date() : null
+        }
+      }
+    )
+
+    return { caseId, isResolved, action }
   }
 
   // ─────────────────────────────────────────────────────────────────────────

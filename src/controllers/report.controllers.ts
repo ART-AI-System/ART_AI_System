@@ -138,6 +138,19 @@ export const getSuspiciousCasesController = wrapRequestHandler(
   }
 )
 
+export const resolveSuspiciousCaseController = wrapRequestHandler(
+  async (req: Request, res: Response, _next: NextFunction) => {
+    const caseId = req.params['caseId'] as string
+    const action = (req.body?.action as 'clear' | 'penalty') || 'clear'
+    const note = req.body?.note as string | undefined
+    const result = await reportService.resolveSuspiciousCase(caseId, action, note)
+    res.json({
+      message: `Suspicious case ${action === 'clear' ? 'cleared' : 'penalized'} successfully`,
+      result
+    })
+  }
+)
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 9.3 — Export Reports
 // ─────────────────────────────────────────────────────────────────────────────

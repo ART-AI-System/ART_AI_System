@@ -86,7 +86,7 @@ export const getGradeReportsController = wrapRequestHandler(
   }
 )
 
-export const reviewGradeReportController = (action: 'approve' | 'reject') =>
+export const reviewGradeReportController = (action: 'approve' | 'reject' | 'reopen') =>
   wrapRequestHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const subjectHeadId = (req.user!._id as any).toHexString()
     const reportId = req.params['reportId'] as string
@@ -98,7 +98,7 @@ export const reviewGradeReportController = (action: 'approve' | 'reject') =>
       reviewNote
     )
     res.json({
-      message: `Grade report ${action}d successfully`,
+      message: `Grade report ${action === 'reopen' ? 'reopened' : action + 'd'} successfully`,
       result
     })
   })
