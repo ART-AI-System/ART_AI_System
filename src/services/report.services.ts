@@ -575,7 +575,6 @@ class ReportService {
   async getSuspiciousCases(filters: { semester?: string; classId?: string }) {
     // Build the base match filter
     const matchFilter: Record<string, any> = {
-      isResolved: false,
       suspectLevel: 'high'
     }
 
