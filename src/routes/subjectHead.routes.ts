@@ -96,4 +96,10 @@ subjectHeadRouter.patch(
   reviewGradeReportController('reject')
 )
 
+subjectHeadRouter.patch(
+  '/grade-reports/:reportId/reopen',
+  validateObjectIdParam('reportId'),
+  reviewGradeReportController('reopen')
+)
+
 export default subjectHeadRouter

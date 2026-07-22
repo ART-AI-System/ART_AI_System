@@ -530,7 +530,7 @@ class SubjectHeadService {
   async reviewGradeReport(
     subjectHeadId: string,
     reportId: string,
-    action: 'approve' | 'reject',
+    action: 'approve' | 'reject' | 'reopen',
     reviewNote?: string
   ) {
     const subjectHeadOid = new ObjectId(subjectHeadId)
@@ -546,29 +546,22 @@ class SubjectHeadService {
 
     await this.verifyManagedClass(subjectHeadId, report.classId.toString())
 
-    if (report.status !== 'pending') {
-      throw new ErrorWithStatus({
-        message: 'Grade report has already been reviewed',
-        status: HTTP_STATUS.BAD_REQUEST
-      })
-    }
-
-    if (action === 'reject' && !reviewNote?.trim()) {
+    if (action === 'reject' && !reviewNote?.trim() && !report.reviewNote) {
       throw new ErrorWithStatus({
         message: 'Review note is required when rejecting a grade report',
         status: HTTP_STATUS.BAD_REQUEST
       })
     }
 
-    const newStatus = action === 'approve' ? 'approved' : 'rejected'
+    const newStatus = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'pending'
     await databaseService.gradeReportSubmissions.updateOne(
       { _id: reportOid },
       {
         $set: {
           status: newStatus,
           subjectHeadId: subjectHeadOid,
-          reviewNote: reviewNote?.trim(),
-          reviewedAt: new Date()
+          reviewNote: reviewNote?.trim() || report.reviewNote || (action === 'approve' ? 'Officially approved by Subject Head.' : action === 'reject' ? 'Returned for lecturer re-audit.' : 'Reopened for re-review.'),
+          reviewedAt: newStatus === 'pending' ? undefined : new Date()
         }
       }
     )
@@ -576,7 +569,7 @@ class SubjectHeadService {
     return {
       reportId: reportOid,
       status: newStatus,
-      reviewedAt: new Date()
+      reviewedAt: newStatus === 'pending' ? undefined : new Date()
     }
   }
 }
