@@ -38,11 +38,22 @@ class ChatService {
     const contacts: any[] = []
     const contactIds = new Set<string>()
 
+    const userRole = (user?.role as string || '').toUpperCase()
+
     const addContact = (u: any) => {
-      if (u && u._id.toString() !== userId && !contactIds.has(u._id.toString())) {
-        contactIds.add(u._id.toString())
-        contacts.push({ _id: u._id, fullName: u.fullName, email: u.email, role: u.role, avatar: u.profile?.avatar, username: u.username, studentCode: u.studentCode })
+      if (!u || u._id.toString() === userId || contactIds.has(u._id.toString())) return
+      const uRole = (u.role as string || '').toUpperCase()
+
+      // Strict role filtering for Headmaster and Lecturer
+      if (userRole === 'SUBJECT_HEAD' || userRole === 'HEADSUBJECT') {
+        if (uRole !== 'LECTURER') return // Headmaster ONLY allowed to contact Lecturers
       }
+      if (userRole === 'LECTURER') {
+        if (uRole !== 'SUBJECT_HEAD' && uRole !== 'HEADSUBJECT') return // Lecturer ONLY allowed to contact Headmaster
+      }
+
+      contactIds.add(u._id.toString())
+      contacts.push({ _id: u._id, fullName: u.fullName, email: u.email, role: u.role, avatar: u.profile?.avatar, username: u.username, studentCode: u.studentCode })
     }
 
     if (!user) {
@@ -50,8 +61,6 @@ class ChatService {
       staff.forEach(addContact)
       return contacts
     }
-
-    const userRole = (user.role as string).toUpperCase()
 
     if (userRole === 'SUBJECT_HEAD' || userRole === 'HEADSUBJECT') {
       // Headmaster ONLY sees Lecturers
@@ -84,7 +93,7 @@ class ChatService {
       allUsers.forEach(addContact)
     }
 
-    // NEW LOGIC: Also include any user that we already have a direct chat room with
+    // Also include any user that we already have a direct chat room with (subject to addContact strict role check)
     const userOidForRooms = ObjectId.isValid(userId) ? new ObjectId(userId) : new ObjectId()
     const rooms = await databaseService.chatRooms.find({ 
       memberIds: userOidForRooms, 
@@ -129,10 +138,48 @@ class ChatService {
   }
 
   async getRooms(userId: string) {
-    return await databaseService.chatRooms
-      .find({ memberIds: new ObjectId(userId), archivedBy: { $ne: new ObjectId(userId) } })
+    const currentUser = await databaseService.users.findOne({ _id: ObjectId.isValid(userId) ? new ObjectId(userId) : new ObjectId() })
+    const userRole = (currentUser?.role as string || '').toUpperCase()
+
+    const rooms = await databaseService.chatRooms
+      .find({ memberIds: ObjectId.isValid(userId) ? new ObjectId(userId) : (userId as any), archivedBy: { $ne: ObjectId.isValid(userId) ? new ObjectId(userId) : (userId as any) } })
       .sort({ updatedAt: -1 })
       .toArray()
+
+    if (userRole === 'SUBJECT_HEAD' || userRole === 'HEADSUBJECT') {
+      // Filter rooms so Headmaster ONLY sees rooms with LECTURER members
+      const validRooms: any[] = []
+      for (const room of rooms) {
+        if (room.type === 'group') continue
+        const otherMemberId = room.memberIds.find(id => id.toString() !== userId)
+        if (otherMemberId) {
+          const otherUser = await databaseService.users.findOne({ _id: ObjectId.isValid(otherMemberId.toString()) ? new ObjectId(otherMemberId.toString()) : otherMemberId })
+          if (otherUser && (otherUser.role as string).toUpperCase() === 'LECTURER') {
+            validRooms.push(room)
+          }
+        }
+      }
+      return validRooms
+    }
+
+    if (userRole === 'LECTURER') {
+      // Filter rooms so Lecturer ONLY sees rooms with SUBJECT_HEAD members
+      const validRooms: any[] = []
+      for (const room of rooms) {
+        if (room.type === 'group') continue
+        const otherMemberId = room.memberIds.find(id => id.toString() !== userId)
+        if (otherMemberId) {
+          const otherUser = await databaseService.users.findOne({ _id: ObjectId.isValid(otherMemberId.toString()) ? new ObjectId(otherMemberId.toString()) : otherMemberId })
+          const otherRole = (otherUser?.role as string || '').toUpperCase()
+          if (otherUser && (otherRole === 'SUBJECT_HEAD' || otherRole === 'HEADSUBJECT')) {
+            validRooms.push(room)
+          }
+        }
+      }
+      return validRooms
+    }
+
+    return rooms
   }
 
   async getRoom(userId: string, roomId: string) {
