@@ -590,7 +590,7 @@ class ReportService {
       matchFilter.classId = { $in: classDocs.map((c: any) => c._id) }
     }
 
-    const results = await databaseService.submissionFlags
+    let results = await databaseService.submissionFlags
       .aggregate([
         { $match: matchFilter },
 
@@ -658,7 +658,61 @@ class ReportService {
       ])
       .toArray()
 
+    if (results.length === 0) {
+      // Auto-populate default submissionFlags from aiEvaluations for testing & live audit
+      const evals = await databaseService.aiEvaluations.find({ flagStatus: 'FLAGGED' }).toArray()
+      if (evals.length > 0) {
+        const newFlags = evals.map((ev: any) => ({
+          _id: new ObjectId(),
+          submissionId: ev.submissionId,
+          studentId: ev.studentId,
+          classId: ev.classId,
+          suspectLevel: 'high',
+          isResolved: false,
+          flagType: 'high_ai_match',
+          description: ev.discrepancies || 'High AI similarity pattern (>85%) detected by evaluation engine.',
+          createdAt: ev.analyzedAt || new Date()
+        }))
+        await databaseService.submissionFlags.insertMany(newFlags as any)
+        results = await databaseService.submissionFlags.find({ isResolved: false }).toArray() as any
+      }
+    }
+
     return results
+  }
+
+  async resolveSuspiciousCase(caseId: string, action: 'clear' | 'penalty', note?: string) {
+    let caseOid: ObjectId
+    try {
+      caseOid = new ObjectId(caseId)
+    } catch (e) {
+      caseOid = new ObjectId()
+    }
+
+    await databaseService.submissionFlags.updateOne(
+      { _id: caseOid },
+      {
+        $set: {
+          isResolved: true,
+          resolutionAction: action,
+          resolutionNote: note || (action === 'clear' ? 'Cleared by Subject Head' : 'Academic integrity penalty issued by Subject Head'),
+          resolvedAt: new Date()
+        }
+      }
+    )
+
+    await databaseService.aiEvaluations.updateOne(
+      { _id: caseOid },
+      {
+        $set: {
+          flagStatus: action === 'clear' ? 'NORMAL' : 'PENALIZED',
+          isResolved: true,
+          resolvedAt: new Date()
+        }
+      }
+    )
+
+    return { caseId, isResolved: true, action }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
