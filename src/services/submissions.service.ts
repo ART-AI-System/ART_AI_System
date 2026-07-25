@@ -1,7 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 import { randomUUID } from 'crypto'
-import { inflateRawSync, crc32 } from 'zlib'
+import { crc32 } from 'zlib'
+import AdmZip from 'adm-zip'
 import { ObjectId } from 'mongodb'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { ErrorWithStatus } from '~/models/Errors'
@@ -14,33 +15,10 @@ const SUBMISSION_UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'submissions')
 const HEATMAP_VALID_STATUSES = ['submitted', 'late', 'evaluated', 'reviewed', 'graded', 'flagged']
 const MAX_TEXT_PREVIEW_SIZE = 1024 * 1024
 const TEXT_FILE_EXTENSIONS = new Set([
-  '.txt',
-  '.md',
-  '.json',
-  '.xml',
-  '.html',
-  '.htm',
-  '.css',
-  '.js',
-  '.jsx',
-  '.ts',
-  '.tsx',
-  '.java',
-  '.cs',
-  '.cpp',
-  '.c',
-  '.h',
-  '.py',
-  '.php',
-  '.rb',
-  '.go',
-  '.rs',
-  '.sql',
-  '.yaml',
-  '.yml',
-  '.csv',
-  '.env',
-  '.gitignore'
+  '.txt', '.md', '.json', '.xml', '.html', '.htm', '.css', '.js', '.jsx', '.ts', '.tsx',
+  '.java', '.cs', '.cpp', '.c', '.h', '.py', '.php', '.rb', '.go', '.rs', '.sql',
+  '.yaml', '.yml', '.csv', '.env', '.gitignore',
+  '.properties', '.gradle', '.bat', '.sh', '.ini', '.toml', '.lock', '.log', '.conf'
 ])
 
 type SubmissionHeatmapQuery = {
@@ -60,15 +38,6 @@ type SubmissionTreeNode = {
   size?: number
   mimeType?: string
   children?: SubmissionTreeNode[]
-}
-
-type ZipEntry = {
-  path: string
-  compressedSize: number
-  uncompressedSize: number
-  compressionMethod: number
-  localHeaderOffset: number
-  isDirectory: boolean
 }
 
 function toObjectId(id: string, entityName: string) {
@@ -174,62 +143,10 @@ function addPathToTree(root: SubmissionTreeNode, entryPath: string, size: number
   }
 }
 
-function readZipEntries(buffer: Buffer) {
-  const entries: ZipEntry[] = []
-  let eocdOffset = -1
-  for (let index = buffer.length - 22; index >= 0; index--) {
-    if (buffer.readUInt32LE(index) === 0x06054b50) {
-      eocdOffset = index
-      break
-    }
-  }
-
-  if (eocdOffset === -1) {
-    throw new ErrorWithStatus({
-      message: 'Invalid ZIP submission file',
-      status: HTTP_STATUS.BAD_REQUEST
-    })
-  }
-
-  const centralDirectorySize = buffer.readUInt32LE(eocdOffset + 12)
-  const centralDirectoryOffset = buffer.readUInt32LE(eocdOffset + 16)
-  const centralDirectoryEnd = centralDirectoryOffset + centralDirectorySize
-  let offset = centralDirectoryOffset
-
-  while (offset < centralDirectoryEnd) {
-    if (buffer.readUInt32LE(offset) !== 0x02014b50) break
-
-    const compressionMethod = buffer.readUInt16LE(offset + 10)
-    const compressedSize = buffer.readUInt32LE(offset + 20)
-    const uncompressedSize = buffer.readUInt32LE(offset + 24)
-    const fileNameLength = buffer.readUInt16LE(offset + 28)
-    const extraFieldLength = buffer.readUInt16LE(offset + 30)
-    const fileCommentLength = buffer.readUInt16LE(offset + 32)
-    const localHeaderOffset = buffer.readUInt32LE(offset + 42)
-    const fileName = buffer.toString('utf8', offset + 46, offset + 46 + fileNameLength)
-    const isDirectory = fileName.endsWith('/')
-
-    const safePath = sanitizeZipEntryPath(fileName)
-    if (safePath && !safePath.startsWith('__MACOSX/')) {
-      entries.push({
-        path: safePath,
-        compressedSize,
-        uncompressedSize,
-        compressionMethod,
-        localHeaderOffset,
-        isDirectory
-      })
-    }
-
-    offset += 46 + fileNameLength + extraFieldLength + fileCommentLength
-  }
-
-  return entries
-}
-
 function readZipFileTree(filePath: string, rootName: string): SubmissionTreeNode {
-  const buffer = fs.readFileSync(filePath)
-  const entries = readZipEntries(buffer)
+  const zip = new AdmZip(filePath)
+  const zipEntries = zip.getEntries()
+  
   const root: SubmissionTreeNode = {
     name: rootName,
     path: '',
@@ -237,8 +154,12 @@ function readZipFileTree(filePath: string, rootName: string): SubmissionTreeNode
     children: []
   }
 
-  for (const entry of entries) {
-    addPathToTree(root, entry.path, entry.uncompressedSize || entry.compressedSize, entry.isDirectory)
+  for (const entry of zipEntries) {
+    const safePath = sanitizeZipEntryPath(entry.entryName)
+    if (!safePath || safePath.startsWith('__MACOSX/')) continue
+
+    const size = entry.header.size
+    addPathToTree(root, safePath, size, entry.isDirectory)
   }
 
   sortTreeNodes(root.children || [])
@@ -256,40 +177,6 @@ function looksBinary(buffer: Buffer) {
     if (buffer[index] === 0) return true
   }
   return false
-}
-
-function readZipEntryData(buffer: Buffer, entry: ZipEntry) {
-  if (entry.isDirectory) {
-    throw new ErrorWithStatus({
-      message: 'Selected path is a folder',
-      status: HTTP_STATUS.BAD_REQUEST
-    })
-  }
-
-  if (buffer.readUInt32LE(entry.localHeaderOffset) !== 0x04034b50) {
-    throw new ErrorWithStatus({
-      message: 'Invalid ZIP entry header',
-      status: HTTP_STATUS.BAD_REQUEST
-    })
-  }
-
-  const fileNameLength = buffer.readUInt16LE(entry.localHeaderOffset + 26)
-  const extraFieldLength = buffer.readUInt16LE(entry.localHeaderOffset + 28)
-  const dataStart = entry.localHeaderOffset + 30 + fileNameLength + extraFieldLength
-  const compressedData = buffer.subarray(dataStart, dataStart + entry.compressedSize)
-
-  if (entry.compressionMethod === 0) {
-    return compressedData
-  }
-
-  if (entry.compressionMethod === 8) {
-    return inflateRawSync(compressedData)
-  }
-
-  throw new ErrorWithStatus({
-    message: 'Unsupported ZIP compression method',
-    status: HTTP_STATUS.BAD_REQUEST
-  })
 }
 
 function createSampleZipBuffer(entries: { name: string; content: string }[]): Buffer {
@@ -874,18 +761,18 @@ class SubmissionsService {
         })
       }
 
-      const isText = isTextFile(submission.fileName, submission.mimeType)
       const isTooLarge = submission.fileSize > MAX_TEXT_PREVIEW_SIZE
 
-      if (!isText || isTooLarge) {
+      if (isTooLarge) {
+        const guessedIsText = isTextFile(submission.fileName, submission.mimeType)
         return {
           submissionId,
           path: submission.fileName,
           fileName: submission.fileName,
           size: submission.fileSize,
           mimeType: submission.mimeType,
-          type: isText ? 'text' : 'binary',
-          isText,
+          type: guessedIsText ? 'text' : 'binary',
+          isText: guessedIsText,
           content: null,
           truncated: false,
           downloadUrl: `/api/submissions/${submissionId}/download`
@@ -917,9 +804,9 @@ class SubmissionsService {
       })
     }
 
-    const zipBuffer = fs.readFileSync(filePath)
-    const entries = readZipEntries(zipBuffer)
-    const entry = entries.find((zipEntry) => zipEntry.path === requestedPath)
+    const zip = new AdmZip(filePath)
+    const zipEntries = zip.getEntries()
+    const entry = zipEntries.find((zipEntry) => sanitizeZipEntryPath(zipEntry.entryName) === requestedPath)
 
     if (!entry) {
       throw new ErrorWithStatus({
@@ -935,32 +822,32 @@ class SubmissionsService {
       })
     }
 
-    const isText = isTextFile(entry.path)
-    const isTooLarge = entry.uncompressedSize > MAX_TEXT_PREVIEW_SIZE
+    const isTooLarge = entry.header.size > MAX_TEXT_PREVIEW_SIZE
 
-    if (!isText || isTooLarge) {
+    if (isTooLarge) {
+      const guessedIsText = isTextFile(requestedPath)
       return {
         submissionId,
-        path: entry.path,
-        fileName: path.basename(entry.path),
-        size: entry.uncompressedSize,
+        path: requestedPath,
+        fileName: path.basename(requestedPath),
+        size: entry.header.size,
         mimeType: 'application/octet-stream',
-        type: isText ? 'text' : 'binary',
-        isText,
+        type: guessedIsText ? 'text' : 'binary',
+        isText: guessedIsText,
         content: null,
         truncated: false,
         downloadUrl: `/api/submissions/${submissionId}/download`
       }
     }
 
-    const contentBuffer = readZipEntryData(zipBuffer, entry)
+    const contentBuffer = entry.getData()
     const isBinary = looksBinary(contentBuffer)
 
     return {
       submissionId,
-      path: entry.path,
-      fileName: path.basename(entry.path),
-      size: entry.uncompressedSize,
+      path: requestedPath,
+      fileName: path.basename(requestedPath),
+      size: entry.header.size,
       mimeType: 'text/plain',
       type: isBinary ? 'binary' : 'text',
       isText: !isBinary,
@@ -1007,9 +894,9 @@ class SubmissionsService {
       }
     }
 
-    const zipBuffer = fs.readFileSync(filePath)
-    const entries = readZipEntries(zipBuffer)
-    const entry = entries.find((zipEntry) => zipEntry.path === requestedPath)
+    const zip = new AdmZip(filePath)
+    const zipEntries = zip.getEntries()
+    const entry = zipEntries.find((zipEntry) => sanitizeZipEntryPath(zipEntry.entryName) === requestedPath)
 
     if (!entry) {
       throw new ErrorWithStatus({
@@ -1018,12 +905,12 @@ class SubmissionsService {
       })
     }
 
-    const buffer = readZipEntryData(zipBuffer, entry)
+    const buffer = entry.getData()
 
     return {
       buffer,
-      fileName: path.basename(entry.path),
-      mimeType: isTextFile(entry.path) ? 'text/plain' : 'application/octet-stream'
+      fileName: path.basename(requestedPath),
+      mimeType: isTextFile(requestedPath) ? 'text/plain' : 'application/octet-stream'
     }
   }
 
