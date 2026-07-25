@@ -58,6 +58,12 @@ class GradesService {
       }
     }
 
+    // Update the submission status to 'graded'
+    await databaseService.submissions.updateOne(
+      { _id: new ObjectId(submissionId) },
+      { $set: { status: 'graded', updatedAt: new Date() } }
+    )
+
     // Return the result for the specific target student, or the first one
     return results[0]
   }
