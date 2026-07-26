@@ -17,3 +17,10 @@ docs/testing
 .ai_rules.md
 RULE_AI.md
 ai_rule*.md
+
+# Temporary AI scratch & logs
+scratch/
+*.log
+pr_body.txt
+pr_*.md
+
