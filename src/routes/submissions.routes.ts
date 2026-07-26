@@ -8,6 +8,7 @@ import {
   getMySubmissionByGradeItemController,
   getMySubmissionsController,
   getSubmissionByIdController,
+  deleteSubmissionController,
   getSubmissionVersionByIdController,
   getSubmissionVersionsController,
   getSubmissionsByGradeItemController,
@@ -19,13 +20,26 @@ import {
   getAIGradeSuggestionController,
   getAIAnnotateFileController,
   aiAuditAndVivaController,
-  aiHolisticSynthesisController
+  aiHolisticSynthesisController,
+  getGroupedStudentsController
 } from '~/controllers/submissions.controller'
 import { requireAuth, requireRole } from '~/middlewares/auth.middlewares'
 import { parseSubmissionFile } from '~/middlewares/submissions.middleware'
 import { wrapRequestHandler } from '~/utils/handlers'
 
 const submissionsRouter = Router()
+
+submissionsRouter.get(
+  '/assignments/:assignmentId/grouped-students',
+  requireAuth,
+  wrapRequestHandler(getGroupedStudentsController)
+)
+
+submissionsRouter.get(
+  '/grade-items/:gradeItemId/grouped-students',
+  requireAuth,
+  wrapRequestHandler(getGroupedStudentsController)
+)
 
 submissionsRouter.post(
   '/grade-items/:gradeItemId/submissions',
@@ -70,6 +84,8 @@ submissionsRouter.get(
 )
 
 submissionsRouter.get('/submissions/:id', requireAuth, wrapRequestHandler(getSubmissionByIdController))
+
+submissionsRouter.delete('/submissions/:id', requireAuth, requireRole('LECTURER'), wrapRequestHandler(deleteSubmissionController))
 
 submissionsRouter.get('/submissions/:id/download', requireAuth, wrapRequestHandler(downloadSubmissionController))
 

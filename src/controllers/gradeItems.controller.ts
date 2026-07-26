@@ -15,6 +15,32 @@ export const createGradeItemController = async (req: Request, res: Response, nex
   }
 }
 
+export const importTestController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { classId } = req.params
+    const file = (req as any).file as unknown as UploadedAssignmentMaterialFile
+    const { title, duration, totalPoints, showResultImmediately, sessionId, randomCount, isRandomPerStudent } = req.body
+
+    const result = await gradeItemsService.importTest(classId as string, {
+      file,
+      title,
+      duration: Number(duration),
+      totalPoints: Number(totalPoints),
+      showResultImmediately: showResultImmediately === 'true',
+      sessionId,
+      randomCount: Number(randomCount),
+      isRandomPerStudent: isRandomPerStudent === 'true'
+    })
+
+    res.status(201).json({
+      message: 'Test imported and generated successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const getGradeItemsByClassController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { classId } = req.params

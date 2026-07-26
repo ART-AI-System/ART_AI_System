@@ -39,6 +39,113 @@ class GradeItemsService {
     return { ...newGradeItem, _id: result.insertedId }
   }
 
+  async importTest(classId: string, payload: any) {
+    const mammoth = require('mammoth');
+    const cheerio = require('cheerio');
+    
+    const result = await mammoth.convertToHtml({ path: payload.file.filepath });
+    const html = result.value;
+    const $ = cheerio.load(html);
+    
+    const parsedQuestions: any[] = [];
+    let currentQuestion: any = null;
+    
+    $('p').each((_: any, element: any) => {
+      const text = $(element).text().trim();
+      if (!text) return;
+
+      const questionMatch = text.match(/^(?:Câu\s*hỏi\s*\d+|Question\s*\d+|\d+)\.?\s*(?:\(.*?\))?\s*(.*)/i);
+      if (questionMatch) {
+        if (currentQuestion) parsedQuestions.push(currentQuestion);
+        currentQuestion = {
+          _id: new ObjectId(),
+          type: 'multiple-choice',
+          text: questionMatch[1] || text.replace(/^(?:Câu\s*hỏi\s*\d+|Question\s*\d+|\d+)\.?\s*/i, '').trim(),
+          points: 0,
+          options: []
+        };
+        return;
+      }
+
+      if (currentQuestion) {
+        const optionMatch = text.match(/^([A-E])\.\s*(.*)/i);
+        if (optionMatch) {
+          const isBold = $(element).find('strong, b').length > 0;
+          currentQuestion.options.push({
+            _id: new ObjectId(),
+            text: optionMatch[2],
+            isCorrect: isBold
+          });
+          return;
+        }
+
+        const answerMatch = text.match(/^(?:Đáp\s*án\/?\s*Answer:|Đáp\s*án:)\s*([A-E])/i);
+        if (answerMatch && currentQuestion.options.length > 0) {
+          const answerLetter = answerMatch[1].toUpperCase();
+          const optionIndex = answerLetter.charCodeAt(0) - 65; // A=0, B=1...
+          if (currentQuestion.options[optionIndex]) {
+            currentQuestion.options.forEach((opt: any) => opt.isCorrect = false);
+            currentQuestion.options[optionIndex].isCorrect = true;
+          }
+          return;
+        }
+        
+        if (currentQuestion.options.length === 0 && !text.match(/^([A-E])\./i)) {
+          // Multiline question text
+          currentQuestion.text += '\n' + text;
+        }
+      }
+    });
+
+    if (currentQuestion) parsedQuestions.push(currentQuestion);
+
+    // Randomize and limit
+    let finalQuestions = [...parsedQuestions];
+    for (let i = finalQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [finalQuestions[i], finalQuestions[j]] = [finalQuestions[j], finalQuestions[i]];
+    }
+    
+    if (payload.randomCount && payload.randomCount > 0) {
+      if (payload.randomCount > finalQuestions.length) {
+        // Resample to fill
+        const originalPool = [...finalQuestions];
+        while (finalQuestions.length < payload.randomCount) {
+          const randomQ = originalPool[Math.floor(Math.random() * originalPool.length)];
+          finalQuestions.push({ ...randomQ, _id: new ObjectId() }); // clone with new id
+        }
+      } else if (!payload.isRandomPerStudent) {
+        finalQuestions = finalQuestions.slice(0, payload.randomCount);
+      }
+    }
+
+    // Distribute points equally
+    const activeQuestionCount = (payload.isRandomPerStudent && payload.randomCount > 0) ? payload.randomCount : finalQuestions.length;
+    const pointPerQuestion = payload.totalPoints / activeQuestionCount;
+    finalQuestions.forEach(q => q.points = pointPerQuestion);
+
+    // Clean up temp file
+    if (fs.existsSync(payload.file.filepath)) {
+      fs.unlinkSync(payload.file.filepath);
+    }
+
+    const testPayload = {
+      title: payload.title,
+      type: 'test',
+      duration: payload.duration,
+      totalPoints: payload.totalPoints,
+      showResultImmediately: payload.showResultImmediately,
+      sessionId: payload.sessionId,
+      questions: finalQuestions,
+      randomCount: payload.randomCount,
+      isRandomPerStudent: payload.isRandomPerStudent,
+      status: 'published'
+    };
+
+    return this.createGradeItem(classId, testPayload);
+  }
+
+
   async getGradeItemsByClassId(classId: string) {
     const items = await databaseService.gradeItems.find({ classId: new ObjectId(classId) }).toArray()
     return items

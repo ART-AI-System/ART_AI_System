@@ -412,6 +412,27 @@ class SubmissionsService {
       .toArray()
   }
 
+  async getGroupedStudentsByGradeItem(gradeItemId: string) {
+    const gradeItemObjectId = toObjectId(gradeItemId, 'Grade item')
+    
+    const submissions = await databaseService.submissions.find({
+      gradeItemId: gradeItemObjectId,
+      isLatest: true
+    }).toArray()
+    
+    const groupedStudentIds = new Set<string>()
+    for (const sub of submissions) {
+      if (sub.groupMembers && sub.groupMembers.length > 0) {
+        for (const member of sub.groupMembers) {
+          groupedStudentIds.add(member.toString())
+        }
+      }
+      groupedStudentIds.add(sub.studentId.toString())
+    }
+    
+    return Array.from(groupedStudentIds)
+  }
+
   async getSubmissionHistoryByGradeItem(gradeItemId: string, user: User) {
     const gradeItemObjectId = toObjectId(gradeItemId, 'Grade item')
     const userObjectId = user._id as ObjectId
@@ -503,6 +524,10 @@ class SubmissionsService {
 
     await this.assertCanViewSubmission(submission, user)
     return submission
+  }
+
+  async deleteSubmission(id: string) {
+    await databaseService.submissions.deleteOne({ _id: toObjectId(id, 'Submission') })
   }
 
   async getSubmissionDetailById(id: string, user: User) {
