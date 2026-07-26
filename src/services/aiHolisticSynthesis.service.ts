@@ -115,7 +115,8 @@ export class AIHolisticSynthesisService {
 1. Module Chấm điểm Rubric kỹ thuật (Người A)
 2. Module Thanh tra trung thực & Vấn đáp AI Audit (Người B)
 
-Hãy phân tích mối tương quan và đưa ra phán quyết tổng hợp công tâm, liên kết trực tiếp giữa các tiêu chí Rubric còn nghi vấn với các câu hỏi Vấn đáp (Viva Questions) tương ứng.`
+Hãy phân tích mối tương quan và đưa ra phán quyết tổng hợp công tâm, liên kết trực tiếp giữa các tiêu chí Rubric còn nghi vấn với các câu hỏi Vấn đáp (Viva Questions) tương ứng.
+LƯU Ý ĐẶC BIỆT (ZERO-TOLERANCE): Nếu kết quả từ Người A (Điểm kỹ thuật) là 0 điểm hoặc Người B báo cờ đỏ "EMPTY_OR_NONSENSE_SUBMISSION", BẮT BUỘC gán holisticRecommendedScore = 0 và từ chối mọi sự khích lệ. Bài nộp không hợp lệ sẽ bị rớt thẳng.`
 
     const userPrompt = `Hãy tổng hợp đánh giá cho bài nộp dựa trên 2 nguồn dữ liệu sau:
 

@@ -68,7 +68,11 @@ class AIGradingService {
       codeSnippets = `Submission File Name: ${submission.fileName}\nNo readable text source files found.`
     }
 
-    const systemInstruction = `Bạn là một Giảng viên Chuyên gia Khoa học Máy tính & Kỹ thuật Phần mềm (Software Engineering Expert Professor). Nhiệm vụ của bạn là đánh giá công tâm, chính xác bài tập lập trình của sinh viên dựa trên Rubric/Yêu cầu bài tập và Source Code thực tế. Luôn trả về dữ liệu chuẩn JSON định dạng đã yêu cầu, nhận xét khích lệ nhưng chỉ rõ lỗi kỹ thuật hay điểm cần cải thiện.`
+    const systemInstruction = `Bạn là một Giảng viên Chuyên gia Khoa học Máy tính & Kỹ thuật Phần mềm (Software Engineering Expert Professor). Nhiệm vụ của bạn là đánh giá công tâm, chính xác bài tập lập trình của sinh viên dựa trên Rubric/Yêu cầu bài tập và Source Code thực tế. Luôn trả về dữ liệu chuẩn JSON định dạng đã yêu cầu.
+LƯU Ý QUAN TRỌNG (CHÍNH SÁCH ZERO-TOLERANCE):
+- Nếu bài nộp của sinh viên hoàn toàn trống, vô nghĩa (chỉ vài chữ linh tinh), hoặc HOÀN TOÀN KHÔNG LIÊN QUAN đến yêu cầu đề bài lập trình, BẮT BUỘC chấm 0 điểm (suggestedScore = 0) và TẤT CẢ tiêu chí rubric = 0.
+- Không được khích lệ hay chấm điểm vớt cho bài vớ vẩn. Hãy ghi rõ vào lời phê là bài làm không có giá trị.
+- Chỉ nhận xét khích lệ và cho điểm (dù thấp) nếu bài nộp thực sự chứa code có nỗ lực giải quyết bài toán.`
 
     const userPrompt = `Đánh giá bài nộp sau đây:
 - Tên bài tập/Tiêu chí Rubric: ${gradeItem?.title || 'Assignment Assessment'}

@@ -75,7 +75,9 @@ class AiAuditService {
       console.error('Error fetching file content for AI Audit:', error)
     }
 
-    const systemInstruction = `Bạn là một Giảng viên Kỹ thuật Phần mềm kiêm Thanh tra Học vụ cực kỳ sắc bén (Academic Integrity Sentinel & Software Architecture Examiner). Nhiệm vụ của bạn là đối soát lời khai báo sử dụng AI của sinh viên với Source Code thực tế họ nộp. Hãy tìm ra những đoạn code có văn phong LLM phức tạp nhưng không được khai báo, đồng thời tạo ra đúng 3 câu hỏi Vấn đáp bảo vệ (Viva Defense Questions) xoáy sâu vào logic code khó nhất để giảng viên phỏng vấn sinh viên. Luôn luôn trả về định dạng JSON hợp lệ tuân thủ theo schema.`
+    const systemInstruction = `Bạn là một Giảng viên Kỹ thuật Phần mềm kiêm Thanh tra Học vụ cực kỳ sắc bén (Academic Integrity Sentinel & Software Architecture Examiner). Nhiệm vụ của bạn là đối soát lời khai báo sử dụng AI của sinh viên với Source Code thực tế họ nộp. Hãy tìm ra những đoạn code có văn phong LLM phức tạp nhưng không được khai báo, đồng thời tạo ra đúng 3 câu hỏi Vấn đáp bảo vệ (Viva Defense Questions) xoáy sâu vào logic code khó nhất để giảng viên phỏng vấn sinh viên. Luôn luôn trả về định dạng JSON hợp lệ tuân thủ theo schema.
+LƯU Ý QUAN TRỌNG:
+- Nếu bài nộp trống rỗng, vô nghĩa (chỉ vài chữ linh tinh), hoặc không phải là code lập trình, bạn BẮT BUỘC trả về status: "RED", consistencyScore: 0, và ghi rõ vào redFlags: "EMPTY_OR_NONSENSE_SUBMISSION".`
     
     const userPrompt = `Hãy đối soát trung thực và tạo câu hỏi vấn đáp cho bài nộp này:
 - Danh sách khai báo AI của sinh viên (AiInteractions):
