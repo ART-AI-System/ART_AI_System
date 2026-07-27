@@ -192,3 +192,17 @@ export const exportReportController = wrapRequestHandler(
     }
   }
 )
+
+/**
+ * GET /api/reports/integrity-heatmap
+ * Returns AI Integrity Heatmap matrix & anomaly warnings for Subject Head.
+ */
+export const getDepartmentIntegrityHeatmapController = wrapRequestHandler(
+  async (_req: Request, res: Response, _next: NextFunction) => {
+    const result = await reportService.getDepartmentIntegrityHeatmap()
+    res.json({
+      message: 'Get department integrity heatmap successfully',
+      result
+    })
+  }
+)

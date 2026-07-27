@@ -12,7 +12,8 @@ import {
   getSuspiciousCasesController,
   resolveSuspiciousCaseController,
   exportReportController,
-  getSubjectAiUsageController
+  getSubjectAiUsageController,
+  getDepartmentIntegrityHeatmapController
 } from '~/controllers/report.controllers'
 
 /**
@@ -173,6 +174,13 @@ reportRouter.patch(
   requireAuth,
   requireRole('SUBJECT_HEAD'),
   resolveSuspiciousCaseController
+)
+
+reportRouter.get(
+  '/integrity-heatmap',
+  requireAuth,
+  requireRole('SUBJECT_HEAD'),
+  getDepartmentIntegrityHeatmapController
 )
 
 // ── Section 9.3 — Export Reports ─────────────────────────────────────────────
