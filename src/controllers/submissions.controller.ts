@@ -191,13 +191,6 @@ export const resubmitSubmissionVersionController = async (req: Request, res: Res
     const user = req.user as User
     const submissionFile = req.submissionFile as UploadedSubmissionFile | undefined
 
-    if (!submissionFile) {
-      throw new ErrorWithStatus({
-        message: 'Submission file is required',
-        status: HTTP_STATUS.BAD_REQUEST
-      })
-    }
-
     const result = await submissionsService.resubmitSubmissionVersion(
       submissionId as string,
       user._id!.toString(),
