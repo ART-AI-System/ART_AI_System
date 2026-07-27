@@ -62,6 +62,21 @@ export const getMySubmissionByGradeItemController = async (req: Request, res: Re
   }
 }
 
+export const getGroupedStudentsController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { gradeItemId, assignmentId } = req.params
+    const targetGradeItemId = (gradeItemId || assignmentId) as string
+    const result = await submissionsService.getGroupedStudentsByGradeItem(targetGradeItemId)
+
+    res.json({
+      message: 'Get grouped students successfully',
+      result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const getSubmissionsByGradeItemController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { gradeItemId, assignmentId } = req.params
@@ -94,6 +109,12 @@ export const getSubmissionByIdController = async (req: Request, res: Response, n
   } catch (error) {
     next(error)
   }
+}
+
+export const deleteSubmissionController = async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params
+  await submissionsService.deleteSubmission(id as string)
+  res.json({ message: 'Xóa bài nộp thành công' })
 }
 
 export const downloadSubmissionController = async (req: Request, res: Response, next: NextFunction) => {

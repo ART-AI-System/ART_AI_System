@@ -277,14 +277,7 @@ class AiEvaluationService {
     await this.assertCanViewSubmission(submission, userOid, role)
 
     const evaluation = await databaseService.aiEvaluations.findOne({ submissionId: submissionOid })
-    if (!evaluation) {
-      throw new ErrorWithStatus({
-        message: 'AI Evaluation not found for this submission',
-        status: HTTP_STATUS.NOT_FOUND
-      })
-    }
-
-    return evaluation
+    return evaluation // Will be null if not found, which is fine
   }
 
   async getEvaluationsByClass(classId: string, userId: string, role: string) {

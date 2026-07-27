@@ -7,6 +7,7 @@ import {
   updateClassController,
   deleteClassController,
   importStudentsController,
+  importAndCreateClassController,
   addStudentToClassController,
   removeStudentFromClassController,
   promoteCohortController
@@ -27,6 +28,9 @@ classesRouter.delete('/:id', requireAuth, requireRole('ADMIN', 'SUBJECT_HEAD'), 
 
 // Admin imports student list
 classesRouter.post('/:id/import', requireAuth, requireRole('ADMIN'), parseImportFile, importStudentsController)
+
+// Admin creates a class and imports student list simultaneously
+classesRouter.post('/import-create', requireAuth, requireRole('ADMIN'), parseImportFile, importAndCreateClassController)
 
 // Admin promotes a cohort to next semester
 classesRouter.post('/:id/promote', requireAuth, requireRole('ADMIN'), promoteCohortController)
