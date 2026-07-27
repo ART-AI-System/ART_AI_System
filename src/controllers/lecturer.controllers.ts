@@ -5,7 +5,8 @@ import lecturerService from '~/services/lecturer.services'
 export const getLecturerHomeController = wrapRequestHandler(
   async (req: Request, res: Response, _next: NextFunction) => {
     const lecturerId = (req.user!._id as any).toHexString()
-    const result = await lecturerService.getHome(lecturerId)
+    const semesterId = req.query.semesterId as string | undefined
+    const result = await lecturerService.getHome(lecturerId, semesterId)
     res.json({
       message: 'Get lecturer home successfully',
       result

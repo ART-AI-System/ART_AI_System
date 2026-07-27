@@ -64,32 +64,24 @@ class ClassesService {
   }
 
   async getClassById(id: string) {
-    const classDataArr = await databaseService.classes.aggregate([
-      { $match: { _id: new ObjectId(id) } },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'students.studentId',
-          foreignField: '_id',
-          as: 'studentDetails'
-        }
-      }
-    ]).toArray()
-    
+    const classDataArr = await databaseService.classes.find({ _id: new ObjectId(id) }).toArray()
     if (!classDataArr.length) return null;
     const classData = classDataArr[0];
     
-    if (classData.students && classData.studentDetails) {
+    if (classData.students && classData.students.length > 0) {
+      const studentIds = classData.students.map((s: any) => new ObjectId(s.studentId));
+      const studentDetails = await databaseService.users.find({ _id: { $in: studentIds } }).toArray();
+      
       classData.students = classData.students.map((student: any) => {
-        const user = classData.studentDetails.find((u: any) => u._id.toString() === student.studentId.toString());
+        const user = studentDetails.find((u: any) => u._id.toString() === student.studentId.toString());
         return {
           ...student,
-          fullName: user ? user.fullName : 'Unknown'
+          fullName: user ? user.fullName : student.fullName || 'Unknown',
+          email: user ? user.email : student.email || 'Unknown'
         };
       });
     }
     
-    delete classData.studentDetails;
     return classData;
   }
 

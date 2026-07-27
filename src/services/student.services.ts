@@ -8,20 +8,20 @@ class StudentService {
    * Helper to format enrolled subjects from Class/ClassMember records
    */
   private async getEnrolledSubjects(studentOid: ObjectId, semesterOid: ObjectId) {
-    const classMembers = await databaseService.classMembers
-      .find({ studentId: studentOid, semesterId: semesterOid, status: 'active' })
-      .toArray()
-
-    const classIds = classMembers.map((cm) => cm.classId)
-
-    if (classIds.length === 0) return []
-
     const classes = await databaseService.classes
-      .find({ _id: { $in: classIds }, isActive: true })
+      .find({ 
+        'students.studentId': studentOid, 
+        semesterId: semesterOid,
+        isActive: { $ne: false } // Include classes without isActive or where it is true
+      })
       .toArray()
 
-    const subjectIds = classes.map((c: any) => c.subjectId).filter(Boolean)
-    const lecturerIds = classes.map((c: any) => c.lecturer?.lecturerId || c.lecturerId).filter(Boolean)
+    if (classes.length === 0) return []
+
+    const rawSubjectIds = classes.map((c: any) => c.subjectId).filter(Boolean)
+    const subjectIds = rawSubjectIds.map((id: any) => new ObjectId(id))
+    const rawLecturerIds = classes.map((c: any) => c.lecturer?.lecturerId || c.lecturerId).filter(Boolean)
+    const lecturerIds = rawLecturerIds.map((id: any) => new ObjectId(id))
 
     const [subjects, lecturers] = await Promise.all([
       databaseService.subjects.find({ _id: { $in: subjectIds } }).toArray(),
@@ -33,35 +33,38 @@ class StudentService {
       const lecturer = lecturers.find((l) => l._id.toString() === (c.lecturerId || c.lecturer?.lecturerId)?.toString())
       
       return {
-        subjectId: c.subjectSnapshot?.subjectId || c.subjectId,
-        subjectCode: c.subjectSnapshot?.code || subject?.code || 'UNK',
-        subjectName: c.subjectSnapshot?.name || subject?.name || 'Unknown Subject',
+        subjectId: c.subjectId || c.subjectSnapshot?.subjectId,
+        subjectCode: subject?.code || c.subjectSnapshot?.code || 'UNK',
+        subjectName: subject?.name || c.subjectSnapshot?.name || 'Unknown Subject',
         classId: c._id,
         classCode: c.classCode,
-        lecturerName: c.lecturer?.fullName || lecturer?.fullName || 'Unknown Lecturer'
+        lecturerName: lecturer?.fullName || c.lecturer?.fullName || 'Unknown Lecturer'
       }
     })
   }
 
-  async getHome(studentId: string) {
+  async getHome(studentId: string, semesterId?: string) {
     const studentOid = new ObjectId(studentId)
 
-    // Find current semester
-    const currentSemester = await databaseService.semesters.findOne({ isCurrent: true, isActive: true })
-    if (!currentSemester) {
+    let targetSemester;
+    if (semesterId) {
+      targetSemester = await databaseService.semesters.findOne({ _id: new ObjectId(semesterId) })
+    } else {
+      // Find current semester
+      targetSemester = await databaseService.semesters.findOne({ isCurrent: true, isActive: { $ne: false } })
+    }
+
+    if (!targetSemester) {
       return {
         currentSemester: null,
         subjects: []
       }
     }
 
-    const subjects = await this.getEnrolledSubjects(studentOid, currentSemester._id)
+    const subjects = await this.getEnrolledSubjects(studentOid, targetSemester._id)
 
     return {
-      currentSemester: {
-        id: currentSemester._id,
-        name: currentSemester.name
-      },
+      currentSemester: targetSemester,
       subjects
     }
   }

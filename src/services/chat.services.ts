@@ -49,7 +49,7 @@ class ChatService {
         if (uRole !== 'LECTURER') return // Headmaster ONLY allowed to contact Lecturers
       }
       if (userRole === 'LECTURER') {
-        if (uRole !== 'SUBJECT_HEAD' && uRole !== 'HEADSUBJECT') return // Lecturer ONLY allowed to contact Headmaster
+        if (uRole !== 'SUBJECT_HEAD' && uRole !== 'HEADSUBJECT' && uRole !== 'STUDENT' && uRole !== 'ADMIN') return // Lecturer can contact Headmaster, Students, and Admin
       }
 
       contactIds.add(u._id.toString())
@@ -163,7 +163,7 @@ class ChatService {
     }
 
     if (userRole === 'LECTURER') {
-      // Filter rooms so Lecturer ONLY sees rooms with SUBJECT_HEAD members
+      // Lecturer sees rooms with SUBJECT_HEAD or STUDENT members
       const validRooms: any[] = []
       for (const room of rooms) {
         if (room.type === 'group') continue
@@ -171,7 +171,7 @@ class ChatService {
         if (otherMemberId) {
           const otherUser = await databaseService.users.findOne({ _id: ObjectId.isValid(otherMemberId.toString()) ? new ObjectId(otherMemberId.toString()) : otherMemberId })
           const otherRole = (otherUser?.role as string || '').toUpperCase()
-          if (otherUser && (otherRole === 'SUBJECT_HEAD' || otherRole === 'HEADSUBJECT')) {
+          if (otherUser && (otherRole === 'SUBJECT_HEAD' || otherRole === 'HEADSUBJECT' || otherRole === 'STUDENT' || otherRole === 'ADMIN')) {
             validRooms.push(room)
           }
         }
