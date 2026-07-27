@@ -1,5 +1,13 @@
 import { ObjectId } from 'mongodb'
 
+export interface RubricGradeScore {
+  criterionId: string
+  name: string
+  score: number
+  maxPoints: number
+  comment?: string
+}
+
 export interface GradeType {
   _id?: ObjectId
   submissionId: ObjectId
@@ -9,6 +17,10 @@ export interface GradeType {
   score: number
   maxScore?: number
   feedback?: string
+  rubricScores?: RubricGradeScore[]
+  aiAdvisoryRunId?: ObjectId
+  lecturerAdjustmentReason?: string
+  publishedAt?: Date
   gradedBy: ObjectId
   createdAt?: Date
   updatedAt?: Date
@@ -23,6 +35,10 @@ export default class Grade {
   score: number
   maxScore: number
   feedback: string
+  rubricScores?: RubricGradeScore[]
+  aiAdvisoryRunId?: ObjectId
+  lecturerAdjustmentReason?: string
+  publishedAt?: Date
   gradedBy: ObjectId
   createdAt: Date
   updatedAt: Date
@@ -34,8 +50,12 @@ export default class Grade {
     this.classId = grade.classId
     this.gradeItemId = grade.gradeItemId
     this.score = grade.score
-    this.maxScore = grade.maxScore || 10
+    this.maxScore = grade.maxScore ?? 10
     this.feedback = grade.feedback || ''
+    this.rubricScores = grade.rubricScores || []
+    this.aiAdvisoryRunId = grade.aiAdvisoryRunId
+    this.lecturerAdjustmentReason = grade.lecturerAdjustmentReason || ''
+    this.publishedAt = grade.publishedAt || new Date()
     this.gradedBy = grade.gradedBy
     this.createdAt = grade.createdAt || new Date()
     this.updatedAt = grade.updatedAt || new Date()

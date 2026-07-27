@@ -17,6 +17,10 @@ export interface AiEvaluationType {
   criticalThinkingScore?: number
   aiDependencyScore?: number
   summary?: string
+  aiGradingSuggestion?: Record<string, any>
+  aiAudit?: Record<string, any>
+  aiHolisticSuggestion?: Record<string, any>
+  aiSuggestionUpdatedAt?: Date
   evaluatedAt?: Date
   createdAt?: Date
   updatedAt?: Date
@@ -36,6 +40,10 @@ export default class AiEvaluation {
   criticalThinkingScore: number
   aiDependencyScore: number
   summary: string
+  aiGradingSuggestion?: Record<string, any>
+  aiAudit?: Record<string, any>
+  aiHolisticSuggestion?: Record<string, any>
+  aiSuggestionUpdatedAt?: Date
   evaluatedAt: Date
   createdAt: Date
   updatedAt: Date
@@ -55,6 +63,10 @@ export default class AiEvaluation {
     this.criticalThinkingScore = evaluation.criticalThinkingScore ?? 0
     this.aiDependencyScore = evaluation.aiDependencyScore ?? 0
     this.summary = evaluation.summary ?? ''
+    this.aiGradingSuggestion = evaluation.aiGradingSuggestion
+    this.aiAudit = evaluation.aiAudit
+    this.aiHolisticSuggestion = evaluation.aiHolisticSuggestion
+    this.aiSuggestionUpdatedAt = evaluation.aiSuggestionUpdatedAt
     this.evaluatedAt = evaluation.evaluatedAt || date
     this.createdAt = evaluation.createdAt || date
     this.updatedAt = evaluation.updatedAt || date

@@ -1,5 +1,13 @@
 import { ObjectId } from 'mongodb'
 
+export interface RubricCriterion {
+  id: string
+  name: string
+  description: string
+  maxPoints: number
+  evidenceRequirements?: string[]
+}
+
 export interface GradeItemType {
   _id?: ObjectId
   classId: ObjectId
@@ -13,6 +21,7 @@ export interface GradeItemType {
   minAiInteractions?: number
   maxAiInteractions?: number
   aiDeclarationConfig?: { categoryId: string, weight: number }[]
+  rubric?: RubricCriterion[]
   sequenceOrder?: number
   isActive?: boolean
   isGroupAssignment?: boolean
@@ -43,6 +52,7 @@ export default class GradeItem {
   minAiInteractions: number
   maxAiInteractions: number
   aiDeclarationConfig: { categoryId: string, weight: number }[]
+  rubric: RubricCriterion[]
   sequenceOrder: number
   isActive: boolean
   isGroupAssignment: boolean
@@ -73,6 +83,7 @@ export default class GradeItem {
     this.minAiInteractions = gradeItemData.minAiInteractions || 0
     this.maxAiInteractions = gradeItemData.maxAiInteractions || 0
     this.aiDeclarationConfig = gradeItemData.aiDeclarationConfig || []
+    this.rubric = gradeItemData.rubric || []
     this.sequenceOrder = gradeItemData.sequenceOrder || 1
     this.isActive = gradeItemData.isActive ?? true
     this.isGroupAssignment = gradeItemData.isGroupAssignment ?? false

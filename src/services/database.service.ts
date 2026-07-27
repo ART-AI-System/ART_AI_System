@@ -153,6 +153,7 @@ class DatabaseService {
         process.env.DB_SUBMISSIONS_COLLECTION || 'submissions',
         process.env.DB_AI_INTERACTIONS_COLLECTION || 'ai_interactions',
         process.env.DB_AI_EVALUATIONS_COLLECTION || 'ai_evaluations',
+        process.env.DB_AI_ADVISORY_RUNS_COLLECTION || 'ai_advisory_runs',
         process.env.DB_SUBMISSION_FLAGS_COLLECTION || 'submission_flags',
         process.env.DB_SUBMISSION_REVIEWS_COLLECTION || 'submission_reviews',
         process.env.DB_NOTIFICATIONS_COLLECTION || 'notifications',
@@ -427,6 +428,19 @@ class DatabaseService {
 
   get aiEvaluations(): Collection<AiEvaluation> {
     return this.db.collection(process.env.DB_AI_EVALUATIONS_COLLECTION || 'ai_evaluations')
+  }
+
+  async indexAiAdvisoryRuns() {
+    try {
+      await this.aiAdvisoryRuns.createIndex({ submissionId: 1, type: 1, createdAt: -1 })
+      await this.aiAdvisoryRuns.createIndex({ gradeItemId: 1, createdAt: -1 })
+    } catch (error) {
+      console.error('Error indexing AI advisory runs:', error)
+    }
+  }
+
+  get aiAdvisoryRuns(): Collection<any> {
+    return this.db.collection(process.env.DB_AI_ADVISORY_RUNS_COLLECTION || 'ai_advisory_runs')
   }
 
   get submissionFlags(): Collection<SubmissionFlag> {

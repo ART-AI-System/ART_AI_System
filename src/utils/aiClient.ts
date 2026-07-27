@@ -7,14 +7,15 @@ dotenv.config()
  */
 export async function callLLMWithJSON<T>(systemInstruction: string, userPrompt: string, mockFallback?: T): Promise<T> {
   const apiKey = process.env.GEMINI_API_KEY || ''
+  const mockFallbackEnabled = process.env.AI_MOCK_FALLBACK_ENABLED === 'true'
   
-  // If no valid API key is set and a mockFallback is provided, return mock for local development
+  // Mock AI results must be explicitly enabled. They must never look like real grading output by default.
   if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey.startsWith('AIzaSy_your_key')) {
-    console.warn('⚠️ [aiClient] GEMINI_API_KEY is missing or placeholder. Using mock/fallback response if provided.')
-    if (mockFallback) {
+    if (mockFallbackEnabled && mockFallback) {
+      console.warn('⚠️ [aiClient] GEMINI_API_KEY is missing. Returning explicitly enabled development mock data.')
       return mockFallback
     }
-    throw new Error('GEMINI_API_KEY is not configured in .env file.')
+    throw new Error('GEMINI_API_KEY is not configured. AI grading suggestions are unavailable.')
   }
 
   const candidateModels = [
@@ -107,8 +108,8 @@ export async function callLLMWithJSON<T>(systemInstruction: string, userPrompt: 
   }
 
   console.error('❌ [aiClient] All Gemini models failed. Last error:', lastError?.message || lastError)
-  if (mockFallback) {
-    console.warn('⚠️ [aiClient] Falling back to mock data due to API failure/quota.')
+  if (mockFallbackEnabled && mockFallback) {
+    console.warn('⚠️ [aiClient] Returning explicitly enabled development mock data after Gemini failure.')
     return mockFallback
   }
   throw lastError || new Error('All Gemini AI models failed to generate content.')

@@ -37,7 +37,8 @@ export const getGradeBySubmissionController = async (req: Request, res: Response
 export const deleteGradeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id: submissionId } = req.params
-    const result = await gradesService.deleteGradeBySubmission(submissionId as string)
+    const userId = (req as any).decoded_auth.user_id
+    const result = await gradesService.deleteGradeBySubmission(submissionId as string, userId)
     if (!result) {
       res.status(404).json({ message: 'Grade not found' })
       return

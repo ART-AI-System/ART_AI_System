@@ -20,8 +20,8 @@ gradesRouter.delete('/', requireAuth, requireRole('LECTURER'), deleteGradeContro
 export const gradesStandaloneRouter = Router({ mergeParams: true })
 
 // These will be mounted separately in index.ts
-gradesStandaloneRouter.get('/grade-items/:gradeItemId/grades', requireAuth, getGradesByGradeItemController)
-gradesStandaloneRouter.get('/classes/:classId/grades', requireAuth, getGradesByClassController)
+gradesStandaloneRouter.get('/grade-items/:gradeItemId/grades', requireAuth, requireRole('LECTURER', 'ADMIN', 'SUBJECT_HEAD'), getGradesByGradeItemController)
+gradesStandaloneRouter.get('/classes/:classId/grades', requireAuth, requireRole('LECTURER', 'ADMIN', 'SUBJECT_HEAD'), getGradesByClassController)
 gradesStandaloneRouter.post('/classes/:classId/students/:studentId/final-result', requireAuth, requireRole('LECTURER'), calculateFinalResultController)
 
 export default gradesRouter

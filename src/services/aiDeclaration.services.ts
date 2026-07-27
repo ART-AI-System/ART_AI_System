@@ -45,6 +45,39 @@ class AiDeclarationService {
     // Allow updating AI interaction even if finalized
 
 
+    const existingInteraction = await databaseService.aiInteractions.findOne({
+      submissionId: submissionOid,
+      studentId: studentOid,
+      usagePurpose: payload.usagePurpose
+    })
+
+    if (existingInteraction) {
+      return await databaseService.aiInteractions.findOneAndUpdate(
+        { _id: existingInteraction._id },
+        {
+          $set: {
+            aiTool: payload.aiTool,
+            promptContent: payload.promptContent,
+            aiResponseSummary: payload.aiResponseSummary,
+            studentDecision: payload.studentDecision,
+            reflectionText: payload.reflectionText,
+            updatedAt: new Date()
+          }
+        },
+        { returnDocument: 'after' }
+      )
+    }
+
+    const gradeItem = await databaseService.gradeItems.findOne({ _id: submission.gradeItemId })
+    const currentCount = await databaseService.aiInteractions.countDocuments({ submissionId: submissionOid })
+    const maxInteractions = gradeItem?.maxAiInteractions ?? 10
+    if (maxInteractions > 0 && currentCount >= maxInteractions) {
+      throw new ErrorWithStatus({
+        message: `No more than ${maxInteractions} AI declarations are allowed for this submission`,
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
     const newInteraction = new AiInteraction({
       submissionId: submissionOid,
       gradeItemId: submission.gradeItemId,
@@ -59,12 +92,11 @@ class AiDeclarationService {
 
     const result = await databaseService.aiInteractions.insertOne(newInteraction)
     
-    // Increment interaction count in submission
+    // Keep the denormalized counter aligned with the actual declaration records.
     await databaseService.submissions.updateOne(
       { _id: submissionOid },
       {
-        $inc: { aiInteractionCount: 1 },
-        $set: { updatedAt: new Date() }
+        $set: { aiInteractionCount: currentCount + 1, updatedAt: new Date() }
       }
     )
 
@@ -281,8 +313,13 @@ class AiDeclarationService {
     if (role === 'LECTURER') {
       const classData = await databaseService.classes.findOne({
         _id: submission.classId,
-        'lecturer.lecturerId': userId
-      })
+        $or: [
+          { lecturerId: userId },
+          { lecturerId: userId.toHexString() },
+          { 'lecturer.lecturerId': userId },
+          { 'lecturer.lecturerId': userId.toHexString() }
+        ]
+      } as any)
 
       if (classData) {
         return

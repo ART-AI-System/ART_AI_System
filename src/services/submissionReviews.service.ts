@@ -246,9 +246,14 @@ class SubmissionReviewsService {
   private async getLecturerClassOrFail(classId: ObjectId, lecturerId: ObjectId) {
     const classData = await databaseService.classes.findOne({
       _id: classId,
-      'lecturer.lecturerId': lecturerId,
+      $or: [
+        { lecturerId },
+        { lecturerId: lecturerId.toHexString() },
+        { 'lecturer.lecturerId': lecturerId },
+        { 'lecturer.lecturerId': lecturerId.toHexString() }
+      ],
       isActive: { $ne: false }
-    })
+    } as any)
 
     if (!classData) {
       throw new ErrorWithStatus({
@@ -278,7 +283,7 @@ class SubmissionReviewsService {
     const submissionStatus = reviewStatus === 'FLAGGED' ? 'flagged' : reviewStatus === 'PENDING' ? 'submitted' : 'reviewed'
 
     await databaseService.submissions.updateOne(
-      { _id: submissionId },
+      { _id: submissionId, status: { $ne: 'graded' } },
       {
         $set: {
           status: submissionStatus,
