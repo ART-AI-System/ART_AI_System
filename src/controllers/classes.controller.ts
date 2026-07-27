@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import classesService from '~/services/classes.service'
+import databaseService from '~/services/database.service'
+import { ObjectId } from 'mongodb'
 
 export const createClassController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -88,6 +90,66 @@ export const importStudentsController = async (req: Request, res: Response, next
     res.json({
       message: 'Import students successfully',
       result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const importAndCreateClassController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { classCode, subjectId, semesterId, lecturerId } = req.body
+    const rows = (req as any).importRows as Record<string, string>[]
+    
+    if (!classCode || !subjectId || !semesterId || !lecturerId) {
+      res.status(400).json({ message: 'Missing required class fields (classCode, subjectId, semesterId, lecturerId)' })
+      return
+    }
+    
+    if (!rows || rows.length === 0) {
+      res.status(400).json({ message: 'No rows found to import in the uploaded file' })
+      return
+    }
+    
+    // Fetch subject and lecturer to build snapshots
+    const subject = await databaseService.subjects.findOne({ _id: new ObjectId(subjectId as string) })
+    if (!subject) {
+      res.status(404).json({ message: 'Subject not found' })
+      return
+    }
+    
+    const lecturer = await databaseService.users.findOne({ _id: new ObjectId(lecturerId as string) })
+    if (!lecturer) {
+      res.status(404).json({ message: 'Lecturer not found' })
+      return
+    }
+    
+    // 1. Create the class
+    const newClass = await classesService.createClass({
+      classCode: classCode as string,
+      semesterId: semesterId as string,
+      subjectId: subjectId as string,
+      subjectSnapshot: {
+        subjectId: subject._id,
+        code: subject.code,
+        name: subject.name
+      },
+      lecturer: {
+        lecturerId: lecturer._id,
+        fullName: lecturer.fullName,
+        email: lecturer.email
+      }
+    } as any)
+    
+    // 2. Import students into the newly created class
+    const importResult = await classesService.importStudents(newClass._id.toString(), rows)
+    
+    res.json({
+      message: 'Class created and students imported successfully',
+      result: {
+        class: newClass,
+        importResult
+      }
     })
   } catch (error) {
     next(error)

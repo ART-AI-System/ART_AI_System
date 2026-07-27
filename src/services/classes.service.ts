@@ -146,9 +146,9 @@ class ClassesService {
       const rowNumber = i + 1
       const row = rows[i]
 
-      const email = (row.email || row['Email'] || '').trim().toLowerCase()
-      const studentCode = (row.studentCode || row['Student Code'] || row['student_code'] || '').trim()
-      const fullName = (row.fullName || row['Full Name'] || row['full_name'] || '').trim()
+      const email = (row.email || row.Email || row['Email'] || '').trim().toLowerCase()
+      const studentCode = (row.studentCode || row.MSSV || row['Student Code'] || row['student_code'] || row['Mssv'] || '').trim()
+      const fullName = (row.fullName || row['Họ Tên'] || row['Full Name'] || row['full_name'] || row['Ho Ten'] || '').trim()
 
       if (!email || !studentCode || !fullName) {
         errors.push({ row: rowNumber, reason: 'Missing required field (email, studentCode, or fullName)' })

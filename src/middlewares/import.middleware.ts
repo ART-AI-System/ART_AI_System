@@ -99,6 +99,12 @@ export const parseImportFile = async (req: Request, res: Response, next: NextFun
           )
         }
 
+        // Map formidable fields to req.body so the controller can access them
+        req.body = req.body || {}
+        Object.keys(_fields).forEach((key) => {
+          req.body[key] = Array.isArray(_fields[key]) ? _fields[key][0] : _fields[key]
+        })
+
         // Support both array and direct file reference
         const fileRaw = files.file
         const file = Array.isArray(fileRaw) ? fileRaw[0] : fileRaw
