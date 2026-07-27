@@ -13,10 +13,14 @@ import {
   deleteGradeItemMaterialController
 } from '~/controllers/gradeItems.controller'
 import { wrapRequestHandler } from '~/utils/handlers'
+import { parseTestImportFile } from '~/middlewares/importTest.middleware'
+import { importTestController } from '~/controllers/gradeItems.controller'
 
 const gradeItemsRouter = Router({ mergeParams: true }) // important for nested routes like /classes/:classId/grade-items
 
 // Route matching /api/classes/:classId/grade-items
+gradeItemsRouter.post('/import-test', requireAuth, requireRole('LECTURER'), parseTestImportFile, wrapRequestHandler(importTestController))
+
 gradeItemsRouter.post('/', requireAuth, requireRole('LECTURER'), wrapRequestHandler(createGradeItemController))
 gradeItemsRouter.get('/', requireAuth, wrapRequestHandler(getGradeItemsByClassController))
 

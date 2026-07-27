@@ -64,8 +64,25 @@ class ClassesService {
   }
 
   async getClassById(id: string) {
-    const classData = await databaseService.classes.findOne({ _id: new ObjectId(id) })
-    return classData
+    const classDataArr = await databaseService.classes.find({ _id: new ObjectId(id) }).toArray()
+    if (!classDataArr.length) return null;
+    const classData = classDataArr[0];
+    
+    if (classData.students && classData.students.length > 0) {
+      const studentIds = classData.students.map((s: any) => new ObjectId(s.studentId));
+      const studentDetails = await databaseService.users.find({ _id: { $in: studentIds } }).toArray();
+      
+      classData.students = classData.students.map((student: any) => {
+        const user = studentDetails.find((u: any) => u._id.toString() === student.studentId.toString());
+        return {
+          ...student,
+          fullName: user ? user.fullName : student.fullName || 'Unknown',
+          email: user ? user.email : student.email || 'Unknown'
+        };
+      });
+    }
+    
+    return classData;
   }
 
   async updateClass(id: string, payload: Partial<ClassType>) {
@@ -121,9 +138,9 @@ class ClassesService {
       const rowNumber = i + 1
       const row = rows[i]
 
-      const email = (row.email || row['Email'] || '').trim().toLowerCase()
-      const studentCode = (row.studentCode || row['Student Code'] || row['student_code'] || '').trim()
-      const fullName = (row.fullName || row['Full Name'] || row['full_name'] || '').trim()
+      const email = (row.email || row.Email || row['Email'] || '').trim().toLowerCase()
+      const studentCode = (row.studentCode || row.MSSV || row['Student Code'] || row['student_code'] || row['Mssv'] || '').trim()
+      const fullName = (row.fullName || row['Họ Tên'] || row['Full Name'] || row['full_name'] || row['Ho Ten'] || '').trim()
 
       if (!email || !studentCode || !fullName) {
         errors.push({ row: rowNumber, reason: 'Missing required field (email, studentCode, or fullName)' })

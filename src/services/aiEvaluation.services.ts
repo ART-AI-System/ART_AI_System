@@ -276,32 +276,8 @@ class AiEvaluationService {
 
     await this.assertCanViewSubmission(submission, userOid, role)
 
-    const [evaluation, advisoryRuns] = await Promise.all([
-      databaseService.aiEvaluations.findOne({ submissionId: submissionOid }),
-      databaseService.aiAdvisoryRuns.find({ submissionId: submissionOid }).sort({ createdAt: -1 }).toArray()
-    ])
-    if (!evaluation && advisoryRuns.length === 0) {
-      throw new ErrorWithStatus({
-        message: 'AI evaluation or advisory result not found for this submission',
-        status: HTTP_STATUS.NOT_FOUND
-      })
-    }
-    const latestByType = new Map<string, any>()
-    advisoryRuns.forEach(run => {
-      if (!latestByType.has(run.type)) latestByType.set(run.type, run)
-    })
-
-    return {
-      ...evaluation,
-      aiGradingSuggestion: latestByType.get('aiGradingSuggestion')?.result || evaluation?.aiGradingSuggestion,
-      aiAudit: latestByType.get('aiAudit')?.result || evaluation?.aiAudit,
-      aiHolisticSuggestion: latestByType.get('aiHolisticSuggestion')?.result || evaluation?.aiHolisticSuggestion,
-      latestAdvisoryRunIds: {
-        grading: latestByType.get('aiGradingSuggestion')?._id,
-        audit: latestByType.get('aiAudit')?._id,
-        holistic: latestByType.get('aiHolisticSuggestion')?._id
-      }
-    }
+    const evaluation = await databaseService.aiEvaluations.findOne({ submissionId: submissionOid })
+    return evaluation // Will be null if not found, which is fine
   }
 
   async getEvaluationsByClass(classId: string, userId: string, role: string) {

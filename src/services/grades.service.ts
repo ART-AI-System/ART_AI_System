@@ -181,12 +181,13 @@ class GradesService {
       }
     }
 
+    // Update the submission status to 'graded'
     await databaseService.submissions.updateOne(
-      { _id: submission._id },
+      { _id: new ObjectId(submissionId) },
       { $set: { status: 'graded', updatedAt: new Date() } }
     )
 
-    // AI only suggests a score. This persisted grade is always the lecturer's explicit decision.
+    // Return the result for the specific target student, or the first one
     return results[0]
   }
 
