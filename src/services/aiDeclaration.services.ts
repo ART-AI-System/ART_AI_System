@@ -42,12 +42,8 @@ class AiDeclarationService {
       })
     }
 
-    if (submission.status !== 'draft') {
-      throw new ErrorWithStatus({
-        message: 'Cannot add AI interaction to a finalized submission',
-        status: HTTP_STATUS.BAD_REQUEST
-      })
-    }
+    // Allow updating AI interaction even if finalized
+
 
     const newInteraction = new AiInteraction({
       submissionId: submissionOid,
@@ -153,12 +149,8 @@ class AiDeclarationService {
       })
     }
 
-    if (submission.status !== 'draft') {
-      throw new ErrorWithStatus({
-        message: 'Cannot update AI interaction of a finalized submission',
-        status: HTTP_STATUS.BAD_REQUEST
-      })
-    }
+    // Allow updating AI interaction even if finalized
+
 
     const result = await databaseService.aiInteractions.findOneAndUpdate(
       { _id: interactionOid },
