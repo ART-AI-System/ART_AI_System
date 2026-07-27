@@ -8,17 +8,15 @@ class StudentService {
    * Helper to format enrolled subjects from Class/ClassMember records
    */
   private async getEnrolledSubjects(studentOid: ObjectId, semesterOid: ObjectId) {
-    const classMembers = await databaseService.classMembers
-      .find({ studentId: studentOid, semesterId: semesterOid, status: 'active' })
-      .toArray()
-
-    const classIds = classMembers.map((cm) => cm.classId)
-
-    if (classIds.length === 0) return []
-
     const classes = await databaseService.classes
-      .find({ _id: { $in: classIds }, isActive: true })
+      .find({ 
+        'students.studentId': studentOid, 
+        semesterId: semesterOid,
+        isActive: { $ne: false } // Include classes without isActive or where it is true
+      })
       .toArray()
+
+    if (classes.length === 0) return []
 
     const subjectIds = classes.map((c: any) => c.subjectId).filter(Boolean)
     const lecturerIds = classes.map((c: any) => c.lecturer?.lecturerId || c.lecturerId).filter(Boolean)
@@ -43,25 +41,28 @@ class StudentService {
     })
   }
 
-  async getHome(studentId: string) {
+  async getHome(studentId: string, semesterId?: string) {
     const studentOid = new ObjectId(studentId)
 
-    // Find current semester
-    const currentSemester = await databaseService.semesters.findOne({ isCurrent: true, isActive: true })
-    if (!currentSemester) {
+    let targetSemester;
+    if (semesterId) {
+      targetSemester = await databaseService.semesters.findOne({ _id: new ObjectId(semesterId) })
+    } else {
+      // Find current semester
+      targetSemester = await databaseService.semesters.findOne({ isCurrent: true, isActive: { $ne: false } })
+    }
+
+    if (!targetSemester) {
       return {
         currentSemester: null,
         subjects: []
       }
     }
 
-    const subjects = await this.getEnrolledSubjects(studentOid, currentSemester._id)
+    const subjects = await this.getEnrolledSubjects(studentOid, targetSemester._id)
 
     return {
-      currentSemester: {
-        id: currentSemester._id,
-        name: currentSemester.name
-      },
+      currentSemester: targetSemester,
       subjects
     }
   }

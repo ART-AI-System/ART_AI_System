@@ -5,7 +5,8 @@ import studentService from '~/services/student.services'
 export const getStudentHomeController = wrapRequestHandler(
   async (req: Request, res: Response, _next: NextFunction) => {
     const studentId = (req.user!._id as any).toHexString()
-    const result = await studentService.getHome(studentId)
+    const semesterId = req.query.semesterId as string | undefined
+    const result = await studentService.getHome(studentId, semesterId)
     res.json({
       message: 'Get student home successfully',
       result

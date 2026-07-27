@@ -27,12 +27,18 @@ class LecturerService {
     return cls
   }
 
-  async getHome(lecturerId: string) {
+  async getHome(lecturerId: string, semesterId?: string) {
     const lecturerOid = new ObjectId(lecturerId)
 
-    // Find current semester
-    const currentSemester = await databaseService.semesters.findOne({ isCurrent: true, isActive: true })
-    if (!currentSemester) {
+    let targetSemester;
+    if (semesterId) {
+      targetSemester = await databaseService.semesters.findOne({ _id: new ObjectId(semesterId) })
+    } else {
+      // Find current semester
+      targetSemester = await databaseService.semesters.findOne({ isCurrent: true, isActive: { $ne: false } })
+    }
+
+    if (!targetSemester) {
       return {
         currentSemester: null,
         classes: []
@@ -52,27 +58,31 @@ class LecturerService {
           },
           {
             $or: [
-              { semesterId: currentSemester._id },
-              { semesterId: currentSemester._id.toHexString() }
+              { semesterId: targetSemester._id },
+              { semesterId: targetSemester._id.toHexString() as unknown as ObjectId }
             ]
           },
-          { isActive: true }
+          { isActive: { $ne: false } }
         ]
-      } as any)
+      })
       .toArray()
 
+    const subjectIds = classes.map((c: any) => c.subjectId).filter(Boolean)
+    const subjects = await databaseService.subjects.find({ _id: { $in: subjectIds } }).toArray()
+
     return {
-      currentSemester: {
-        id: currentSemester._id,
-        name: currentSemester.name
-      },
-      classes: classes.map((c: any) => ({
-        classId: c._id,
-        classCode: c.classCode,
-        subjectCode: c.subjectSnapshot?.code || c.courseCode,
-        subjectName: c.subjectSnapshot?.name || 'Unknown Subject',
-        totalStudents: c.students?.length || 0
-      }))
+      currentSemester: targetSemester,
+      classes: classes.map((c: any) => {
+        const subject = subjects.find((s) => s._id.toString() === (c.subjectId || c.subjectSnapshot?.subjectId)?.toString())
+        return {
+          subjectId: c.subjectSnapshot?.subjectId || c.subjectId,
+          subjectCode: c.subjectSnapshot?.code || subject?.code || 'UNK',
+          subjectName: c.subjectSnapshot?.name || subject?.name || 'Unknown Subject',
+          classId: c._id,
+          classCode: c.classCode,
+          studentsCount: c.students?.length || 0
+        }
+      })
     }
   }
 
