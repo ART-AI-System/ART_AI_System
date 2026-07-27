@@ -1,5 +1,7 @@
 import fs from 'fs'
+import { createHash } from 'crypto'
 import { Request, Response, NextFunction } from 'express'
+import { ObjectId } from 'mongodb'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { ErrorWithStatus } from '~/models/Errors'
 import { UploadedSubmissionFile } from '~/models/requests/submissions.request'
@@ -9,6 +11,53 @@ import aiGradingService from '~/services/aiGrading.service'
 import aiAnnotatorService from '~/services/aiAnnotator.service'
 import aiAuditService from '~/services/aiAudit.service'
 import aiHolisticSynthesisService from '~/services/aiHolisticSynthesis.service'
+import databaseService from '~/services/database.service'
+
+async function persistAdvisoryAiResult(
+  submissionId: string,
+  field: 'aiGradingSuggestion' | 'aiAudit' | 'aiHolisticSuggestion',
+  advisoryResult: Record<string, any>,
+  generatedBy: ObjectId
+) {
+  const submissionObjectId = new ObjectId(submissionId)
+  const submission = await databaseService.submissions.findOne({ _id: submissionObjectId })
+  if (!submission) return
+
+  const now = new Date()
+  const gradeItem = await databaseService.gradeItems.findOne({ _id: submission.gradeItemId })
+  const rubricHash = createHash('sha256')
+    .update(JSON.stringify(gradeItem?.rubric || []))
+    .digest('hex')
+  const advisoryRun = await databaseService.aiAdvisoryRuns.insertOne({
+    submissionId: submissionObjectId,
+    gradeItemId: submission.gradeItemId,
+    studentId: submission.studentId,
+    classId: submission.classId,
+    type: field,
+    result: advisoryResult,
+    submissionContentHash: submission.contentHash || null,
+    rubricHash,
+    provider: 'google-gemini',
+    model: process.env.GEMINI_MODEL || 'automatic-fallback-chain',
+    promptVersion: 'rubric-grounded-v2',
+    generatedBy,
+    createdAt: now
+  })
+
+  // Keep the latest advisory beside an existing heuristic evaluation for backward-compatible reads.
+  // Do not upsert a placeholder heuristic evaluation because it would pollute risk analytics.
+  await databaseService.aiEvaluations.updateOne(
+    { submissionId: submissionObjectId },
+    {
+      $set: {
+        [field]: advisoryResult,
+        aiSuggestionUpdatedAt: now,
+        updatedAt: now
+      }
+    } as any
+  )
+  return advisoryRun.insertedId
+}
 
 export const createSubmissionController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -313,10 +362,11 @@ export const getAIGradeSuggestionController = async (req: Request, res: Response
     const { submissionId } = req.params
     const user = req.user as User
     const result = await aiGradingService.analyzeSubmissionAndSuggestGrade(submissionId as string, user)
+    const advisoryRunId = await persistAdvisoryAiResult(submissionId as string, 'aiGradingSuggestion', result as any, user._id!)
 
     res.json({
       message: 'Get AI grade suggestion successfully',
-      result
+      result: { ...result, advisoryRunId }
     })
   } catch (error) {
     next(error)
@@ -352,10 +402,11 @@ export const aiAuditAndVivaController = async (req: Request, res: Response, next
     const { submissionId } = req.params
     const user = req.user as User
     const result = await aiAuditService.generateAuditAndVivaQuestions(submissionId as string, user)
+    const advisoryRunId = await persistAdvisoryAiResult(submissionId as string, 'aiAudit', result as any, user._id!)
 
     res.json({
       message: 'Generate AI Audit and Viva questions successfully',
-      result
+      result: { ...result, advisoryRunId }
     })
   } catch (error) {
     next(error)
@@ -366,17 +417,29 @@ export const aiHolisticSynthesisController = async (req: Request, res: Response,
   try {
     const { submissionId } = req.params
     const user = req.user as User
-    const { gradingResult, auditResult } = req.body || {}
+    // Never trust advisory grading/audit objects sent by the browser. Reuse only server-persisted results.
+    const submissionObjectId = new ObjectId(submissionId as string)
+    const [gradingRun, auditRun] = await Promise.all([
+      databaseService.aiAdvisoryRuns.findOne(
+        { submissionId: submissionObjectId, type: 'aiGradingSuggestion' },
+        { sort: { createdAt: -1 } }
+      ),
+      databaseService.aiAdvisoryRuns.findOne(
+        { submissionId: submissionObjectId, type: 'aiAudit' },
+        { sort: { createdAt: -1 } }
+      )
+    ])
     const result = await aiHolisticSynthesisService.synthesizeAuditAndGrading(
       submissionId as string,
       user,
-      gradingResult,
-      auditResult
+      gradingRun?.result as any,
+      auditRun?.result as any
     )
+    const advisoryRunId = await persistAdvisoryAiResult(submissionId as string, 'aiHolisticSuggestion', result as any, user._id!)
 
     res.json({
       message: 'Generate AI Holistic Synthesis successfully',
-      result
+      result: { ...result, advisoryRunId }
     })
   } catch (error) {
     next(error)

@@ -36,6 +36,7 @@ databaseService.connect().then(async () => {
     await databaseService.indexPasswordResetTokens()
     await databaseService.indexSubmissions()
     await databaseService.indexSubmissionReviews()
+    await databaseService.indexAiAdvisoryRuns()
     await databaseService.indexNotifications()
     await databaseService.indexEmailLogs()
     await databaseService.indexAssignments()

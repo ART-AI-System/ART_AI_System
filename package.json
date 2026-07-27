@@ -16,7 +16,9 @@
     "test:users": "ts-node -r tsconfig-paths/register src/tests/user-management.test.ts",
     "seed:test-users": "ts-node -r tsconfig-paths/register src/scripts/seed-auth-test-users.ts",
     "seed:headsubject": "ts-node -r tsconfig-paths/register src/scripts/seed-headsubject-demo.ts",
-    "test:chat": "ts-node -r tsconfig-paths/register src/tests/chat.test.ts"
+    "test:chat": "ts-node -r tsconfig-paths/register src/tests/chat.test.ts",
+    "seed:core-demo": "node scripts/seed-core-flow-demo.js",
+    "test:core-demo": "node scripts/verify-core-flow-demo.js"
   },
   "repository": {
     "type": "git",

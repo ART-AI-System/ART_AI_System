@@ -373,13 +373,24 @@ class SubmissionsService {
       })
     }
 
-    const classData = await databaseService.classes.findOne({
-      _id: gradeItem.classId,
-      'students.studentId': studentObjectId,
-      isActive: { $ne: false }
-    })
+    const [classData, classMembership] = await Promise.all([
+      databaseService.classes.findOne({
+        _id: gradeItem.classId,
+        isActive: { $ne: false },
+        $or: [
+          { 'students.studentId': studentObjectId },
+          { studentIds: studentObjectId },
+          { studentIds: studentObjectId.toHexString() }
+        ]
+      } as any),
+      databaseService.classMembers.findOne({
+        classId: gradeItem.classId,
+        studentId: studentObjectId,
+        status: { $ne: 'dropped' }
+      })
+    ])
 
-    if (!classData) {
+    if (!classData && !classMembership) {
       removeFileIfExists(file.filepath)
       throw new ErrorWithStatus({
         message: 'Student is not enrolled in this class',
@@ -409,20 +420,6 @@ class SubmissionsService {
     ensureSubmissionUploadDir()
     fs.renameSync(file.filepath, finalFilePath)
 
-    await databaseService.submissions.updateMany(
-      {
-        gradeItemId: gradeItemObjectId,
-        studentId: studentObjectId,
-        isLatest: true
-      },
-      {
-        $set: {
-          isLatest: false,
-          updatedAt: new Date()
-        }
-      }
-    )
-
     let groupMembers: ObjectId[] = []
     if (groupMembersStr) {
       try {
@@ -444,12 +441,26 @@ class SubmissionsService {
     }).toArray()
     
     if (otherSubmissions.length > 0) {
-      removeFileIfExists(file.filepath)
+      removeFileIfExists(finalFilePath)
       throw new ErrorWithStatus({
         message: 'You or one of the selected members are already part of another group submission.',
         status: HTTP_STATUS.FORBIDDEN
       })
     }
+
+    await databaseService.submissions.updateMany(
+      {
+        gradeItemId: gradeItemObjectId,
+        studentId: studentObjectId,
+        isLatest: true
+      },
+      {
+        $set: {
+          isLatest: false,
+          updatedAt: new Date()
+        }
+      }
+    )
 
     const newSubmission = new Submission({
       uuid,
@@ -505,8 +516,13 @@ class SubmissionsService {
         ? await databaseService.classes.findOne({ _id: gradeItem.classId })
         : await databaseService.classes.findOne({
             _id: gradeItem.classId,
-            'lecturer.lecturerId': userObjectId
-          })
+            $or: [
+              { 'lecturer.lecturerId': userObjectId },
+              { 'lecturer.lecturerId': userObjectId.toHexString() },
+              { lecturerId: userObjectId },
+              { lecturerId: userObjectId.toHexString() }
+            ]
+          } as any)
 
     if (!classData) {
       throw new ErrorWithStatus({
@@ -645,7 +661,7 @@ class SubmissionsService {
         { $unwind: { path: '$classId', preserveNullAndEmptyArrays: true } },
         {
           $lookup: {
-            from: 'gradeItems',
+            from: 'grade_items',
             localField: 'gradeItemId',
             foreignField: '_id',
             as: 'gradeItemId'
@@ -667,15 +683,64 @@ class SubmissionsService {
   }
 
   async getMySubmissions(studentId: string) {
+    const studentObjectId = toObjectId(studentId, 'Student')
     return await databaseService.submissions
-      .find({
-        $or: [
-          { studentId: toObjectId(studentId, 'Student') },
-          { groupMembers: toObjectId(studentId, 'Student') }
-        ],
-        isLatest: true
-      })
-      .sort({ submittedAt: -1 })
+      .aggregate([
+        {
+          $match: {
+            $or: [{ studentId: studentObjectId }, { groupMembers: studentObjectId }],
+            isLatest: true
+          }
+        },
+        {
+          $lookup: {
+            from: 'grade_items',
+            localField: 'gradeItemId',
+            foreignField: '_id',
+            as: 'gradeItem'
+          }
+        },
+        { $unwind: { path: '$gradeItem', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'classes',
+            localField: 'classId',
+            foreignField: '_id',
+            as: 'class'
+          }
+        },
+        { $unwind: { path: '$class', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'grades',
+            let: { submissionId: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$submissionId', '$$submissionId'] },
+                      { $eq: ['$studentId', studentObjectId] }
+                    ]
+                  }
+                }
+              }
+            ],
+            as: 'grade'
+          }
+        },
+        { $unwind: { path: '$grade', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'ai_evaluations',
+            localField: '_id',
+            foreignField: 'submissionId',
+            as: 'aiEvaluation'
+          }
+        },
+        { $unwind: { path: '$aiEvaluation', preserveNullAndEmptyArrays: true } },
+        { $sort: { submittedAt: -1 } }
+      ])
       .toArray()
   }
 
@@ -770,54 +835,11 @@ class SubmissionsService {
   }
 
   getSubmissionFilePath(submission: any) {
-    let filePath: string
     if (!submission.fileStorageKey) {
       const safeName = submission.fileName || 'submission.zip'
-      filePath = path.join(process.cwd(), 'uploads', 'submissions', safeName)
-    } else {
-      filePath = path.join(process.cwd(), submission.fileStorageKey)
+      return path.join(process.cwd(), 'uploads', 'submissions', safeName)
     }
-
-    if (!fs.existsSync(filePath)) {
-      try {
-        const dir = path.dirname(filePath)
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true })
-        }
-
-        const fileName = submission.fileName || 'submission.zip'
-        const isZip = path.extname(fileName).toLowerCase() === '.zip' || (submission.mimeType || '').includes('zip')
-        if (isZip) {
-          const sampleFiles = [
-            {
-              name: 'src/index.js',
-              content: `// Sample submission entry file for ${fileName}\nimport { calculateGrade } from './utils.js';\n\nconsole.log("Starting Academic Assessment App...");\nconst score = calculateGrade(85, 90);\nconsole.log(\`Final Score: \${score}\`);\n`
-            },
-            {
-              name: 'src/utils.js',
-              content: `// Helper functions for assessment\nexport function calculateGrade(midterm, final) {\n  return (midterm * 0.4) + (final * 0.6);\n}\n`
-            },
-            {
-              name: 'README.md',
-              content: `# Assessment Project Submission\n\nFile: ${fileName}\nSubmitted by student for review and AI assessment.\n\n## Instructions to Run\n\`\`\`bash\nnpm install\nnpm start\n\`\`\`\n`
-            },
-            {
-              name: 'package.json',
-              content: `{\n  "name": "assessment-project",\n  "version": "1.0.0",\n  "type": "module",\n  "main": "src/index.js",\n  "scripts": {\n    "start": "node src/index.js"\n  }\n}\n`
-            }
-          ]
-          const zipBuf = createSampleZipBuffer(sampleFiles)
-          fs.writeFileSync(filePath, zipBuf)
-        } else {
-          const textContent = `// Sample submission content for ${fileName}\nconsole.log("Hello from demo submission");\n`
-          fs.writeFileSync(filePath, textContent, 'utf8')
-        }
-      } catch (err) {
-        console.error('Failed to auto-generate sample submission file:', err)
-      }
-    }
-
-    return filePath
+    return path.join(process.cwd(), submission.fileStorageKey)
   }
 
   async getSubmissionFileTree(submissionId: string, user: User) {
@@ -1077,8 +1099,20 @@ class SubmissionsService {
     const minInteractions = gradeItem.minAiInteractions ?? 5
     const maxInteractions = gradeItem.maxAiInteractions ?? 10
 
-    // Bỏ qua validate số lượng tối thiểu/tối đa theo yêu cầu
-    
+    if (declarationRequired && interactionCount < minInteractions) {
+      throw new ErrorWithStatus({
+        message: `At least ${minInteractions} AI declarations are required before finalizing this submission`,
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
+    if (maxInteractions > 0 && interactionCount > maxInteractions) {
+      throw new ErrorWithStatus({
+        message: `No more than ${maxInteractions} AI declarations are allowed for this submission`,
+        status: HTTP_STATUS.BAD_REQUEST
+      })
+    }
+
     const now = new Date()
     const deadline = new Date(gradeItem.deadline)
     const status = now <= deadline ? 'submitted' : 'late'
@@ -1089,7 +1123,7 @@ class SubmissionsService {
         $set: {
           status,
           finalizedAt: now,
-          aiRequirementSatisfied: true,
+          aiRequirementSatisfied: !declarationRequired || interactionCount >= minInteractions,
           aiInteractionCount: interactionCount,
           updatedAt: now
         }
@@ -1243,8 +1277,13 @@ class SubmissionsService {
     if (user.role === 'LECTURER') {
       const classData = await databaseService.classes.findOne({
         _id: submission.classId,
-        'lecturer.lecturerId': userId
-      })
+        $or: [
+          { 'lecturer.lecturerId': userId },
+          { 'lecturer.lecturerId': userId.toHexString() },
+          { lecturerId: userId },
+          { lecturerId: userId.toHexString() }
+        ]
+      } as any)
 
       if (!classData) {
         throw new ErrorWithStatus({

@@ -61,6 +61,17 @@ class LecturerService {
       } as any)
       .toArray()
 
+    const classIds = classes.map((classData: any) => classData._id)
+    const memberCounts = classIds.length
+      ? await databaseService.classMembers
+          .aggregate([
+            { $match: { classId: { $in: classIds }, status: { $ne: 'dropped' } } },
+            { $group: { _id: '$classId', count: { $sum: 1 } } }
+          ])
+          .toArray()
+      : []
+    const memberCountByClass = new Map(memberCounts.map((item: any) => [item._id.toString(), item.count]))
+
     return {
       currentSemester: {
         id: currentSemester._id,
@@ -71,7 +82,11 @@ class LecturerService {
         classCode: c.classCode,
         subjectCode: c.subjectSnapshot?.code || c.courseCode,
         subjectName: c.subjectSnapshot?.name || 'Unknown Subject',
-        totalStudents: c.students?.length || 0
+        totalStudents:
+          memberCountByClass.get(c._id.toString()) ||
+          c.students?.length ||
+          c.studentIds?.length ||
+          0
       }))
     }
   }
@@ -81,69 +96,86 @@ class LecturerService {
     const classOid = new ObjectId(classId)
 
     const cls: any = await this.verifyClassOwnership(lecturerOid, classOid)
-    const totalStudents = cls.students?.length || 0
-
-    const [assignments, submissionStats, pendingReviews, finalResults, flaggedSubmissions] = await Promise.all([
-      databaseService.assignments.countDocuments({ classId: classOid }),
+    const [memberCount, gradeItems, submissions, grades, evaluations] = await Promise.all([
+      databaseService.classMembers.countDocuments({ classId: classOid, status: { $ne: 'dropped' } }),
+      databaseService.gradeItems.countDocuments({ classId: classOid, isActive: { $ne: false } }),
       databaseService.submissions
-        .aggregate([
-          { $match: { classId: classOid, isLatest: true } },
-          { $group: { _id: '$status', count: { $sum: 1 } } }
-        ])
+        .find({ classId: classOid, isLatest: true })
+        .sort({ submittedAt: -1 })
         .toArray(),
-      databaseService.submissions.aggregate([
-        { $match: { classId: classOid } },
-        {
-          $lookup: {
-            from: 'submissionreviews',
-            localField: '_id',
-            foreignField: 'submissionId',
-            as: 'reviews'
-          }
-        },
-        { $unwind: '$reviews' },
-        { $match: { 'reviews.reviewStatus': 'pending', 'reviews.lecturerId': lecturerOid } },
-        { $count: 'pendingReviewsCount' }
-      ]).toArray(),
-      databaseService.finalResults
-        .aggregate([
-          { $match: { classId: classOid } },
-          { $group: { _id: null, avg: { $avg: '$finalScore' } } }
-        ])
-        .toArray(),
-      databaseService.submissionFlags.countDocuments({ classId: classOid, isResolved: false })
+      databaseService.grades.find({ classId: classOid }).toArray(),
+      databaseService.aiEvaluations.find({ classId: classOid }).toArray()
     ])
 
-    // Notice that submissionReviews does not have classId in schema directly, it has submissionId.
-    // Wait, let's fix pendingReviews:
-    const pendingReviewsCount = pendingReviews[0]?.pendingReviewsCount || 0
-    // Actually, to get pending reviews for THIS class, we might need a lookup or we can just query submissions in this class and check pending reviews.
-    // A simpler way: we'll use a lookup or aggregate if needed. Since it's an overview, let's do a correct count.
-    
-    // Total expected submissions = assignments * totalStudents
-    const totalExpected = assignments * totalStudents
-    const draft = submissionStats.find((s) => s._id === 'draft')?.count || 0
-    const submitted = submissionStats.find((s) => s._id === 'submitted')?.count || 0
-    const late = submissionStats.find((s) => s._id === 'late')?.count || 0
+    const totalStudents = memberCount || cls.students?.length || cls.studentIds?.length || 0
+    const gradeBySubmission = new Map(grades.map((grade: any) => [grade.submissionId.toString(), grade]))
+    const evaluationBySubmission = new Map(
+      evaluations.map((evaluation: any) => [evaluation.submissionId.toString(), evaluation])
+    )
+    const recent = submissions.slice(0, 8)
+    const studentIds = recent.map((submission: any) => submission.studentId)
+    const gradeItemIds = recent.map((submission: any) => submission.gradeItemId)
+    const [students, recentGradeItems] = await Promise.all([
+      databaseService.users
+        .find({ _id: { $in: studentIds } })
+        .project({ fullName: 1, studentCode: 1, username: 1 })
+        .toArray(),
+      databaseService.gradeItems
+        .find({ _id: { $in: gradeItemIds } })
+        .project({ title: 1 })
+        .toArray()
+    ])
+    const studentById = new Map(students.map((student: any) => [student._id.toString(), student]))
+    const gradeItemById = new Map(recentGradeItems.map((item: any) => [item._id.toString(), item]))
+
+    const submitted = submissions.filter((submission: any) => submission.status === 'submitted').length
+    const late = submissions.filter((submission: any) => submission.status === 'late').length
+    const draft = submissions.filter((submission: any) => submission.status === 'draft').length
+    const graded = submissions.filter((submission: any) => gradeBySubmission.has(submission._id.toString())).length
+    const pendingReviews = submissions.filter(
+      (submission: any) => submission.status !== 'draft' && !gradeBySubmission.has(submission._id.toString())
+    ).length
+    const averageScore = grades.length
+      ? Number((grades.reduce((sum: number, grade: any) => sum + (grade.score / grade.maxScore) * 10, 0) / grades.length).toFixed(2))
+      : 0
+    const flaggedSubmissions = evaluations.filter((evaluation: any) => evaluation.riskLevel === 'high').length
 
     return {
       classId: cls._id,
       classCode: cls.classCode,
       subject: {
-        code: cls.subjectName,
-        name: cls.subjectName
+        code: cls.subjectSnapshot?.code || cls.courseCode || 'Unknown',
+        name: cls.subjectSnapshot?.name || cls.subjectName || 'Unknown Subject'
       },
       totalStudents,
-      totalAssignments: assignments,
+      totalAssignments: gradeItems,
       submissionOverview: {
-        totalExpected,
+        totalExpected: gradeItems * totalStudents,
         submitted,
         late,
-        draft
+        draft,
+        graded
       },
-      pendingReviews: pendingReviewsCount, // Will refine pendingReviews query logic below
-      averageScore: finalResults[0]?.avg ? Number(finalResults[0].avg.toFixed(2)) : 0,
-      flaggedSubmissions
+      pendingReviews,
+      averageScore,
+      flaggedSubmissions,
+      recentSubmissions: recent.map((submission: any) => {
+        const student = studentById.get(submission.studentId.toString())
+        const grade = gradeBySubmission.get(submission._id.toString())
+        const evaluation = evaluationBySubmission.get(submission._id.toString())
+        return {
+          submissionId: submission._id,
+          studentName: student?.fullName || student?.username || 'Unknown student',
+          studentCode: student?.studentCode || student?.username || 'N/A',
+          assignmentTitle: gradeItemById.get(submission.gradeItemId.toString())?.title || 'Assignment',
+          status: submission.status,
+          submittedAt: submission.finalizedAt || submission.submittedAt,
+          score: grade?.score ?? null,
+          maxScore: grade?.maxScore ?? 10,
+          riskLevel: evaluation?.riskLevel || 'not_evaluated',
+          aiDependencyScore: evaluation?.aiDependencyScore ?? null
+        }
+      })
     }
   }
 
@@ -153,22 +185,31 @@ class LecturerService {
 
     await this.verifyClassOwnership(lecturerOid, classOid)
 
-    const stats = await databaseService.submissions
-      .aggregate([
-        { $match: { classId: classOid, isLatest: true } },
-        { $group: { _id: '$status', count: { $sum: 1 } } }
-      ])
-      .toArray()
-
-    const draft = stats.find((s) => s._id === 'draft')?.count || 0
-    const submitted = stats.find((s) => s._id === 'submitted')?.count || 0
-    const late = stats.find((s) => s._id === 'late')?.count || 0
+    const [submissions, grades] = await Promise.all([
+      databaseService.submissions.find({ classId: classOid, isLatest: true }).toArray(),
+      databaseService.grades.find({ classId: classOid }).toArray()
+    ])
+    const gradeBySubmission = new Set(grades.map((grade: any) => grade.submissionId.toString()))
+    const draft = submissions.filter((submission: any) => submission.status === 'draft').length
+    const submitted = submissions.filter((submission: any) => submission.status === 'submitted').length
+    const late = submissions.filter((submission: any) => submission.status === 'late').length
+    const graded = submissions.filter((submission: any) => gradeBySubmission.has(submission._id.toString())).length
+    const pendingReviews = submissions.filter(
+      (submission: any) => submission.status !== 'draft' && !gradeBySubmission.has(submission._id.toString())
+    ).length
+    const averageScore = grades.length
+      ? Number((grades.reduce((sum: number, grade: any) => sum + (grade.score / grade.maxScore) * 10, 0) / grades.length).toFixed(2))
+      : 0
 
     return {
       draft,
       submitted,
       late,
-      total: draft + submitted + late
+      graded,
+      total: submissions.length,
+      pendingReviews,
+      averageScore,
+      statusDistribution: { draft, submitted, late, graded }
     }
   }
 
@@ -178,26 +219,39 @@ class LecturerService {
 
     await this.verifyClassOwnership(lecturerOid, classOid)
 
-    const [patternDistribution, riskLevelDistribution] = await Promise.all([
-      databaseService.aiEvaluations
-        .aggregate([
-          { $match: { classId: classOid } },
-          { $group: { _id: '$pattern', count: { $sum: 1 } } },
-          { $project: { _id: 0, pattern: '$_id', count: 1 } }
-        ])
-        .toArray(),
-      databaseService.aiEvaluations
-        .aggregate([
-          { $match: { classId: classOid } },
-          { $group: { _id: '$riskLevel', count: { $sum: 1 } } },
-          { $project: { _id: 0, riskLevel: '$_id', count: 1 } }
-        ])
-        .toArray()
-    ])
+    const evaluations = await databaseService.aiEvaluations.find({ classId: classOid }).toArray()
+    const countBy = (field: 'pattern' | 'riskLevel') =>
+      Array.from(
+        evaluations.reduce((counts: Map<string, number>, evaluation: any) => {
+          const key = evaluation[field] || 'unknown'
+          counts.set(key, (counts.get(key) || 0) + 1)
+          return counts
+        }, new Map<string, number>())
+      ).map(([key, count]) => ({ [field]: key, count }))
+
+    const usageDistribution = evaluations.reduce(
+      (distribution, evaluation: any) => {
+        const score = Number(evaluation.aiDependencyScore || 0)
+        if (score <= 20) distribution.low += 1
+        else if (score <= 60) distribution.medium += 1
+        else distribution.high += 1
+        return distribution
+      },
+      { low: 0, medium: 0, high: 0 }
+    )
 
     return {
-      patternDistribution,
-      riskLevelDistribution
+      patternDistribution: countBy('pattern'),
+      riskLevelDistribution: countBy('riskLevel'),
+      usageDistribution,
+      flaggedSubmissions: evaluations.filter((evaluation: any) => evaluation.riskLevel === 'high').length,
+      evaluatedSubmissions: evaluations.length,
+      averageTransparencyScore: evaluations.length
+        ? Number(
+            (evaluations.reduce((sum: number, evaluation: any) => sum + evaluation.transparencyScore, 0) /
+              evaluations.length).toFixed(2)
+          )
+        : 0
     }
   }
 
